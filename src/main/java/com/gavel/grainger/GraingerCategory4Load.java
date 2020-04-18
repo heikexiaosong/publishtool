@@ -1,6 +1,8 @@
 package com.gavel.grainger;
 
 import com.gavel.HttpUtils;
+import com.gavel.database.DataSourceHolder;
+import com.gavel.entity.GraingerCategory;
 import com.gavel.suning.SuningClient;
 import com.google.gson.Gson;
 import com.suning.api.DefaultSuningClient;
@@ -19,34 +21,22 @@ import java.util.List;
 
 public class GraingerCategory4Load {
 
-    //数据库连接URL，当前连接的是E:/H2目录下的gacl数据库
-    private static final String JDBC_URL = "jdbc:h2:./abc";
-    //连接数据库时使用的用户名
-    private static final String USER = "sa";
-    //连接数据库时使用的密码
-    private static final String PASSWORD = "sa";
-    //连接H2数据库时使用的驱动类，org.h2.Driver这个类是由H2数据库自己提供的，在H2数据库的jar包中可以找到
-    private static final String DRIVER_CLASS="org.h2.Driver";
-
     public static void main(String[] args) throws Exception {
 
 
-        //加载驱动
-        Class.forName(DRIVER_CLASS);
-        //根据连接URL，用户名，密码，获取数据库连接
-        Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
+        Connection conn = DataSourceHolder.dataSource().getConnection();
 
         Statement stmt = conn.createStatement();
 
 
-        ResultSet rs = stmt.executeQuery("SELECT * FROM CATEGORY_GRAINGER where grade = '3'");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM GRAINGERCATEGORY where grade = '3'");
         //遍历结果集
 
         int i = 0;
         while (rs.next()) {
-            System.out.println(rs.getString("url") + "," + rs.getString("code")+ "," + rs.getString("title"));
+            System.out.println(rs.getString("url") + "," + rs.getString("code")+ "," + rs.getString("name"));
 
-            loadCategory(conn, rs.getString("url"));
+            loadCategory(conn, rs.getString("url"), rs.getString("code"));
 
             i += 1;
             System.out.println("Handle: " + i + "\n");
@@ -60,7 +50,7 @@ public class GraingerCategory4Load {
 
     }
 
-    private static void loadCategory(Connection conn, String url) throws Exception {
+    private static void loadCategory(Connection conn, String url, String parent) throws Exception {
 
 
         List<GraingerCategory> graingerBrandList = new ArrayList<>();
@@ -77,9 +67,10 @@ public class GraingerCategory4Load {
 
             GraingerCategory category4 = new GraingerCategory();
             category4.setGrade("4");
-            category4.setTitle(element.text());
+            category4.setName(StringUtils.getName(element.text()));
+            category4.setParent(parent);
             category4.setUrl(element.attr("href"));
-            category4.setCode(element.attr("href"));
+            category4.setCode(StringUtils.getCode(element.attr("href")));
 
             graingerBrandList.add(category4);
 
@@ -92,16 +83,17 @@ public class GraingerCategory4Load {
             return;
         }
 
-        PreparedStatement stmt = conn.prepareStatement("INSERT INTO CATEGORY_GRAINGER VALUES(?, ?, ?, ?)");
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO GRAINGERCATEGORY VALUES(?, ?, ?, ?, ?)");
 
         for (GraingerCategory category : graingerBrandList) {
             System.out.println(category);
 
             //新增
             stmt.setObject(1, category.getCode());
-            stmt.setObject(2, category.getTitle());
-            stmt.setObject(3, category.getGrade());
-            stmt.setObject(4, category.getUrl());
+            stmt.setObject(2, category.getName());
+            stmt.setObject(3, category.getParent());
+            stmt.setObject(4, category.getGrade());
+            stmt.setObject(5, category.getUrl());
 
             stmt.addBatch();
         }

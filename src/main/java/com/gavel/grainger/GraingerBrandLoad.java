@@ -1,6 +1,7 @@
 package com.gavel.grainger;
 
 import com.gavel.HttpUtils;
+import com.gavel.database.DataSourceHolder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -11,15 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GraingerBrandLoad {
-
-    //数据库连接URL，当前连接的是E:/H2目录下的gacl数据库
-    private static final String JDBC_URL = "jdbc:h2:./abc";
-    //连接数据库时使用的用户名
-    private static final String USER = "sa";
-    //连接数据库时使用的密码
-    private static final String PASSWORD = "sa";
-    //连接H2数据库时使用的驱动类，org.h2.Driver这个类是由H2数据库自己提供的，在H2数据库的jar包中可以找到
-    private static final String DRIVER_CLASS="org.h2.Driver";
 
     public static void main(String[] args) throws Exception {
 
@@ -82,12 +74,9 @@ public class GraingerBrandLoad {
         }
 
 
-        //加载驱动
-        Class.forName(DRIVER_CLASS);
-        //根据连接URL，用户名，密码，获取数据库连接
-        Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
+        Connection conn = DataSourceHolder.dataSource().getConnection();
 
-        PreparedStatement stmt = conn.prepareStatement("INSERT INTO BRAND_GRAINGER VALUES(?, ?, ?, ?, ?)");
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO GRAINGERBRAND VALUES(?, ?, ?, ?, ?)");
 
 
         for (GraingerBrand graingerBrand : graingerBrandList) {

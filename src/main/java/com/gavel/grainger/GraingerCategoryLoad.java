@@ -1,6 +1,8 @@
 package com.gavel.grainger;
 
 import com.gavel.HttpUtils;
+import com.gavel.database.DataSourceHolder;
+import com.gavel.entity.GraingerCategory;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,16 +16,11 @@ import java.util.List;
 
 public class GraingerCategoryLoad {
 
-    //数据库连接URL，当前连接的是E:/H2目录下的gacl数据库
-    private static final String JDBC_URL = "jdbc:h2:./abc";
-    //连接数据库时使用的用户名
-    private static final String USER = "sa";
-    //连接数据库时使用的密码
-    private static final String PASSWORD = "sa";
-    //连接H2数据库时使用的驱动类，org.h2.Driver这个类是由H2数据库自己提供的，在H2数据库的jar包中可以找到
-    private static final String DRIVER_CLASS="org.h2.Driver";
-
     public static void main(String[] args) throws Exception {
+
+        Connection conn = DataSourceHolder.dataSource().getConnection();
+
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO GRAINGERCATEGORY VALUES(?, ?, ?, ?, ?)");
 
 
         List<GraingerCategory> graingerBrandList = new ArrayList<>();
@@ -43,9 +40,18 @@ public class GraingerCategoryLoad {
 
             GraingerCategory category = new GraingerCategory();
             category.setGrade("1");
-            category.setTitle(hashDivTit.text());
+            category.setName(hashDivTit.text());
             category.setUrl(hashDivTit.attr("href"));
-            category.setCode(hashDivTit.attr("href"));
+            category.setCode(StringUtils.getCode(hashDivTit.attr("href")));
+
+            //新增
+            stmt.setObject(1, category.getCode());
+            stmt.setObject(2, category.getName());
+            stmt.setObject(3, "");
+            stmt.setObject(4, category.getGrade());
+            stmt.setObject(5, category.getUrl());
+
+            stmt.addBatch();
 
             graingerBrandList.add(category);
 
@@ -57,9 +63,16 @@ public class GraingerCategoryLoad {
 
                 GraingerCategory category2 = new GraingerCategory();
                 category2.setGrade("2");
-                category2.setTitle(li_1.text());
+                category2.setName(li_1.text());
                 category2.setUrl(li_1.attr("href"));
-                category2.setCode(li_1.attr("href"));
+                category2.setCode(StringUtils.getCode(li_1.attr("href")));
+
+                stmt.setObject(1, category2.getCode());
+                stmt.setObject(2, category2.getName());
+                stmt.setObject(3, category.getCode());
+                stmt.setObject(4, category2.getGrade());
+                stmt.setObject(5, category2.getUrl());
+                stmt.addBatch();
 
                 graingerBrandList.add(category2);
 
@@ -72,9 +85,16 @@ public class GraingerCategoryLoad {
 
                     GraingerCategory category3 = new GraingerCategory();
                     category3.setGrade("3");
-                    category3.setTitle(element2.text());
+                    category3.setName(element2.text());
                     category3.setUrl(element2.attr("href"));
-                    category3.setCode(element2.attr("href"));
+                    category3.setCode(StringUtils.getCode(element2.attr("href")));
+
+                    stmt.setObject(1, category3.getCode());
+                    stmt.setObject(2, category3.getName());
+                    stmt.setObject(3, category2.getCode());
+                    stmt.setObject(4, category3.getGrade());
+                    stmt.setObject(5, category3.getUrl());
+                    stmt.addBatch();
 
                     graingerBrandList.add(category3);
 
@@ -82,74 +102,9 @@ public class GraingerCategoryLoad {
 
             }
 
-//            GraingerBrand graingerBrand = new GraingerBrand();
-//
-//            Element logo = element.selectFirst("a img");
-//            System.out.println(logo.attr("data-original"));
-//
-//            graingerBrand.setLogo(logo.attr("data-original"));
-//
-//            Element brand = element.selectFirst("h3 a");
-//
-//
-//            graingerBrand.setUrl("https://www.grainger.cn" + brand.attr("href"));
-//
-//            Elements childrens = brand.children();
-//            if ( childrens==null || childrens.size() <= 0 ) {
-//                System.out.println(brand.text());
-//
-//                graingerBrand.setName1(brand.text());
-//                graingerBrand.setName2(brand.text());
-//
-//            } else {
-//
-//                for (int i = 0; i < childrens.size(); i++) {
-//                    Element children = childrens.get(i);
-//                    if ( i==0 ) {
-//                        graingerBrand.setName1(children.text());
-//                    } else  if ( i==1 ) {
-//                        graingerBrand.setName2(children.text());
-//                    }
-//                }
-//
-//            }
-//
-//            graingerBrandList.add(graingerBrand);
-
 
             System.out.println("---");
         }
-
-        for (GraingerCategory category : graingerBrandList) {
-            System.out.println(category);
-        }
-
-
-//        for (GraingerBrand graingerBrand : graingerBrandList) {
-//            System.out.println(graingerBrand);
-//        }
-//
-//
-        //加载驱动
-        Class.forName(DRIVER_CLASS);
-        //根据连接URL，用户名，密码，获取数据库连接
-        Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
-
-        PreparedStatement stmt = conn.prepareStatement("INSERT INTO CATEGORY_GRAINGER VALUES(?, ?, ?, ?)");
-
-
-        for (GraingerCategory category : graingerBrandList) {
-            System.out.println(category);
-
-            //新增
-            stmt.setObject(1, category.getCode());
-            stmt.setObject(2, category.getTitle());
-            stmt.setObject(3, category.getGrade());
-            stmt.setObject(4, category.getUrl());
-
-            stmt.addBatch();
-        }
-
 
 
         stmt.executeBatch();

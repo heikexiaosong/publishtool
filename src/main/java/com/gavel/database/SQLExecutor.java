@@ -2,8 +2,7 @@ package com.gavel.database;
 
 import com.gavel.annotation.FieldMeta;
 import com.gavel.annotation.TableMeta;
-import com.gavel.entity.Brand;
-import com.gavel.entity.Category;
+import com.gavel.entity.*;
 import org.apache.commons.dbutils.QueryRunner;
 
 import java.lang.reflect.Field;
@@ -56,6 +55,9 @@ public class SQLExecutor {
     public static void main(String[] args) throws Exception {
         createTable(Brand.class);
         createTable(Category.class);
+        createTable(GraingerBrand.class);
+        createTable(GraingerCategory.class);
+        createTable(Product.class);
     }
 
 }
