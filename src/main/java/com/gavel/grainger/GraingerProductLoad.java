@@ -3,11 +3,14 @@ package com.gavel.grainger;
 import com.gavel.HttpUtils;
 import com.gavel.database.DataSourceHolder;
 import com.gavel.entity.Product;
+import com.google.common.io.Files;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
@@ -22,58 +25,16 @@ public class GraingerProductLoad {
     public static void main(String[] args) throws Exception {
 
 
-        List<Product> graingerBrandList = new ArrayList<>();
-
-        String content = HttpUtils.get("https://www.grainger.cn/c-209089.html");
-
-        Document doc = Jsoup.parse(content);
-
-        Elements elements = doc.select("div.proUL li");
-
-        for (Element element : elements) {
-            System.out.println(element);
-
-            Product graingerBrand = new Product();
-
-            graingerBrand.setName(element.attr("title"));
-
-            Element item = element.selectFirst("a");
-
-            String href = item.attr("href");
-
-            graingerBrand.setCode(href);
-            graingerBrand.setType("");
-            graingerBrand.setUrl("https://www.grainger.cn/" + href);
-
-            Matcher matcher = CODE_PATTERN.matcher(href);
-            if (matcher.find()) {
-                graingerBrand.setCode(matcher.group(2));
-                graingerBrand.setType(matcher.group(1));
-            }
-
-            String picUrl = item.selectFirst("div.pic img").attr("src");
-
-            if ( "/Content/images/hp_np.png".equalsIgnoreCase(picUrl.trim()) ) {
-                graingerBrand.setPic("https://www.grainger.cn/Content/images/hp_np.png");
-            } else {
-                graingerBrand.setPic("https:" + picUrl);
-            }
-
-            graingerBrand.setBrand(item.selectFirst("div.wenz h3 span").text());
-            graingerBrand.setCategory("209089");
+        loadProducts("204888");
 
 
-            graingerBrandList.add(graingerBrand);
+
+    }
+
+    public static void load(String category) throws Exception {
 
 
-            System.out.println("---");
-        }
-
-
-        for (Product product : graingerBrandList) {
-            System.out.println(product);
-        }
-
+        List<Product> graingerBrandList = loadProducts(category);
 
         Connection conn = DataSourceHolder.dataSource().getConnection();
 
@@ -81,7 +42,6 @@ public class GraingerProductLoad {
 
 
         for (Product graingerBrand : graingerBrandList) {
-            System.out.println(graingerBrand);
 
             //新增
             stmt.setObject(1, graingerBrand.getCode());
@@ -106,4 +66,83 @@ public class GraingerProductLoad {
 
 
     }
+
+
+    public static List<Product> loadProducts(String categoryCode){
+
+        List<Product> products = new ArrayList<>();
+        if ( categoryCode==null || categoryCode.trim().length()==0 ){
+            return products;
+        }
+
+        int cur = 0;
+        int total = 1;
+
+        while ( cur < total ) {
+            cur++;
+            String content = HttpUtils.get("https://www.grainger.cn/c-" + categoryCode + ".html?page=" + cur);
+
+            try {
+                Files.write(content.getBytes(), new File(categoryCode + "_" + cur + ".html"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            Document doc = Jsoup.parse(content);
+
+            Element pagination = doc.selectFirst("div.pagination");
+            Elements label = pagination.select("label");
+            cur = Integer.parseInt(label.get(0).text());
+            total = Integer.parseInt(label.get(1).text());
+
+            System.out.print("\rCur: " + cur + "; Total: " + total);
+
+            System.out.print("; cpz: " + doc.selectFirst("font.cpz").text());
+            System.out.println("; total: " + doc.selectFirst("font.total").text());
+
+
+            // 产品列表数据
+            Elements elements = doc.select("div.proUL li");
+            for (Element element : elements) {
+
+                Product graingerBrand = new Product();
+
+                graingerBrand.setName(element.attr("title"));
+
+                Element item = element.selectFirst("a");
+
+                String href = item.attr("href");
+
+                graingerBrand.setCode(href);
+                graingerBrand.setType("");
+                graingerBrand.setUrl("https://www.grainger.cn/" + href);
+
+                Matcher matcher = CODE_PATTERN.matcher(href);
+                if (matcher.find()) {
+                    graingerBrand.setCode(matcher.group(2));
+                    graingerBrand.setType(matcher.group(1));
+                }
+
+                String picUrl = item.selectFirst("div.pic img").attr("src");
+
+                if ( "/Content/images/hp_np.png".equalsIgnoreCase(picUrl.trim()) ) {
+                    graingerBrand.setPic("https://www.grainger.cn/Content/images/hp_np.png");
+                } else {
+                    graingerBrand.setPic("https:" + picUrl);
+                }
+
+                graingerBrand.setBrand(item.selectFirst("div.wenz h3 span").text());
+                graingerBrand.setCategory("209089");
+
+
+                products.add(graingerBrand);
+            }
+        }
+
+
+        return products;
+    }
+
+
+
 }

@@ -12,7 +12,7 @@ public class Product {
     @FieldMeta(name = "TYPE", title = "产品类型", length = 32, primary = true)
     private String type;
 
-    @FieldMeta(name = "NAME", title = "名称", length = 64)
+    @FieldMeta(name = "NAME", title = "名称", length = 128)
     private String name;
 
     @FieldMeta(name = "BRAND", title = "品牌", length = 64)

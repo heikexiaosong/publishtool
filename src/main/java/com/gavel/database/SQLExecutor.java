@@ -4,8 +4,11 @@ import com.gavel.annotation.FieldMeta;
 import com.gavel.annotation.TableMeta;
 import com.gavel.entity.*;
 import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.BeanListHandler;
 
 import java.lang.reflect.Field;
+import java.sql.SQLException;
+import java.util.List;
 
 public class SQLExecutor {
 
@@ -50,6 +53,11 @@ public class SQLExecutor {
         QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
         runner.update(builder.toString());
 
+    }
+
+    public static  <T> List<T> executeQueryBeanList(String sql, Class<T> clz, Object... params) throws Exception {
+        QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
+        return runner.query(sql, new BeanListHandler<T>(clz));
     }
 
     public static void main(String[] args) throws Exception {

@@ -60,4 +60,15 @@ public class GraingerCategory {
     public void setUrl(String url) {
         this.url = url;
     }
+
+    @Override
+    public String toString() {
+        return "GraingerCategory{" +
+                "code='" + code + '\'' +
+                ", name='" + name + '\'' +
+                ", parent='" + parent + '\'' +
+                ", grade='" + grade + '\'' +
+                ", url='" + url + '\'' +
+                '}';
+    }
 }

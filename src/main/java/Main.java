@@ -1,46 +1,27 @@
-import com.gavel.BrandLoad;
-import com.gavel.database.DataSourceHolder;
-import org.apache.commons.dbutils.QueryRunner;
+import com.gavel.database.SQLExecutor;
+import com.gavel.entity.GraingerCategory;
+import com.gavel.grainger.GraingerProductLoad;
 
-import javax.sql.DataSource;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 public class Main {
 
-    public static void main(String[] args) {
-        {
-        Pattern pattern = Pattern.compile("/([a-zA-Z]-)?(\\d*).html", Pattern.CASE_INSENSITIVE);
-
-        String str = "/c-207146.html";
-
-        System.out.println(str);
-
-        Matcher matcher = pattern.matcher(str);
-        if (matcher.find()) {
-            System.out.println(matcher.group(2));
-        }
+    public static void main(String[] args) throws Exception {
 
 
-    }
+      List<GraingerCategory> graingerCategoryList =  SQLExecutor.executeQueryBeanList("select * from graingercategory where grade = '4'", GraingerCategory.class);
 
-        {
 
-            Pattern pattern = Pattern.compile("([^（]*).*", Pattern.CASE_INSENSITIVE);
-
-            String str= "调心球轴承（1524）";
-
-            System.out.println(str);
-
-            Matcher matcher = pattern.matcher(str);
-            if (matcher.find()) {
-                System.out.println(matcher.group(1));
+        for (GraingerCategory graingerCategory : graingerCategoryList) {
+            try {
+                System.out.println(graingerCategory);
+                //GraingerProductLoad.load(graingerCategory.getCode());
+            } catch (Exception e) {
+                System.out.println(graingerCategory + " 失败: " + e.getMessage());
             }
-
         }
 
-        QueryRunner runner = new QueryRunner(DataSourceHolder.getInstance().dataSource());
-
+        System.out.println("Total: " + graingerCategoryList.size());
 
     }
 }
