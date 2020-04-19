@@ -10,11 +10,12 @@ import java.util.concurrent.TimeUnit;
 
 public class HttpUtils {
 
+	public final  static List<Cookie> cache = new ArrayList<>();
+
     private static final OkHttpClient client = new OkHttpClient.Builder()
 													.connectTimeout(15, TimeUnit.SECONDS)
 													.readTimeout(15, TimeUnit.MINUTES)
 													.cookieJar(new CookieJar() {
-														List<Cookie> cache = new ArrayList<>();
 														@Override
 														public void saveFromResponse(HttpUrl httpUrl, List<Cookie> list) {
 															//内存中缓存Cookie
@@ -56,7 +57,9 @@ public class HttpUtils {
     public static String get(String url) {
         Response response = null;
     	try {
-    		Request request = new Request.Builder().url(url).build();
+    		Request request = new Request.Builder()
+										.url(url)
+										.build();
     		response = client.newCall(request).execute();
         	if (!response.isSuccessful())
                 throw new RuntimeException("请求失败： " + response);
@@ -70,6 +73,32 @@ public class HttpUtils {
 			}
 		}
     }
+
+	/**
+	 * get请求
+	 * @param url
+	 * @return
+	 */
+	public static String get(String url, String referer) {
+		Response response = null;
+		try {
+			Request request = new Request.Builder()
+					.url(url)
+					.header("Referer", referer)
+					.build();
+			response = client.newCall(request).execute();
+			if (!response.isSuccessful())
+				throw new RuntimeException("请求失败： " + response);
+			return response.body().string();
+
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}finally {
+			if (response != null) {
+				response.close();
+			}
+		}
+	}
 
 	/**
 	 * post请求
