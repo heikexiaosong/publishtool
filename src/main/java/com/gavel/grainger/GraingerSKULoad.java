@@ -18,12 +18,10 @@ import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class GraingerSKULoad {
 
@@ -34,41 +32,49 @@ public class GraingerSKULoad {
 
         PreparedStatement stmt = conn.prepareStatement("INSERT INTO htmlcache VALUES(?, ?, ?, ?)");
 
-        PreparedStatement exist = conn.prepareStatement("select count(1) from htmlcache where url = ? ");
+//        PreparedStatement _exist = conn.prepareStatement("select count(1) from htmlcache where url = ? ");
 
         List<Product> products =  SQLExecutor.executeQueryBeanList("select * from graingerproduct order by code desc", Product.class);
+        System.out.println("Product: "  + products.size());
 
-        long start = System.currentTimeMillis();
+        /**
+         * List -> Map
+         * 需要注意的是：
+         * toMap 如果集合对象有重复的key，会报错Duplicate key ....
+         *  apple1,apple12的id都为1。
+         *  可以用 (k1,k2)->k1 来设置，如果有重复的key,则保留key1,舍弃key2
+         */
+        Map<String, Product> urlProductMap = products.stream().collect(Collectors.toMap(Product::getUrl, a -> a));
+
+        List<HtmlCache> caches =  SQLExecutor.executeQueryBeanList("select URL from htmlcache ", HtmlCache.class);
+        System.out.println("HtmlCache: "  + caches.size());
+
+        caches.stream().forEach( e -> urlProductMap.remove(e.getUrl()) );
+        System.out.println("task: "  + urlProductMap.size());
+
+        long start = 0;
         int i = 0;
 
         int cnt = 0;
-        for (Product product : products) {
+        for (Product product : urlProductMap.values()) {
 
             try {
                 start = System.currentTimeMillis();
-
-                exist.setObject(1, product.getUrl().trim());
-                ResultSet rs = exist.executeQuery();
-                rs.next();
-                if ( rs.getInt(1) <=0 ) {
-                    HtmlCache cache = load(product.getUrl(), product.getCategory());
-                    cnt++;
-                    if ( cache==null ) {
-                        continue;
-                    }
-
-                    stmt.setObject(1,  cache.getUrl());
-                    stmt.setObject(2,  cache.getHtml());
-                    stmt.setObject(3,  cache.getContentlen());
-                    stmt.setObject(4,  cache.getUpdatetime());
-
-                    stmt.execute();
-
-                    System.out.println( (i++)  + " : " + product.getBrand() + " " + product.getName() + " ==>  Cost: " + (System.currentTimeMillis() - start) + " ms.");
-                } else {
-                    System.out.println((i++));
+                HtmlCache cache = load(product.getUrl(), product.getCategory());
+                cnt++;
+                if ( cache==null ) {
+                    continue;
                 }
 
+                stmt.setObject(1,  cache.getUrl());
+                stmt.setObject(2,  cache.getHtml());
+                stmt.setObject(3,  cache.getContentlen());
+                stmt.setObject(4,  cache.getUpdatetime());
+
+                stmt.execute();
+                caches.add(cache);
+                System.out.println( i  + " : " + product.getBrand() + " " + product.getName() + " ==>  Cost: " + (System.currentTimeMillis() - start) + " ms.");
+                i++;
             } catch (Exception e) {
                 System.out.println( "\t[异常]" + (i++)  + " : " + product.getBrand() + " " + product.getName() + " ==>  " + e.getMessage());
                 HttpUtils.cache.clear();
