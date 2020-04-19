@@ -11,9 +11,11 @@ import org.jsoup.select.Elements;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,7 +40,7 @@ public class GraingerProductLoad {
 
         Connection conn = DataSourceHolder.dataSource().getConnection();
 
-        PreparedStatement stmt = conn.prepareStatement("INSERT INTO GRAINGERPRODUCT VALUES(?, ?, ?, ?, ?, ?, ?)");
+        PreparedStatement stmt = conn.prepareStatement("INSERT INTO graingerproduct VALUES(?, ?, ?, ?, ?, ?, ?)");
 
 
         for (Product graingerBrand : graingerBrandList) {
@@ -57,7 +59,10 @@ public class GraingerProductLoad {
 
 
 
-        stmt.executeBatch();
+        int[] rets = stmt.executeBatch();
+
+        System.out.println(Arrays.toString(rets));
+        System.out.println("Total: " +rets.length);
 
         //释放资源
         stmt.close();
@@ -80,13 +85,30 @@ public class GraingerProductLoad {
 
         while ( cur < total ) {
             cur++;
-            String content = HttpUtils.get("https://www.grainger.cn/c-" + categoryCode + ".html?page=" + cur);
 
-            try {
-                Files.write(content.getBytes(), new File(categoryCode + "_" + cur + ".html"));
-            } catch (IOException e) {
-                e.printStackTrace();
+            String content = null;
+
+            String cacheFile = "list" + File.separator + categoryCode + "_" + cur + ".html";
+
+            File cache = new File(cacheFile);
+            if ( cache.exists() ) {
+                try {
+                    content = Files.toString(cache, Charset.forName("UTF8"));
+                    System.out.println("Load Content From file");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                content = HttpUtils.get("https://www.grainger.cn/c-" + categoryCode + ".html?page=" + cur);
+
+                System.out.println("Load Content From network");
+                try {
+                    Files.write(content.getBytes(), new File(categoryCode + "_" + cur + ".html"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
+
 
             Document doc = Jsoup.parse(content);
 
@@ -95,7 +117,7 @@ public class GraingerProductLoad {
             cur = Integer.parseInt(label.get(0).text());
             total = Integer.parseInt(label.get(1).text());
 
-            System.out.print("\rCur: " + cur + "; Total: " + total);
+            System.out.print("[" + categoryCode + "]Cur: " + cur + "; Total: " + total);
 
             System.out.print("; cpz: " + doc.selectFirst("font.cpz").text());
             System.out.println("; total: " + doc.selectFirst("font.total").text());
@@ -132,7 +154,7 @@ public class GraingerProductLoad {
                 }
 
                 graingerBrand.setBrand(item.selectFirst("div.wenz h3 span").text());
-                graingerBrand.setCategory("209089");
+                graingerBrand.setCategory(categoryCode);
 
 
                 products.add(graingerBrand);
