@@ -26,7 +26,7 @@ public class Main {
 
         {
             CityQueryRequest request = new CityQueryRequest();
-            request.setNationCode("ZN");
+            request.setNationCode("zn");
 
             //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
             request.setCheckParam(true);
@@ -84,7 +84,7 @@ public class Main {
         }
 
 
-        {
+        if ( 1==2 ) {
 
 
             ApplyAddRequest request = new ApplyAddRequest();

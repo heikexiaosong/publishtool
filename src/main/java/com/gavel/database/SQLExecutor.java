@@ -36,7 +36,11 @@ public class SQLExecutor {
             if ( fieldMeta!=null ){
                 System.out.println( fieldMeta.name() + ", " + fieldMeta.length() + ", " + f.getType().getName());
                 if ( f.getType().equals(String.class) ) {
-                    builder.append(fieldMeta.name()).append(" NVARCHAR(").append(fieldMeta.length()).append("),\n");
+                    if (  fieldMeta.length() > 2000 ) {
+                        builder.append(fieldMeta.name()).append(" TEXT,\n");
+                    } else {
+                        builder.append(fieldMeta.name()).append(" NVARCHAR(").append(fieldMeta.length()).append("),\n");
+                    }
                 } else if ( f.getType().equals(String.class) ) {
                     builder.append(fieldMeta.name()).append(" float,\n");
                 } else {
@@ -66,6 +70,7 @@ public class SQLExecutor {
         createTable(GraingerBrand.class);
         createTable(GraingerCategory.class);
         createTable(Product.class);
+        createTable(Itemparameter.class);
     }
 
 }

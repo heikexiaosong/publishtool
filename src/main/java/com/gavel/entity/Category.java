@@ -60,4 +60,15 @@ public class Category {
     public void setDescPath(String descPath) {
         this.descPath = descPath;
     }
+
+    @Override
+    public String toString() {
+        return "Category{" +
+                "categoryCode='" + categoryCode + '\'' +
+                ", categoryName='" + categoryName + '\'' +
+                ", grade='" + grade + '\'' +
+                ", isBottom='" + isBottom + '\'' +
+                ", descPath='" + descPath + '\'' +
+                '}';
+    }
 }
