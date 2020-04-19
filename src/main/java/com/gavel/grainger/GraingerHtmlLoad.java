@@ -3,27 +3,21 @@ package com.gavel.grainger;
 import com.gavel.HttpUtils;
 import com.gavel.database.DataSourceHolder;
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.Category;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Product;
-import com.google.common.io.Files;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-public class GraingerSKULoad {
+public class GraingerHtmlLoad {
 
     public static void main(String[] args) throws Exception {
 
@@ -32,36 +26,32 @@ public class GraingerSKULoad {
 
         PreparedStatement stmt = conn.prepareStatement("INSERT INTO htmlcache VALUES(?, ?, ?, ?)");
 
-//        PreparedStatement _exist = conn.prepareStatement("select count(1) from htmlcache where url = ? ");
+        PreparedStatement _exist = conn.prepareStatement("select count(1) from htmlcache where url = ? ");
 
         List<Product> products =  SQLExecutor.executeQueryBeanList("select * from graingerproduct order by code desc", Product.class);
         System.out.println("Product: "  + products.size());
 
-        /**
-         * List -> Map
-         * 需要注意的是：
-         * toMap 如果集合对象有重复的key，会报错Duplicate key ....
-         *  apple1,apple12的id都为1。
-         *  可以用 (k1,k2)->k1 来设置，如果有重复的key,则保留key1,舍弃key2
-         */
-        Map<String, Product> urlProductMap = products.stream().collect(Collectors.toMap(Product::getUrl, a -> a));
-
-        List<HtmlCache> caches =  SQLExecutor.executeQueryBeanList("select URL from htmlcache ", HtmlCache.class);
-        System.out.println("HtmlCache: "  + caches.size());
-
-        caches.stream().forEach( e -> urlProductMap.remove(e.getUrl()) );
-        caches.clear();
-        System.out.println("task: "  + urlProductMap.size());
 
         long start = 0;
         int i = 0;
 
         int cnt = 0;
-        for (Product product : urlProductMap.values()) {
+        for (Product product : products) {
+
+            if ( "g".equalsIgnoreCase(product.getType()) ) {
+                continue;
+            }
+
+            HtmlCache cache = null;
+
+            List<HtmlCache> exists =  SQLExecutor.executeQueryBeanList("select * from htmlcache  where url = '" + product.getUrl() + "' ", HtmlCache.class);
+            if ( exists!=null && exists.size()>0 ){
+                cache = exists.get(0);
+            }
 
             try {
                 start = System.currentTimeMillis();
-                HtmlCache cache = load(product.getUrl(), product.getCategory());
+                cache = load(product.getUrl(), product.getCategory());
                 cnt++;
                 if ( cache==null ) {
                     continue;
@@ -89,6 +79,20 @@ public class GraingerSKULoad {
                 }
                 cnt = 0;
             }
+
+            if ( cache!=null ) {
+                Document doc = Jsoup.parse(cache.getHtml());
+                Element leftTable2 = doc.selectFirst("div#leftTable2");
+                Elements tdItemNos = leftTable2.select("td[name='tdItemNo'] a");
+                for (Element tdItemNo : tdItemNos) {
+                    System.out.println(tdItemNo.attr("href") + "-" +  tdItemNo.text());
+                    System.out.println("---");
+                }
+            }
+
+
+
+
         }
 
         System.out.println("Total: " +products.size());
@@ -97,8 +101,6 @@ public class GraingerSKULoad {
         stmt.close();
         //关闭连接
         conn.close();
-
-
     }
 
     public static HtmlCache load(String url, String category) throws Exception {
