@@ -12,6 +12,7 @@ import org.jsoup.select.Elements;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class GraingerHtmlLoad {
 
         PreparedStatement _exist = conn.prepareStatement("select count(1) from htmlcache where url = ? ");
 
-        List<Product> products =  SQLExecutor.executeQueryBeanList("select * from graingerproduct order by code desc", Product.class);
+        List<Product> products =  SQLExecutor.executeQueryBeanList("select * from graingerproduct where type = 'g' order by code desc", Product.class);
         System.out.println("Product: "  + products.size());
 
 
@@ -38,55 +39,102 @@ public class GraingerHtmlLoad {
         int cnt = 0;
         for (Product product : products) {
 
-            if ( "g".equalsIgnoreCase(product.getType()) ) {
+            if ( "u".equalsIgnoreCase(product.getType()) ) {
                 continue;
             }
 
+            System.out.println(product.getName() + " : " + product.getUrl());
+
             HtmlCache cache = null;
 
-            List<HtmlCache> exists =  SQLExecutor.executeQueryBeanList("select * from htmlcache  where url = '" + product.getUrl() + "' ", HtmlCache.class);
+            List<HtmlCache> exists =  SQLExecutor.executeQueryBeanList("select * from htmlcache  where url = '" + product.getUrl() + "' limit 1 ", HtmlCache.class);
             if ( exists!=null && exists.size()>0 ){
                 cache = exists.get(0);
             }
 
-            try {
-                start = System.currentTimeMillis();
-                cache = load(product.getUrl(), product.getCategory());
-                cnt++;
-                if ( cache==null ) {
-                    continue;
-                }
+            if ( cache==null ) {
+                try {
+                    start = System.currentTimeMillis();
+                    cache = load(product.getUrl(), product.getCategory());
+                    cnt++;
+                    if ( cache==null ) {
+                        continue;
+                    }
 
-                stmt.setObject(1,  cache.getUrl());
-                stmt.setObject(2,  cache.getHtml());
-                stmt.setObject(3,  cache.getContentlen());
-                stmt.setObject(4,  cache.getUpdatetime());
+                    stmt.setObject(1,  cache.getUrl());
+                    stmt.setObject(2,  cache.getHtml());
+                    stmt.setObject(3,  cache.getContentlen());
+                    stmt.setObject(4,  cache.getUpdatetime());
 
-                stmt.execute();
-                System.out.println( i  + " : " + product.getBrand() + " " + product.getName() + " ==>  Cost: " + (System.currentTimeMillis() - start) + " ms.");
-                i++;
-            } catch (Exception e) {
-                System.out.println( "\t[异常]" + (i++)  + " : " + product.getBrand() + " " + product.getName() + " ==>  " + e.getMessage());
-                HttpUtils.cache.clear();
-                if ( cnt < 5 ) {
-                    Thread.sleep(180000);
-                } else if ( cnt < 50 ) {
-                    Thread.sleep(60000);
-                } else  if ( cnt < 500 ) {
-                    Thread.sleep(30000);
-                } else {
-                    Thread.sleep(10000);
+                    stmt.execute();
+                    System.out.println( i  + " : " + product.getBrand() + " " + product.getName() + " ==>  Cost: " + (System.currentTimeMillis() - start) + " ms.");
+                    i++;
+                } catch (Exception e) {
+                    System.out.println( "\t[异常]" + (i++)  + " : " + product.getBrand() + " " + product.getName() + " ==>  " + e.getMessage());
+                    HttpUtils.cache.clear();
+                    if ( cnt < 5 ) {
+                        Thread.sleep(180000);
+                    } else if ( cnt < 50 ) {
+                        Thread.sleep(60000);
+                    } else  if ( cnt < 500 ) {
+                        Thread.sleep(30000);
+                    } else {
+                        Thread.sleep(10000);
+                    }
+                    cnt = 0;
                 }
-                cnt = 0;
             }
+
 
             if ( cache!=null ) {
                 Document doc = Jsoup.parse(cache.getHtml());
                 Element leftTable2 = doc.selectFirst("div#leftTable2");
-                Elements tdItemNos = leftTable2.select("td[name='tdItemNo'] a");
+                Elements tdItemNos = leftTable2.select("td[name='tdItemNo'] span a");
                 for (Element tdItemNo : tdItemNos) {
-                    System.out.println(tdItemNo.attr("href") + "-" +  tdItemNo.text());
-                    System.out.println("---");
+                    String url = "https://www.grainger.cn" + tdItemNo.attr("href");
+
+                    int count = 0;
+                    _exist.setObject(1, url);
+                    ResultSet resultSet = _exist.executeQuery();
+                    if ( resultSet!=null && resultSet.next() ) {
+                        count =  resultSet.getInt(1);
+                    }
+                    resultSet.close();
+                    if ( count >=1 ) {
+                        continue;
+                    }
+                    _exist.clearParameters();
+
+                    try {
+                        start = System.currentTimeMillis();
+                        cache = load(url, product.getCategory());
+                        cnt++;
+                        if ( cache==null ) {
+                            continue;
+                        }
+
+                        stmt.setObject(1,  cache.getUrl());
+                        stmt.setObject(2,  cache.getHtml());
+                        stmt.setObject(3,  cache.getContentlen());
+                        stmt.setObject(4,  cache.getUpdatetime());
+
+                        stmt.execute();
+                        System.out.println("\t" +  tdItemNo.text()  + " : " + product.getBrand() + " " + product.getName() + "[URL: " + url + "] ==>  Cost: " + (System.currentTimeMillis() - start) + " ms.");
+                    } catch (Exception e) {
+                        System.out.println( "\t[异常]"  + " : " + product.getBrand() + " " + product.getName() + " ==>  " + e.getMessage());
+                        HttpUtils.cache.clear();
+                        if ( cnt < 5 ) {
+                            Thread.sleep(180000);
+                        } else if ( cnt < 50 ) {
+                            Thread.sleep(60000);
+                        } else  if ( cnt < 500 ) {
+                            Thread.sleep(30000);
+                        } else {
+                            Thread.sleep(10000);
+                        }
+                        cnt = 0;
+                    }
+
                 }
             }
 

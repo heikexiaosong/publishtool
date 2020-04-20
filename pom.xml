@@ -159,7 +159,7 @@
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
 							<mainClass>
-                                com.gavel.Start
+                                com.gavel.grainger.GraingerHtmlLoad
                             </mainClass>
 						</manifest>
 						<manifestEntries>
