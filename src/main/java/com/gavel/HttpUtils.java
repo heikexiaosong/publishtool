@@ -79,6 +79,31 @@ public class HttpUtils {
 	 * @param url
 	 * @return
 	 */
+	public static String get(String url, OkHttpClient okHttpClient) {
+		Response response = null;
+		try {
+			Request request = new Request.Builder()
+					.url(url)
+					.build();
+			response = okHttpClient.newCall(request).execute();
+			if (!response.isSuccessful())
+				throw new RuntimeException("请求失败： " + response);
+			return response.body().string();
+
+		} catch (Exception e) {
+			throw new RuntimeException(e.getMessage());
+		}finally {
+			if (response != null) {
+				response.close();
+			}
+		}
+	}
+
+	/**
+	 * get请求
+	 * @param url
+	 * @return
+	 */
 	public static String get(String url, String referer) {
 		Response response = null;
 		try {
@@ -87,6 +112,7 @@ public class HttpUtils {
 					.header("Referer", referer)
 					.build();
 			response = client.newCall(request).execute();
+			System.out.println("response[" + response.code() + "]: " + response.body());
 			if (!response.isSuccessful())
 				throw new RuntimeException("请求失败： " + response);
 			return response.body().string();

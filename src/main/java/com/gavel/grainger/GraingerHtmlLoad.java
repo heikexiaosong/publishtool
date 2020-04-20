@@ -93,9 +93,6 @@ public class GraingerHtmlLoad {
                 Element loadmore = doc.selectFirst("div.loadMoreBox a.loadmore");
                 if ( loadmore!=null  ) {
                     Element token = doc.selectFirst("input[name='__RequestVerificationToken']");
-                    System.out.println(loadmore);
-                    System.out.println(token.attr("value"));
-
                     String moreSku = "https://www.grainger.cn/Ajax/GetSkuListTable?__RequestVerificationToken=" + token.attr("value") + "&id=" + product.getCode();
                     String content = HttpUtils.get(moreSku);
 

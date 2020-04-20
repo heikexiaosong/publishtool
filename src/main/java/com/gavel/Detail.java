@@ -1,15 +1,23 @@
 package com.gavel;
 
+import okhttp3.OkHttpClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+
 public class Detail {
 
     public static void main(String[] args) {
 
-        String content = HttpUtils.get("https://www.grainger.cn//g-673739.html");
+
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .build();
+
+        String content = HttpUtils.get("https://www.grainger.cn//g-673739.html", okHttpClient);
 
         Document doc = Jsoup.parse(content);
 

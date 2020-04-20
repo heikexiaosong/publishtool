@@ -8,10 +8,61 @@ import org.apache.commons.dbutils.handlers.BeanListHandler;
 
 import java.lang.reflect.Field;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class SQLExecutor {
+
+    public static void insert(Object record) throws Exception {
+
+        if ( record==null ){
+            return;
+        }
+
+        Class clz = record.getClass();
+        TableMeta tableMeta = (TableMeta)clz.getAnnotation(TableMeta.class);
+        if ( tableMeta==null ){
+            System.out.println("非实体类");
+            return;
+        }
+
+        String table = tableMeta.name();
+        // INSERT INTO jingsu.itemparameter (CATEGORYCODE, PARATEMPLATECODE, PARATEMPLATEDESC, PARCODE, PARNAME, PARTYPE, PARUNIT, ISMUST, DATATYPE, OPTIONS) VALUES ('R9002886', 'basic', '基本参数模板', 'cmModel', '商品型号', '3', '', 'X', null, 'null');
+        StringBuilder builder = new StringBuilder("INSERT INTO ");
+        builder.append(table).append(" (");
+
+        List<Object> paramObjs = new ArrayList<>();
+
+        StringBuilder params = new StringBuilder();
+        Field[] fs = clz.getDeclaredFields();
+        for (Field f : fs) {
+
+            FieldMeta fieldMeta =  f.getAnnotation(FieldMeta.class);
+            if ( fieldMeta!=null ){
+                //System.out.println( fieldMeta.name() + ", " + fieldMeta.length() + ", " + f.getType().getName());
+                builder.append(fieldMeta.name()).append(",");
+                params.append("?,");
+                boolean access =  f.isAccessible();
+                f.setAccessible(true);
+                paramObjs.add(f.get(record));
+                f.setAccessible(access);
+            }
+        }
+        builder.deleteCharAt(builder.length()-1);
+        params.deleteCharAt(params.length()-1);
+        builder.append(") VALUES (").append(params).append(")");
+
+        System.out.println(builder.toString());
+
+
+        QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
+        runner.execute(builder.toString(), paramObjs.toArray(new Object[paramObjs.size()]));
+
+//        QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
+//        runner.update(builder.toString());
+
+    }
 
     public static void createTable(Class clz) throws Exception {
 
@@ -81,6 +132,11 @@ public class SQLExecutor {
         createTable(Itemparameter.class);
         createTable(Item.class);
         createTable(HtmlCache.class);
+
+        Item item = new Item();
+        item.setCode("123");
+        item.setBrand("brand");
+        insert(item);
     }
 
 }
