@@ -1,7 +1,6 @@
 package com.gavel.grainger;
 
 import com.gavel.HttpUtils;
-import com.gavel.database.DataSourceHolder;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Product;
@@ -10,24 +9,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class GraingerHtmlLoad {
 
     public static void main(String[] args) throws Exception {
-
-
-        Connection conn = DataSourceHolder.dataSource().getConnection();
-
-        PreparedStatement stmt = conn.prepareStatement("INSERT INTO htmlcache VALUES(?, ?, ?, ?)");
-
-        PreparedStatement _exist = conn.prepareStatement("select count(1) from htmlcache where url = ? ");
 
         List<Product> products =  SQLExecutor.executeQueryBeanList("select * from graingerproduct where type = 'g' order by code desc", Product.class);
         System.out.println("Product: "  + products.size());
@@ -61,12 +48,7 @@ public class GraingerHtmlLoad {
                         continue;
                     }
 
-                    stmt.setObject(1,  cache.getUrl());
-                    stmt.setObject(2,  cache.getHtml());
-                    stmt.setObject(3,  cache.getContentlen());
-                    stmt.setObject(4,  cache.getUpdatetime());
-
-                    stmt.execute();
+                    SQLExecutor.insert(cache);
                     System.out.println( i  + " : " + product.getBrand() + " " + product.getName() + " ==>  Cost: " + (System.currentTimeMillis() - start) + " ms.");
                     i++;
                 } catch (Exception e) {
@@ -94,31 +76,25 @@ public class GraingerHtmlLoad {
                 if ( loadmore!=null  ) {
                     Element token = doc.selectFirst("input[name='__RequestVerificationToken']");
                     String moreSku = "https://www.grainger.cn/Ajax/GetSkuListTable?__RequestVerificationToken=" + token.attr("value") + "&id=" + product.getCode();
-                    String content = HttpUtils.get(moreSku);
-
-                    doc = Jsoup.parse(content);
-
+                    doc = Jsoup.parse(HttpUtils.get(moreSku));
                     tdItemNos = doc.select("td[name='tdItemNo'] span a");
                 } else {
                     Element leftTable2 = doc.selectFirst("div#leftTable2");
-
                     tdItemNos = leftTable2.select("td[name='tdItemNo'] span a");
                 }
-                System.out.println(tdItemNos.size());
+                System.out.println("SKU: " + tdItemNos.size() + "\n");
+
+                int curCnt = 0;
                 for (Element tdItemNo : tdItemNos) {
+
+                    curCnt++;
+
                     String url = "https://www.grainger.cn" + tdItemNo.attr("href");
 
-                    int count = 0;
-                    _exist.setObject(1, url);
-                    ResultSet resultSet = _exist.executeQuery();
-                    if ( resultSet!=null && resultSet.next() ) {
-                        count =  resultSet.getInt(1);
-                    }
-                    resultSet.close();
+                    int count = SQLExecutor.intQuery("select count(1) from htmlcache where url = ? ", url);
                     if ( count >=1 ) {
                         continue;
                     }
-                    _exist.clearParameters();
 
                     try {
                         start = System.currentTimeMillis();
@@ -128,13 +104,8 @@ public class GraingerHtmlLoad {
                             continue;
                         }
 
-                        stmt.setObject(1,  cache.getUrl());
-                        stmt.setObject(2,  cache.getHtml());
-                        stmt.setObject(3,  cache.getContentlen());
-                        stmt.setObject(4,  cache.getUpdatetime());
-
-                        stmt.execute();
-                        System.out.println("\t" +  tdItemNo.text()  + " : " + product.getBrand() + " " + product.getName() + "[URL: " + url + "] ==>  Cost: " + (System.currentTimeMillis() - start) + " ms.");
+                        SQLExecutor.insert(cache);
+                        System.out.println("\t" + curCnt + ". " +  tdItemNo.text()  + " : " + product.getBrand() + " " + product.getName() + "[URL: " + url + "] ==>  Cost: " + (System.currentTimeMillis() - start) + " ms.");
                     } catch (Exception e) {
                         System.out.println( "\t[异常]"  + " : " + product.getBrand() + " " + product.getName() + " ==>  " + e.getMessage());
                         HttpUtils.cache.clear();
@@ -152,18 +123,9 @@ public class GraingerHtmlLoad {
 
                 }
             }
-
-
-
-
         }
 
-        System.out.println("Total: " +products.size());
-
-        //释放资源
-        stmt.close();
-        //关闭连接
-        conn.close();
+        System.out.println("Total: " +products.size() + "\n");
     }
 
     public static HtmlCache load(String url, String category) throws Exception {

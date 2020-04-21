@@ -4,15 +4,43 @@ import com.gavel.annotation.FieldMeta;
 import com.gavel.annotation.TableMeta;
 import com.gavel.entity.*;
 import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
+import org.apache.commons.dbutils.handlers.MapHandler;
 
 import java.lang.reflect.Field;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class SQLExecutor {
+
+    public static int intQuery(String query, Object... params) throws Exception {
+
+        QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
+        Map<String, Object> res = runner.query(query, new MapHandler(), params);
+        if ( res==null || res.size()<=0 ) {
+            return 0;
+        }
+
+        Object obj = res.values().iterator().next();
+        if ( obj==null ) {
+            return 0;
+        }
+
+        if ( obj instanceof  Number ) {
+            return  ((Number) obj).intValue();
+        }
+
+        try {
+            return Integer.parseInt(obj.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
 
     public static void insert(Object record) throws Exception {
 
@@ -52,9 +80,6 @@ public class SQLExecutor {
         builder.deleteCharAt(builder.length()-1);
         params.deleteCharAt(params.length()-1);
         builder.append(") VALUES (").append(params).append(")");
-
-        System.out.println(builder.toString());
-
 
         QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
         runner.execute(builder.toString(), paramObjs.toArray(new Object[paramObjs.size()]));
@@ -121,6 +146,11 @@ public class SQLExecutor {
     public static  <T> List<T> executeQueryBeanList(String sql, Class<T> clz, Object... params) throws Exception {
         QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
         return runner.query(sql, new BeanListHandler<T>(clz));
+    }
+
+    public static  <T> T executeQueryBean(String sql, Class<T> clz, Object... params) throws Exception {
+        QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
+        return runner.query(sql, new BeanHandler<T>(clz));
     }
 
     public static void main(String[] args) throws Exception {

@@ -154,7 +154,7 @@ public class Itemparameter {
             return parOption;
         }
 
-        if ( parOption.size() == 0 ) {
+        if ( parOption==null || parOption.size() == 0 ) {
             parOption = new Gson().fromJson(options, new TypeToken<List<ParOption>>() {}.getType());
         }
 

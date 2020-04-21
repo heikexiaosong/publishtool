@@ -55,23 +55,42 @@ public class HttpUtils {
      * @return
      */
     public static String get(String url) {
-        Response response = null;
-    	try {
-    		Request request = new Request.Builder()
-										.url(url)
-										.build();
-    		response = client.newCall(request).execute();
-        	if (!response.isSuccessful())
-                throw new RuntimeException("请求失败： " + response);
-            return response.body().string();
 
-    	} catch (Exception e) {
-			throw new RuntimeException(e.getMessage());
-		}finally {
-			if (response != null) {
-				response.close();
+    	int tryTimes = 0;
+
+		Request request = new Request.Builder()
+				.url(url)
+				.build();
+
+        Response response = null;
+        while ( true ) {
+        	if ( tryTimes > 0 ) {
+				System.out.println("第 " + tryTimes + " 次重试...");
+			}
+			try {
+				response = client.newCall(request).execute();
+				if (!response.isSuccessful())
+					throw new RuntimeException("请求失败： " + response);
+				return response.body().string();
+
+			} catch (Exception e) {
+				tryTimes++;
+				if ( tryTimes > 5 ) {
+					throw new RuntimeException(e.getMessage());
+				} else {
+					try {
+						Thread.sleep(tryTimes*20000);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}finally {
+				if (response != null) {
+					response.close();
+				}
 			}
 		}
+
     }
 
 	/**
@@ -112,7 +131,6 @@ public class HttpUtils {
 					.header("Referer", referer)
 					.build();
 			response = client.newCall(request).execute();
-			System.out.println("response[" + response.code() + "]: " + response.body());
 			if (!response.isSuccessful())
 				throw new RuntimeException("请求失败： " + response);
 			return response.body().string();
