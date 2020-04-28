@@ -173,6 +173,9 @@ public class SQLExecutor {
         createTable(HtmlCache.class);
 
         createTable(ImageCache.class);
+
+        createTable(BrandMapping.class);
+        createTable(CategoryMapping.class);
     }
 
     public static void update(ImageCache record) throws Exception {
