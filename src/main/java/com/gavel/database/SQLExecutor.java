@@ -178,7 +178,7 @@ public class SQLExecutor {
         createTable(CategoryMapping.class);
     }
 
-    public static void update(ImageCache record) throws Exception {
+    public static void update(Object record) throws Exception {
         if ( record==null ){
             return;
         }
@@ -215,7 +215,7 @@ public class SQLExecutor {
             FieldMeta fieldMeta =  f.getAnnotation(FieldMeta.class);
             if ( fieldMeta!=null && fieldMeta.primary() ){
                 //System.out.println( fieldMeta.name() + ", " + fieldMeta.length() + ", " + f.getType().getName());
-                builder.append(" ").append(fieldMeta.name()).append(" = ?,");
+                builder.append(" ").append(fieldMeta.name()).append(" = ? and");
                 boolean access =  f.isAccessible();
                 f.setAccessible(true);
                 paramObjs.add(f.get(record));
@@ -223,7 +223,7 @@ public class SQLExecutor {
             }
         }
 
-        builder.deleteCharAt(builder.length()-1);
+        builder.delete(builder.length()-3, builder.length());
 
         System.out.println(builder.toString());
 

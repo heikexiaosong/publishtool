@@ -6,10 +6,10 @@ import com.gavel.annotation.TableMeta;
 @TableMeta(name = "BRANDMAPPING", title = "品牌映射")
 public class BrandMapping {
 
-    @FieldMeta(name = "GRAINGERCODE", title = "固安捷编码", length = 32)
-    private String code;
+    @FieldMeta(name = "GRAINGERCODE", title = "固安捷编码", length = 32, primary = true)
+    private String graingercode;
 
-    @FieldMeta(name = "TASKID", title = "任务ID", length = 32)
+    @FieldMeta(name = "TASKID", title = "任务ID", length = 32, primary = true)
     private String taskid;
 
     @FieldMeta(name = "BRAND", title = "苏宁品牌", length = 32)
@@ -32,12 +32,12 @@ public class BrandMapping {
         this.taskid = taskid;
     }
 
-    public String getCode() {
-        return code;
+    public String getGraingercode() {
+        return graingercode;
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void setGraingercode(String graingercode) {
+        this.graingercode = graingercode;
     }
 
     public String getName1() {
