@@ -4,6 +4,7 @@ import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.ImageCache;
 import com.gavel.entity.Itemparameter;
+import com.gavel.grainger.StringUtils;
 import com.gavel.suning.SuningClient;
 import com.gavel.utils.ImageLoader;
 import com.google.gson.Gson;
@@ -20,10 +21,11 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.sound.midi.Soundbank;
 import java.io.File;
 import java.util.*;
 
-public class Main {
+public class ProductShelves {
 
 
     private  static  final DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET, "json");
@@ -91,9 +93,6 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-
-        System.out.println(title(" 博世 GLM4000激光测距仪，最远测距40米", "博世", "博世 Bosch", "GLM4000", "1件"));
-
         String code = "5V0292";
         String suningBrand = "0401";
         String suningCate = "R1309004";
@@ -106,9 +105,6 @@ public class Main {
 
         run(htmlCache, suningCate, suningBrand);
     }
-
-
-
 
 
     public static HtmlCache loadHtmlPage(String url, String params) throws Exception {
@@ -191,6 +187,7 @@ public class Main {
         Element cate = crumbs.get(index);
         System.out.println(cate.attr("href") + ": " + cate.text());
 
+        System.out.println("类目: " + StringUtils.getCode(cate.attr("href")));
 
         Element proDetailCon = doc.selectFirst("div.proDetailCon");
 
@@ -218,7 +215,7 @@ public class Main {
         String fahuori = fonts.get(4).text();
 
         System.out.println("订 货 号： " + code);
-        System.out.println("品   牌： " + brand);
+        System.out.println("品   牌： " + brand + " - " + StringUtils.getCode(fonts.get(1).selectFirst("a").attr("href")));
         System.out.println("制造商型号： " + model);
         System.out.println("包装内件数： " + number);
         System.out.println("预计发货日： " + fahuori);
@@ -348,7 +345,6 @@ public class Main {
         System.out.println("");
 
 
-
         // 小图片
         List<String> picUrls = new ArrayList<>();
         Elements imgs = doc.select("div.xiaotu > div.xtu > dl > dd > img");
@@ -436,11 +432,6 @@ public class Main {
 
 
 
-        if ( 1==1 ) {
-            return;
-        }
-
-
 
 
 
@@ -473,10 +464,12 @@ public class Main {
         List<ApplyAddRequest.Pars> parsList =new ArrayList<ApplyAddRequest.Pars>();
 
 
+        boolean hasChild = false;
         for (Itemparameter parameter : itemparameters) {
             if ( parameter.getIsMust() !=null && "X".equalsIgnoreCase(parameter.getIsMust()) ) {
 
                 if ( "通用参数模板".equalsIgnoreCase(parameter.getParaTemplateDesc()) ) {
+                    hasChild = true;
                     continue;
                 }
                 ApplyAddRequest.Pars pars= new ApplyAddRequest.Pars();
@@ -560,50 +553,63 @@ public class Main {
         request.setSupplierImgUrl(supplierImgUrls);
 
 
-        List<ApplyAddRequest.ChildItem> childItems = new ArrayList<>();
+        // 含有通子码 需要添加子型号
+        if ( hasChild ) {
+            List<ApplyAddRequest.ChildItem> childItems = new ArrayList<>();
 
-        ApplyAddRequest.ChildItem childItem = new ApplyAddRequest.ChildItem();
+            ApplyAddRequest.ChildItem childItem = new ApplyAddRequest.ChildItem();
 
-        //childItem.setItemCodeX("ddfdf");
-        List<ApplyAddRequest.ParsX> parsX = new ArrayList<>();
-
-        ApplyAddRequest.ParsX parx = new ApplyAddRequest.ParsX();
-        parx.setParCodeX("G00001");
-        parx.setParValueX("蓝色");
-        parsX.add(parx);
-//
-        ApplyAddRequest.ParsX parx1 = new ApplyAddRequest.ParsX();
-        parx1.setParCodeX("G00021");
-        parx1.setParValueX("80米");
-        parsX.add(parx1);
+            //childItem.setItemCodeX("ddfdf");
+            List<ApplyAddRequest.ParsX> parsX = new ArrayList<>();
 
 
-        parx1 = new ApplyAddRequest.ParsX();
-        parx1.setParCodeX("G00000");
-        parx1.setParValueX("蓝色");
-        parsX.add(parx1);
+
+            for (Itemparameter parameter : itemparameters) {
+                if ( parameter.getIsMust() !=null && "X".equalsIgnoreCase(parameter.getIsMust()) ) {
+                    if ( !"通用参数模板".equalsIgnoreCase(parameter.getParaTemplateDesc()) ) {
+                        continue;
+                    }
+
+                    ApplyAddRequest.ParsX parx = new ApplyAddRequest.ParsX();
+                    parx.setParCodeX(parameter.getParCode());
+                    if (  parameter.getParOption()!=null &&  parameter.getParOption().size() > 0 ) {
+                        parx.setParValueX(parameter.getParOption().get(0).getParOptionCode());
+                        if (parx.getParValueX()==null || parx.getParValueX().trim().length()==0 ) {
+                            parx.setParValueX(parameter.getParOption().get(0).getParOptionDesc());
+                        }
+
+                    }
+
+                    if (  "3".equalsIgnoreCase(parameter.getParType())  ) {
+                        parx.setParValueX("1");
+                    }
 
 
-        parx1 = new ApplyAddRequest.ParsX();
-        parx1.setParCodeX("G99166");
-        parx1.setParValueX("80米");
-        parsX.add(parx1);
+                    parsX.add(parx);
+                }
+            }
 
-        //childItem.setSupplierImgAUrl(imageMap.values().iterator().next());
+            childItem.setParsX(parsX);
+            childItems.add(childItem);
+            request.setChildItem(childItems);
+        }
 
-
-        childItem.setParsX(parsX);
-        childItems.add(childItem);
-        request.setChildItem(childItems);
 
         //request.setSupplierImg1Url("https://static.grainger.cn/product_images_new/800/2A1/2013121616015256969.JPG");
 
         //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
         request.setCheckParam(true);
 
+        System.out.println(request.getResParams());
+
+        if ( 1==1 ) {
+            return;
+        }
+
+
         try {
 
-            System.out.println(request.getResParams());
+
             ApplyAddResponse response = client.excute(request);
             System.out.println("ApplyAddRequest :" + response.getBody());
 

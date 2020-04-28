@@ -1,19 +1,12 @@
-import com.gavel.HttpUtils;
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.*;
-import com.gavel.grainger.GraingerProductLoad;
-import com.gavel.utils.ImageLoader;
-import com.gavel.utils.MD5Utils;
+import com.gavel.entity.Brand;
+import com.gavel.entity.BrandMapping;
 
-import java.io.File;
-import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class Main {
-
-    private static final String PIC_DIR = "D:\\images";
 
     public static void main(String[] args) throws Exception {
 
