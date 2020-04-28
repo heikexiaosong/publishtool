@@ -9,7 +9,7 @@ public class Product {
     @FieldMeta(name = "CODE", title = "产品编码", length = 32, primary = true)
     private String code;
 
-    @FieldMeta(name = "TYPE", title = "产品类型", length = 32, primary = true)
+    @FieldMeta(name = "TYPE", title = "产品类型", length = 32)
     private String type;
 
     @FieldMeta(name = "NAME", title = "名称", length = 128)

@@ -74,10 +74,21 @@ public class GraingerHtmlLoad {
                 Elements tdItemNos = null;
                 Element loadmore = doc.selectFirst("div.loadMoreBox a.loadmore");
                 if ( loadmore!=null  ) {
-                    Element token = doc.selectFirst("input[name='__RequestVerificationToken']");
-                    String moreSku = "https://www.grainger.cn/Ajax/GetSkuListTable?__RequestVerificationToken=" + token.attr("value") + "&id=" + product.getCode();
-                    doc = Jsoup.parse(HttpUtils.get(moreSku));
-                    tdItemNos = doc.select("td[name='tdItemNo'] span a");
+
+                    System.out.println("loadmore...");
+
+                    HtmlCache htmlCache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = '" + "https://www.grainger.cn/Ajax/GetSkuListTable?id=" + product.getCode() + "' limit 1 ", HtmlCache.class);
+                    if ( htmlCache==null || htmlCache.getHtml().trim().length()==0 ) {
+                        Element token = doc.selectFirst("input[name='__RequestVerificationToken']");
+                        System.out.println("Token: " + token.attr("value"));
+                        htmlCache = load("https://www.grainger.cn/Ajax/GetSkuListTable?id="+product.getCode(), '&', "__RequestVerificationToken=" + token.attr("value"));
+                        SQLExecutor.insert(htmlCache);
+                    }
+
+                    if ( htmlCache!=null && htmlCache.getHtml().trim().length()>0 ) {
+                        doc = Jsoup.parse(htmlCache.getHtml());
+                        tdItemNos = doc.select("td[name='tdItemNo'] span a");
+                    }
                 } else {
                     Element leftTable2 = doc.selectFirst("div#leftTable2");
                     tdItemNos = leftTable2.select("td[name='tdItemNo'] span a");
@@ -135,6 +146,26 @@ public class GraingerHtmlLoad {
         }
 
         String content = HttpUtils.get(url.trim(), "https://www.grainger.cn/c-" + category + ".html");
+        if ( content==null || content.trim().length()==0 ) {
+            return null;
+        }
+
+        HtmlCache cache = new HtmlCache();
+        cache.setUrl(url.trim());
+        cache.setHtml(content);
+        cache.setContentlen(content.length());
+        cache.setUpdatetime(Calendar.getInstance().getTime());
+        return cache;
+
+    }
+
+    public static HtmlCache load(String url, char seq, String query) throws Exception {
+
+        if ( url==null || url.trim().length() <= 0 ) {
+            return null;
+        }
+
+        String content = HttpUtils.get(url.trim() + seq + query);
         if ( content==null || content.trim().length()==0 ) {
             return null;
         }

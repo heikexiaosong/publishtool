@@ -1,54 +1,60 @@
 package com.gavel;
 
-import okhttp3.OkHttpClient;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import java.net.InetSocketAddress;
-import java.net.Proxy;
+import com.gavel.suning.SuningClient;
+import com.google.gson.Gson;
+import com.suning.api.DefaultSuningClient;
+import com.suning.api.SuningResponse;
+import com.suning.api.entity.item.NPicAddResponse;
+import com.suning.api.entity.selfmarket.ItemQueryRequest;
+import com.suning.api.entity.selfmarket.ItemQueryResponse;
+import com.suning.api.entity.selfmarket.ItemdetailQueryRequest;
+import com.suning.api.entity.selfmarket.ItemdetailQueryResponse;
+import com.suning.api.exception.SuningApiException;
 
 public class Detail {
 
+    private  static  final DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET, "json");
+
+
     public static void main(String[] args) {
 
+        {
+            ItemQueryRequest request1 = new ItemQueryRequest();
+            request1.setPageNo(1);
+            request1.setPageSize(50);
+            request1.setCategoryCode("R1309004");
+            try {
+                ItemQueryResponse response = client.excute(request1);
+                System.out.println("ApplyAddRequest :" + response.getBody());
+                SuningResponse.SnError error = response.getSnerror();
+                if ( error!=null ) {
+                    System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                } else {
+                    for (ItemQueryResponse.QueryItem queryItem : response.getSnbody().getQueryItem()) {
 
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .build();
-
-        String content = HttpUtils.get("https://www.grainger.cn//g-673739.html", okHttpClient);
-
-        Document doc = Jsoup.parse(content);
-
-        Element loadmore = doc.selectFirst("div.loadMoreBox a.loadmore");
-        if ( loadmore!=null  ) {
-            Element token = doc.selectFirst("input[name='__RequestVerificationToken']");
-            System.out.println(loadmore);
-            System.out.println(token.attr("value"));
-
-            String moreSku = "https://www.grainger.cn/Ajax/GetSkuListTable?__RequestVerificationToken=" + token.attr("value") + "&id=673739";
-            content = HttpUtils.get(moreSku);
-
-            doc = Jsoup.parse(content);
-
-            Elements tdItemNoList = doc.select("td[name='tdItemNo'] span a");
-            for (Element tdItemNo : tdItemNoList) {
-                System.out.println(tdItemNo.attr("href") + "-" +  tdItemNo.text());
+                        System.out.println(new Gson().toJson(queryItem));
+                    }
+                }
+            } catch (SuningApiException e) {
+                e.printStackTrace();
             }
-            System.out.println(tdItemNoList.size());
+        }
 
-        } else {
-            Element leftTable2 = doc.selectFirst("div#leftTable2");
-
-            Elements tdItemNos = leftTable2.select("td[name='tdItemNo'] span a");
-
-            for (Element tdItemNo : tdItemNos) {
-                System.out.println(tdItemNo.attr("href") + "-" +  tdItemNo.text());
-                System.out.println("---");
+        {
+            ItemdetailQueryRequest request1 = new ItemdetailQueryRequest();
+            request1.setApplyCode("7043e079-ce8f-4692-b141-33ec066572eb");
+            try {
+                ItemdetailQueryResponse response = client.excute(request1);
+                System.out.println("ApplyAddRequest :" + response.getBody());
+                SuningResponse.SnError error = response.getSnerror();
+                if ( error!=null ) {
+                    System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                } else {
+                    System.out.println(new Gson().toJson(response.getSnbody().getQueryItemdetail()));
+                }
+            } catch (SuningApiException e) {
+                e.printStackTrace();
             }
-
-            System.out.println(tdItemNos.size());
         }
 
     }

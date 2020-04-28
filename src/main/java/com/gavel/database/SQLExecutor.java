@@ -82,7 +82,11 @@ public class SQLExecutor {
         builder.append(") VALUES (").append(params).append(")");
 
         QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
-        runner.execute(builder.toString(), paramObjs.toArray(new Object[paramObjs.size()]));
+        try {
+            runner.execute(builder.toString(), paramObjs.toArray(new Object[paramObjs.size()]));
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
 
 //        QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
 //        runner.update(builder.toString());
@@ -115,21 +119,26 @@ public class SQLExecutor {
                 System.out.println( f.getType());
                 if ( f.getType().equals(String.class) ) {
                     if (  fieldMeta.length() > 30000 ) {
-                        builder.append(fieldMeta.name()).append(" MEDIUMTEXT,\n");
+                        builder.append(fieldMeta.name()).append(" MEDIUMTEXT");
                     } else if (  fieldMeta.length() > 2000 )  {
-                        builder.append(fieldMeta.name()).append(" TEXT,\n");
+                        builder.append(fieldMeta.name()).append(" TEXT");
                     } else {
-                        builder.append(fieldMeta.name()).append(" NVARCHAR(").append(fieldMeta.length()).append("),\n");
+                        builder.append(fieldMeta.name()).append(" NVARCHAR(").append(fieldMeta.length()).append(")");
                     }
                 } else if ( f.getType().equals(String.class) ) {
-                    builder.append(fieldMeta.name()).append(" FLOAT,\n");
+                    builder.append(fieldMeta.name()).append(" FLOAT");
                 } else if ( f.getType().equals(int.class) ) {
-                    builder.append(fieldMeta.name()).append(" BIGINT,\n");
+                    builder.append(fieldMeta.name()).append(" BIGINT");
                 } else if ( f.getType().equals(Date.class) ) {
-                    builder.append(fieldMeta.name()).append(" TIMESTAMP,\n");
+                    builder.append(fieldMeta.name()).append(" TIMESTAMP");
                 } else {
-                    builder.append(fieldMeta.name()).append(" NVARCHAR(").append(fieldMeta.length()).append("),\n");
+                    builder.append(fieldMeta.name()).append(" NVARCHAR(").append(fieldMeta.length()).append(")");
                 }
+
+                if ( fieldMeta.primary() ) {
+                    builder.append(" primary key");
+                }
+                builder.append(",\n");
             }
         }
 
@@ -145,12 +154,12 @@ public class SQLExecutor {
 
     public static  <T> List<T> executeQueryBeanList(String sql, Class<T> clz, Object... params) throws Exception {
         QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
-        return runner.query(sql, new BeanListHandler<T>(clz));
+        return runner.query(sql, new BeanListHandler<T>(clz), params);
     }
 
     public static  <T> T executeQueryBean(String sql, Class<T> clz, Object... params) throws Exception {
         QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
-        return runner.query(sql, new BeanHandler<T>(clz));
+        return runner.query(sql, new BeanHandler<T>(clz), params);
     }
 
     public static void main(String[] args) throws Exception {
@@ -163,10 +172,63 @@ public class SQLExecutor {
         createTable(Item.class);
         createTable(HtmlCache.class);
 
-        Item item = new Item();
-        item.setCode("123");
-        item.setBrand("brand");
-        insert(item);
+        createTable(ImageCache.class);
     }
 
+    public static void update(ImageCache record) throws Exception {
+        if ( record==null ){
+            return;
+        }
+
+        Class clz = record.getClass();
+        TableMeta tableMeta = (TableMeta)clz.getAnnotation(TableMeta.class);
+        if ( tableMeta==null ){
+            System.out.println("非实体类");
+            return;
+        }
+
+        String table = tableMeta.name();
+        // UPDATE image set URL = ?  where id = ?;
+        StringBuilder builder = new StringBuilder("UPDATE ").append(table).append(" SET ");
+
+        List<Object> paramObjs = new ArrayList<>();
+        Field[] fs = clz.getDeclaredFields();
+        for (Field f : fs) {
+            FieldMeta fieldMeta =  f.getAnnotation(FieldMeta.class);
+            if ( fieldMeta!=null && !fieldMeta.primary() ){
+                //System.out.println( fieldMeta.name() + ", " + fieldMeta.length() + ", " + f.getType().getName());
+                builder.append(" ").append(fieldMeta.name()).append(" = ?,");
+                boolean access =  f.isAccessible();
+                f.setAccessible(true);
+                paramObjs.add(f.get(record));
+                f.setAccessible(access);
+            }
+        }
+        builder.deleteCharAt(builder.length()-1);
+
+        builder.append(" where ");
+
+        for (Field f : fs) {
+            FieldMeta fieldMeta =  f.getAnnotation(FieldMeta.class);
+            if ( fieldMeta!=null && fieldMeta.primary() ){
+                //System.out.println( fieldMeta.name() + ", " + fieldMeta.length() + ", " + f.getType().getName());
+                builder.append(" ").append(fieldMeta.name()).append(" = ?,");
+                boolean access =  f.isAccessible();
+                f.setAccessible(true);
+                paramObjs.add(f.get(record));
+                f.setAccessible(access);
+            }
+        }
+
+        builder.deleteCharAt(builder.length()-1);
+
+        System.out.println(builder.toString());
+
+        QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
+        try {
+            runner.execute(builder.toString(), paramObjs.toArray(new Object[paramObjs.size()]));
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }

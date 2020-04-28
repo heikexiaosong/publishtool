@@ -6,11 +6,12 @@ import com.gavel.annotation.TableMeta;
 @TableMeta(name = "ITEM", title = "固安捷SKU")
 public class Item {
 
-    @FieldMeta(name = "PRODUCTCODE", title = "产品编码", length = 32, primary = true)
-    private String productcode;
 
     @FieldMeta(name = "CODE", title = "SKU编码", length = 32, primary = true)
     private String code;
+
+    @FieldMeta(name = "PRODUCTCODE", title = "产品编码", length = 32)
+    private String productcode;
 
     @FieldMeta(name = "NAME", title = "名称", length = 128)
     private String name;

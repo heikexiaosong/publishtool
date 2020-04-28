@@ -1,7 +1,11 @@
 package com.gavel;
 
+import com.google.common.io.Files;
 import okhttp3.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -75,11 +79,14 @@ public class HttpUtils {
 
 			} catch (Exception e) {
 				tryTimes++;
-				if ( tryTimes > 5 ) {
-					throw new RuntimeException(e.getMessage());
+				if ( tryTimes > 3 ) {
+					System.out.println(e.getMessage());
+					return "<html />";
 				} else {
+					System.out.println(response.code() + " - "  + url);
+					System.out.println(response.message());
 					try {
-						Thread.sleep(tryTimes*20000);
+						Thread.sleep(tryTimes*5000);
 					} catch (InterruptedException e1) {
 						e1.printStackTrace();
 					}
@@ -129,6 +136,8 @@ public class HttpUtils {
 			Request request = new Request.Builder()
 					.url(url)
 					.header("Referer", referer)
+					.header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.113 Safari/537.36")
+					.header("Cookie", "_ga=GA1.2.789327771.1587133742; _gid=GA1.2.508946531.1587133743; __RequestVerificationToken=5QJRS4KOpfUgHhHCCGd5spBzZf_cYKBH5Xqklup5bAVb8SbhfcDgx_KvV5S5IPw3O-NHbw2; Hm_lvt_69f75b7843fe943150d92e384dc03fef=1587381810,1587430746,1587440869,1587453801; _gat_gtag_UA_120067393_1=1; lastview=305353,649793,318921,405775,659846; Hm_lpvt_69f75b7843fe943150d92e384dc03fef=1587474108")
 					.build();
 			response = client.newCall(request).execute();
 			if (!response.isSuccessful())
@@ -182,5 +191,49 @@ public class HttpUtils {
 		}
 	}
 
+	public static void main(String[] args) throws IOException {
+		//1.创建OkHttpClient对象
+		OkHttpClient okHttpClient = new OkHttpClient();
+		String url = "https://static.grainger.cn/product_images_new/800/1H8/12991_1_9591.jpg";
 
+		//2.创建Request对象
+		Request request  = new Request.Builder()
+				.url(url)
+				.build();
+
+		//3.异步请求newCall（Callback）
+		Call call = okHttpClient.newCall(request);
+
+
+		Response response = call.execute();
+		if ( response.isSuccessful() ) {
+
+			Files.write(response.body().bytes(), new File("test.jpg"));
+
+		}
+
+
+
+	}
+
+
+	public static void download(String url, String localFilePath) throws IOException {
+
+		//2.创建Request对象
+		Request request  = new Request.Builder()
+				.url(url)
+				.build();
+
+		//3.异步请求newCall（Callback）
+		Call call = client.newCall(request);
+
+
+		Response response = call.execute();
+		if ( response.isSuccessful() ) {
+
+			Files.write(response.body().bytes(), new File(localFilePath));
+
+		}
+
+	}
 }
