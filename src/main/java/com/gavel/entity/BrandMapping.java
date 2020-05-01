@@ -9,7 +9,7 @@ public class BrandMapping {
     @FieldMeta(name = "GRAINGERCODE", title = "固安捷编码", length = 32, primary = true)
     private String graingercode;
 
-    @FieldMeta(name = "TASKID", title = "任务ID", length = 32, primary = true)
+    @FieldMeta(name = "TASKID", title = "任务ID", length = 32)
     private String taskid;
 
     @FieldMeta(name = "BRAND", title = "苏宁品牌", length = 32)

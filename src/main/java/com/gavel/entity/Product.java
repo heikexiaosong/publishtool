@@ -82,4 +82,17 @@ public class Product {
     public void setPic(String pic) {
         this.pic = pic;
     }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "code='" + code + '\'' +
+                ", type='" + type + '\'' +
+                ", name='" + name + '\'' +
+                ", brand='" + brand + '\'' +
+                ", category='" + category + '\'' +
+                ", pic='" + pic + '\'' +
+                ", url='" + url + '\'' +
+                '}';
+    }
 }

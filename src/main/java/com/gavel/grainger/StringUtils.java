@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 public class StringUtils {
 
-    private static final Pattern CODE_PATTERN = Pattern.compile("/([a-zA-Z]-)?(\\d*).html", Pattern.CASE_INSENSITIVE);
+    private static final Pattern CODE_PATTERN = Pattern.compile("/([a-zA-Z]-)?(.*).html", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern name_pattern = Pattern.compile("([^（]*).*", Pattern.CASE_INSENSITIVE);
 

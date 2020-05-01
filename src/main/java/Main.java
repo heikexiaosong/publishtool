@@ -1,7 +1,12 @@
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Brand;
 import com.gavel.entity.BrandMapping;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -10,33 +15,23 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        List<Brand> brands = SQLExecutor.executeQueryBeanList("select * from brand", Brand.class);
 
+        OkHttpClient client = new OkHttpClient.Builder()
+                                                .proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("223.71.203.241", 55443)))
+                                                .build();
 
-       List<BrandMapping> brandMappings = SQLExecutor.executeQueryBeanList("select * from brandmapping", BrandMapping.class);
+        Request request = new Request.Builder()
+                .url("https://www.baidu.com/")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.113 Safari/537.36")
+                .build();
 
-        for (BrandMapping brandMapping : brandMappings) {
-            Set<String> brandSet = new HashSet<>();
-            System.out.println(brandMapping.getGraingercode() + ": " + brandMapping.getName1() + "/" + brandMapping.getName2());
+        Response response = client.newCall(request).execute();
 
-            for (Brand brand: brands) {
-                if ( brand.getName().equals(brandMapping.getName1()) || brand.getName().equals(brandMapping.getName2())
-                        || brand.getName().contains(brandMapping.getName1()) || brand.getName().contains(brandMapping.getName2())   ){
-                    if ( brandSet.add(brand.getCode()) ) {
-                        System.out.println("\t" + brand.getCode() + ": " + brand.getName() + " - " + brand.getCategoryCode());
-                    }
+        System.out.println("Successful: " +response.isSuccessful());
 
-                    brandMapping.setBrand(brand.getCode());
-                }
-            }
-            if ( brandMapping.getBrand()!=null ) {
-                SQLExecutor.update(brandMapping);
-            }
+        System.out.println(response.code());
 
+        System.out.println(response.body().string());
 
-            System.out.println("");
-        }
-
-        System.out.println("Total: " + brandMappings.size());
     }
 }

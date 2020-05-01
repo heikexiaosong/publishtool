@@ -1,6 +1,7 @@
 package com.gavel.grainger;
 
 import com.gavel.HttpUtils;
+import com.gavel.ProductShelves;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Product;
@@ -9,6 +10,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -16,8 +18,15 @@ public class GraingerHtmlLoad {
 
     public static void main(String[] args) throws Exception {
 
-        List<Product> products =  SQLExecutor.executeQueryBeanList("select * from graingerproduct where type = 'g' order by code desc", Product.class);
-        System.out.println("Product: "  + products.size());
+        List<Product> products =  new ArrayList<>();
+
+
+        Product _product = new Product();
+        _product.setType("g");
+        _product.setCode("282634");
+        _product.setUrl("https://www.grainger.cn/g-282634.html");
+
+        products.add(_product);
 
 
         long start = 0;
@@ -104,6 +113,23 @@ public class GraingerHtmlLoad {
 
                     int count = SQLExecutor.intQuery("select count(1) from htmlcache where url = ? ", url);
                     if ( count >=1 ) {
+
+                        System.out.println(url);
+
+
+                        String suningBrand = "04XT";
+                        String suningCate = "R9002778";
+
+                        HtmlCache htmlCache = ProductShelves.loadHtmlPage(url, null);
+                        if ( htmlCache==null || htmlCache.getHtml().trim().length() <=0 ) {
+                            System.out.println("Html 获取失败。。");
+                            return;
+                        }
+
+                        ProductShelves.run(htmlCache, suningCate, suningBrand);
+
+
+
                         continue;
                     }
 

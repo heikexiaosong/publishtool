@@ -21,7 +21,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import javax.sound.midi.Soundbank;
 import java.io.File;
 import java.util.*;
 
@@ -69,10 +68,6 @@ public class ProductShelves {
 
         builder.append(" ").append(model);
         builder.append(" ").append(title);
-        if ( number!=null && number.trim().length()>0 ) {
-            builder.append("(包装数量 ").append(number).append(")");
-        }
-
 
         boolean preBlank = true;
         for (int i = 0; i < builder.length(); i++) {
@@ -88,14 +83,29 @@ public class ProductShelves {
             preBlank = true;
         }
 
+
+        if ( builder.length() < 50 && number!=null && number.trim().length()>0 ) {
+            builder.append("(包装数量 ").append(number).append(")");
+        }
+
+        while ( builder.length() > 60 ) {
+            for (int i = 0; i < builder.length(); i++) {
+                char c = builder.charAt(i);
+                if ( c==' ' && i > 0){
+                    builder = builder.delete(0, i);
+                    break;
+                }
+            }
+        }
+
         return builder.toString();
     }
 
     public static void main(String[] args) throws Exception {
 
-        String code = "5V0292";
-        String suningBrand = "0401";
-        String suningCate = "R1309004";
+        String code = "1m2369";
+        String suningBrand = "04XT";
+        String suningCate = "R9002778";
 
         HtmlCache htmlCache = loadHtmlPage("https://www.grainger.cn/u-" + code + ".html", null);
         if ( htmlCache==null || htmlCache.getHtml().trim().length() <=0 ) {
@@ -220,27 +230,7 @@ public class ProductShelves {
         System.out.println("包装内件数： " + number);
         System.out.println("预计发货日： " + fahuori);
 
-        StringBuilder title = new StringBuilder();
-        if ( name.length() + brand.length() < 60 ) {
-            if ( name.contains(brand) ) {
-                name = name.replace(brand, "").trim();
-            }
-            if ( name.contains(brand1) ) {
-                name = name.replace(brand1, "").trim();
-            }
 
-            title.append(fonts.get(1).text()).append(" ");
-            if ( !name.contains(model.trim()) ) {
-                title.append(model).append(" ");
-            }
-            title.append(name);
-        }
-
-       String title1 = title.toString().replace("霍尼韦尔", "").trim();
-
-
-        System.out.println("[待处理完成]标题：　" +title1);
-        System.out.println("");
 
         String sellingPoint = proDetailCon.selectFirst("h4  span").text();
         System.out.println("子标题(卖点):" + sellingPoint);
@@ -329,21 +319,9 @@ public class ProductShelves {
         }
 
 
-        StringBuilder aa = new StringBuilder();
-
-        if ( columnValues.get("包装数量")!=null && columnValues.get("包装数量").trim().length()>0  ) {
-            aa.append("(包装数量:").append(columnValues.get("包装数量").trim()).append(")");
-        } else {
-            aa.append("(包装数量:").append(number).append(")");
-        }
-
-        if ( title1.length() + aa.length() < 60 ) {
-            title1 = title1 + aa.toString();
-        }
-
-        System.out.println("[处理完成]标题[" + title1.length() + "]：　" +title1);
+        String title = title(name, brand1, brand, model, number);
+        System.out.println("[标题: " + title.length() + "]" + title);
         System.out.println("");
-
 
         // 小图片
         List<String> picUrls = new ArrayList<>();
@@ -447,12 +425,12 @@ public class ProductShelves {
         String suffix = "-测试";
 
         request.setItemCode(code + suffix); // 供应商商品编码
-        request.setProductName(title1 + suffix);  // 大衣	商品名称
-        request.setCmTitle(title1); // 商品标题
+        request.setProductName(title + suffix);  // 大衣	商品名称
+        request.setCmTitle(title); // 商品标题
 
-        request.setSellingPoints(sellingPoint); // 商品卖点
-        request.setHighlightWordone(brand);
-        request.setHighlightWordtwo(model);
+        request.setSellingPoints(sellingPoint.length()>10?sellingPoint.substring(0, 10) : sellingPoint); // 商品卖点
+        request.setHighlightWordone( brand.length()>4?brand.substring(0, 4) : brand);
+        //request.setHighlightWordtwo(model);
         request.setHighlightWordthree(sellingPoint.length()>6?sellingPoint.substring(0, 6) : sellingPoint);
 
         /**
@@ -584,6 +562,15 @@ public class ProductShelves {
                         parx.setParValueX("1");
                     }
 
+                    switch ( parameter.getParCode() ) {
+                        case "G00021": //
+                            parx.setParValueX("80米");
+                            break;
+                        case "G00001": // 国家
+                            parx.setParValueX("蓝色");
+                            break;
+                    }
+
 
                     parsX.add(parx);
                 }
@@ -602,9 +589,7 @@ public class ProductShelves {
 
         System.out.println(request.getResParams());
 
-        if ( 1==1 ) {
-            return;
-        }
+
 
 
         try {

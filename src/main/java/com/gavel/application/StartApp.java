@@ -21,7 +21,7 @@ public class StartApp extends Application {
         Scene scene = new Scene(fxmlLoader.load());
         stage.setScene(scene);
 
-        stage.setTitle("京苏电子自动上架工具  V1.0");
+        stage.setTitle("苏宁自动上架工具  V1.0");
 
         //stage.initStyle(StageStyle.UNDECORATED);//设定窗口无边框
         stage.show();

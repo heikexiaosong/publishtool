@@ -1,14 +1,19 @@
 package com.gavel;
 
+import com.gavel.database.SQLExecutor;
+import com.gavel.entity.Proxy;
 import com.google.common.io.Files;
 import okhttp3.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 
@@ -53,6 +58,25 @@ public class HttpUtils {
 													})
     												.build();
 
+    private static final String USERAGENT = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, lko) Chrome/81.0.4044.129 Safari/537.36";
+
+
+    private static final LinkedBlockingDeque<Proxy> proxyQueue = new LinkedBlockingDeque<>();
+
+
+    static {
+
+		try {
+			List<Proxy>	 proxies = SQLExecutor.executeQueryBeanList("select * from proxy ", Proxy.class);
+			if ( proxies!=null && proxies.size()>0 ) {
+				proxyQueue.addAll(proxies);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
     /**
      * get请求
      * @param url
@@ -62,9 +86,19 @@ public class HttpUtils {
 
     	int tryTimes = 0;
 
+		Proxy proxy = proxyQueue.poll();
+
 		Request request = new Request.Builder()
 				.url(url)
+				.header("User-Agent", USERAGENT)
 				.build();
+
+		OkHttpClient httpClient = client;
+		if ( proxy!=null ) {
+			httpClient = new OkHttpClient.Builder()
+					.proxy(new java.net.Proxy(java.net.Proxy.Type.HTTP, new InetSocketAddress(proxy.getIp(),proxy.getPort())))
+					.build();
+		}
 
         Response response = null;
         while ( true ) {
@@ -72,7 +106,7 @@ public class HttpUtils {
 				System.out.println("第 " + tryTimes + " 次重试...");
 			}
 			try {
-				response = client.newCall(request).execute();
+				response = httpClient.newCall(request).execute();
 				if (!response.isSuccessful())
 					throw new RuntimeException("请求失败： " + response);
 				return response.body().string();
@@ -92,6 +126,7 @@ public class HttpUtils {
 					}
 				}
 			}finally {
+				proxyQueue.push(proxy);
 				if (response != null) {
 					response.close();
 				}
@@ -110,6 +145,7 @@ public class HttpUtils {
 		try {
 			Request request = new Request.Builder()
 					.url(url)
+					.header("User-Agent", USERAGENT)
 					.build();
 			response = okHttpClient.newCall(request).execute();
 			if (!response.isSuccessful())

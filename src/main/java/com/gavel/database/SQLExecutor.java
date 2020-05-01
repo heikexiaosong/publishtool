@@ -162,6 +162,11 @@ public class SQLExecutor {
         return runner.query(sql, new BeanHandler<T>(clz), params);
     }
 
+    public static  int execute(String sql,  Object... params) throws Exception {
+        QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
+        return runner.execute(sql, params);
+    }
+
     public static void main(String[] args) throws Exception {
         createTable(Brand.class);
         createTable(Category.class);
@@ -176,6 +181,8 @@ public class SQLExecutor {
 
         createTable(BrandMapping.class);
         createTable(CategoryMapping.class);
+
+        createTable(Proxy.class);
     }
 
     public static void update(Object record) throws Exception {
