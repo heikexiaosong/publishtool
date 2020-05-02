@@ -2,7 +2,6 @@ package com.gavel.crawler;
 
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
-import com.gavel.entity.Product;
 import com.gavel.entity.SearchItem;
 import com.gavel.entity.Task;
 import org.jsoup.Jsoup;
@@ -11,7 +10,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.Calendar;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,6 +20,11 @@ public class Main {
     private static final Pattern NUMBER = Pattern.compile("\\d*");
 
     public static void main(String[] args) throws Exception {
+
+        task();
+        if ( 1==1 ) {
+            return;
+        }
 
 
         Task task = SQLExecutor.executeQueryBean("select * from task  where id = ? ", Task.class, "1588407103792");
@@ -61,10 +64,8 @@ public class Main {
                 searchItem.setPagenum(pageCur);
                 searchItem.setXh(i+1);
 
-                com.gavel.entity.Product graingerBrand = new Product();
 
                 searchItem.setTitle(element.attr("title"));
-                graingerBrand.setName(element.attr("title"));
 
                 Element item = element.selectFirst("a");
 
@@ -77,49 +78,16 @@ public class Main {
                 }
 
                 String href = item.attr("href");
-
-                graingerBrand.setCode(href);
-                graingerBrand.setType("");
-                graingerBrand.setUrl("https://www.grainger.cn" + href);
-
                 searchItem.setUrl("https://www.grainger.cn" + href);
 
                 matcher = CODE_PATTERN.matcher(href);
                 if (matcher.find()) {
-                    graingerBrand.setCode(matcher.group(2));
-                    searchItem.setCode(matcher.group(2));
-                    graingerBrand.setType(matcher.group(1));
                     searchItem.setType(matcher.group(1));
+                    searchItem.setCode(matcher.group(2));
                 }
-//
-//                HtmlCache product = HtmlPageLoader.getInstance().loadHtmlPage(graingerBrand.getUrl(), true, true);
-//
-//                System.out.println("\t" + (++i) + ". [" + pageCur +"][" +  graingerBrand.getUrl() + "]" + graingerBrand.getCode() + ": " + em.text());
-//
-//                if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
-//                    System.out.println("[URL: " + graingerBrand.getUrl() + "]网页打开失败");
-//                } else {
-//                    List<SkuItem> skuItems1 = GraingerProductParser.parse(product);
-//
-//                    if ( skuItems1.size()==cnt ) {
-//                        System.out.println("\t[" +  graingerBrand.getUrl() + "][SKU: " + cnt + "]Load: " + skuItems1.size());
-//                    } else {
-//                        System.out.println("\t[" +  graingerBrand.getUrl() + "][SKU: " + cnt + "]Load: " + skuItems1.size() + "    ------  丢失SKU");
-//                        Thread.sleep(1000);
-//                    }
-//                    if ( product.getUpdatetime()==null ) {
-//                        product.setUpdatetime(Calendar.getInstance().getTime());
-//                        SQLExecutor.insert(product);
-//                    }
-//                }
 
                 SQLExecutor.insert(searchItem);
-
-
-                // System.out.println(graingerBrand);
             }
-
-
 
             System.out.println("Page: " + pageCur + " => " + proUL.size());
             pageCur++;
@@ -128,8 +96,6 @@ public class Main {
 
         }
 
-
-
 //
         HtmlPageLoader.getInstance().quit();
 
@@ -137,8 +103,6 @@ public class Main {
 
     private static void task() throws Exception {
         String url = "https://www.grainger.cn/s-1.html";
-
-
 
         HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(url, false);
 
@@ -172,6 +136,7 @@ public class Main {
         task.setPagenum(pageTotal);
 
 
+        task.setTitle(document.title());
         task.setUrl(url);
         task.setStatus(Task.Status.INIT);
         task.setUpdatetime(Calendar.getInstance().getTime());
