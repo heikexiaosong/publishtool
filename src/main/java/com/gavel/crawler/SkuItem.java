@@ -31,14 +31,6 @@ public class SkuItem {
         this.product = product;
     }
 
-    public String getHtml() {
-        return html;
-    }
-
-    public void setHtml(String html) {
-        this.html = html;
-    }
-
     @Override
     public String toString() {
         return "SkuItem{" +

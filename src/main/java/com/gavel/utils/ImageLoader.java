@@ -27,31 +27,42 @@ public class ImageLoader {
         ImageCache cache =  SQLExecutor.executeQueryBean("select * from image  where id = ? ", ImageCache.class, id);
 
         if ( cache != null && cache.getFilepath()!=null && new File(PIC_DIR, cache.getFilepath()).exists() ) {
-            System.out.println("Load Local File: " + new File(PIC_DIR, cache.getFilepath()).getAbsolutePath());
+            //System.out.println("Load Local File: " + new File(PIC_DIR, cache.getFilepath()).getAbsolutePath());
             return cache;
-        }
-
-        if ( cache == null ){
-            cache = new ImageCache();
         }
 
         try {
             String image = url.replace("https://static.grainger.cn/", "").replace("/", File.separator).trim();
+
+            if ( url.equalsIgnoreCase("https://www.grainger.cn/Content/images/hp_np.png") ) {
+                image = url.replace("https://www.grainger.cn/", "").replace("/", File.separator).trim();
+            }
 
             File imageFile = new File(PIC_DIR + File.separator + image);
             if ( !imageFile.getParentFile().exists() ) {
                 imageFile.getParentFile().mkdirs();
             }
 
-
             HttpUtils.download(url, imageFile.getAbsolutePath());
-            System.out.println("Load Local Network");
-            cache.setId(id);
-            cache.setUrl(url.trim());
-            cache.setFilepath(image);
-            cache.setUpdatetime(Calendar.getInstance().getTime());
-            SQLExecutor.insert(cache);
-            return cache;
+
+            if ( cache == null ){
+                cache = new ImageCache();
+                cache.setId(id);
+                cache.setUrl(url.trim());
+                cache.setFilepath(image);
+                cache.setUpdatetime(Calendar.getInstance().getTime());
+                SQLExecutor.insert(cache);
+                return cache;
+            } else {
+                cache.setUrl(url.trim());
+                cache.setFilepath(image);
+                cache.setUpdatetime(Calendar.getInstance().getTime());
+                SQLExecutor.update(cache);
+                return cache;
+            }
+
+
+
         } catch (Exception e) {
             System.out.println("下载图片错误: " + e.getMessage());
         }

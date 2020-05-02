@@ -167,24 +167,6 @@ public class SQLExecutor {
         return runner.execute(sql, params);
     }
 
-    public static void main(String[] args) throws Exception {
-        createTable(Brand.class);
-        createTable(Category.class);
-        createTable(GraingerBrand.class);
-        createTable(GraingerCategory.class);
-        createTable(Product.class);
-        createTable(Itemparameter.class);
-        createTable(Item.class);
-        createTable(HtmlCache.class);
-
-        createTable(ImageCache.class);
-
-        createTable(BrandMapping.class);
-        createTable(CategoryMapping.class);
-
-        createTable(Proxy.class);
-    }
-
     public static void update(Object record) throws Exception {
         if ( record==null ){
             return;
@@ -232,13 +214,33 @@ public class SQLExecutor {
 
         builder.delete(builder.length()-3, builder.length());
 
-        System.out.println(builder.toString());
-
         QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
         try {
             runner.execute(builder.toString(), paramObjs.toArray(new Object[paramObjs.size()]));
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
+    }
+
+
+
+    public static void main(String[] args) throws Exception {
+        createTable(Brand.class);
+        createTable(Category.class);
+        createTable(GraingerBrand.class);
+        createTable(GraingerCategory.class);
+        createTable(Product.class);
+        createTable(Itemparameter.class);
+        createTable(Item.class);
+        createTable(HtmlCache.class);
+
+        createTable(ImageCache.class);
+
+        createTable(BrandMapping.class);
+        createTable(CategoryMapping.class);
+
+        createTable(Proxy.class);
+        createTable(Task.class);
+        createTable(SearchItem.class);
     }
 }

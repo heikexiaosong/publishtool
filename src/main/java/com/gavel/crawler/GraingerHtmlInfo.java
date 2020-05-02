@@ -1,6 +1,5 @@
 package com.gavel.crawler;
 
-import com.gavel.HttpUtils;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Product;
@@ -23,29 +22,7 @@ public class GraingerHtmlInfo {
 
     private static final Pattern CODE_PATTERN = Pattern.compile("/([a-zA-Z])-([^\\.]*).html", Pattern.CASE_INSENSITIVE);
 
-    public static HtmlCache loadHtmlPage(String url, String params) throws Exception {
-
-        HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, url);
-        if ( cache == null ) {
-            StringBuilder urlBuilder = new StringBuilder(url.trim());
-            if ( params!=null && params.trim().length() > 0 ){
-                urlBuilder.append(params.trim());
-            }
-
-            String content = HttpUtils.get(urlBuilder.toString().trim(), "https://www.grainger.cn");
-            if ( content==null || content.trim().length()==0 ) {
-                return null;
-            }
-
-            cache = new HtmlCache();
-            cache.setUrl(url.trim());
-            cache.setHtml(content);
-            cache.setContentlen(content.length());
-            cache.setUpdatetime(Calendar.getInstance().getTime());
-            SQLExecutor.insert(cache);
-        }
-        return cache;
-    }
+    private static final Pattern NUMBER = Pattern.compile("\\d*");
 
 
     public static void main(String[] args) throws Exception {
@@ -54,7 +31,7 @@ public class GraingerHtmlInfo {
         String url = "https://www.grainger.cn/s-1.html";
 
 
-        HtmlCache htmlCache = loadHtmlPage(url, null);
+        HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(url, null);
 
         if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
             System.out.println("[URL: " + url + "]网页打开失败");
@@ -92,9 +69,10 @@ public class GraingerHtmlInfo {
         List<Product> products = new ArrayList<>();
         List<SkuItem>  skuItems = new ArrayList<>();
 
-        while ( pageCur <= pageTotal ) {
+        pageCur = pageTotal;
+        while ( pageCur >= 1 ) {
             String pageUrl = "https://www.grainger.cn/s-1.html?page=" + pageCur;
-            HtmlCache htmlCache1 = loadHtmlPage(pageUrl, null);
+            HtmlCache htmlCache1 = HtmlPageLoader.getInstance().loadHtmlPage(pageUrl, false);
 
             if ( htmlCache1==null || htmlCache1.getHtml()==null || htmlCache1.getHtml().trim().length()==0 ) {
                 System.out.println("[URL: " + pageUrl + "]网页打开失败");
@@ -110,6 +88,7 @@ public class GraingerHtmlInfo {
             List<Product> products1 = new ArrayList<>();
 
             // 产品列表数据
+            int i=0;
             Elements elements = document1.select("div.proUL li");
             for (Element element : elements) {
 
@@ -119,13 +98,20 @@ public class GraingerHtmlInfo {
 
                 Element item = element.selectFirst("a");
 
+                int cnt = 1;
+                Element em = item.selectFirst("div.wenz > div > em");
+                Matcher matcher = NUMBER.matcher(em.text());
+                if (matcher.find()) {
+                    cnt = Integer.parseInt(matcher.group(0));
+                }
+
                 String href = item.attr("href");
 
                 graingerBrand.setCode(href);
                 graingerBrand.setType("");
                 graingerBrand.setUrl("https://www.grainger.cn" + href);
 
-                Matcher matcher = CODE_PATTERN.matcher(href);
+                matcher = CODE_PATTERN.matcher(href);
                 if (matcher.find()) {
                     graingerBrand.setCode(matcher.group(2));
                     graingerBrand.setType(matcher.group(1));
@@ -133,14 +119,26 @@ public class GraingerHtmlInfo {
 
                 products1.add(graingerBrand);
 
-                HtmlCache product = loadHtmlPage(graingerBrand.getUrl(), null);
+                HtmlCache product = HtmlPageLoader.getInstance().loadHtmlPage(graingerBrand.getUrl(), true, true);
+
+                System.out.println("\t" + (++i) + ". [" + pageCur +"][" +  graingerBrand.getUrl() + "]" + graingerBrand.getCode() + ": " + em.text());
 
                 if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
                     System.out.println("[URL: " + url + "]网页打开失败");
                 } else {
-                    List<SkuItem>  skuItems1 = GraingerProductParser.parse(product.getHtml());
+                    List<SkuItem>  skuItems1 = GraingerProductParser.parse(product);
                     skuItems.addAll(skuItems1);
-                    System.out.println("skuItems: " + skuItems.size());
+
+                    if ( skuItems1.size()==cnt ) {
+                        System.out.println("\t[" +  graingerBrand.getUrl() + "][SKU: " + cnt + "]Load: " + skuItems1.size());
+                    } else {
+                        System.out.println("\t[" +  graingerBrand.getUrl() + "][SKU: " + cnt + "]Load: " + skuItems1.size() + "    ------  丢失SKU");
+                        Thread.sleep(1000);
+                    }
+                    if ( product.getUpdatetime()==null ) {
+                        product.setUpdatetime(Calendar.getInstance().getTime());
+                        SQLExecutor.insert(product);
+                    }
                 }
 
 
@@ -148,12 +146,12 @@ public class GraingerHtmlInfo {
             }
 
 
-            System.out.println("当前页: " + labels1.get(0).text() + ": " + products1.size() + "\n" );
+            System.out.println("当前页: " + labels1.get(0).text() + ": " + products1.size());
 
 
             products.addAll(products1);
 
-            pageCur++;
+            pageCur-- ;
         }
 
         System.out.println("Total: " + products.size() );

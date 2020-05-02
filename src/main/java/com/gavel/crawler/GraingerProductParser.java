@@ -1,6 +1,5 @@
 package com.gavel.crawler;
 
-import com.gavel.HttpUtils;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.grainger.StringUtils;
@@ -17,66 +16,51 @@ import java.util.List;
 
 public class GraingerProductParser {
 
-    public static List<SkuItem> parse(String html) throws Exception {
+    public static List<SkuItem> parse(HtmlCache product) throws Exception {
 
         List<SkuItem> skuItems = new ArrayList<>();
 
-        if ( html==null || html.trim().length()==0 ) {
+        if ( product==null || product.getHtml()==null || product.getHtml().trim().length()==0 ) {
             throw new Exception("Html页面内容为空");
         }
 
-        Document doc = Jsoup.parse(html);
+        Document doc = Jsoup.parse(product.getHtml());
 
         // 4级类目 + 产品组ID
         Elements elements = doc.select("div.crumbs  a");
         if ( elements.size() == 7 ) {
-            skuItems.add(parseSku(StringUtils.getCode(elements.get(6).attr("href"))));
+            skuItems.add(parseSku(StringUtils.getCode(elements.get(6).attr("href")), product));
+            if ( product.getUpdatetime()==null ) {
+                product.setUpdatetime(Calendar.getInstance().getTime());
+                SQLExecutor.insert(product);
+            }
             return skuItems;
         }
 
         // SKU 信息
         Elements skuList = doc.select("div.leftTable2 tr.trsku2");
         for (Element sku : skuList) {
-
             try {
-                System.out.println("\t ========== SKU: " + elements.get(5).attr("href") +  "\tSKU: " + parseSku(sku.child(0).attr("title")));
-                skuItems.add(parseSku(sku.child(0).attr("title")));
+                String code = sku.child(0).attr("title");
+                String url = "https://www.grainger.cn/u-" + code.trim() + ".html";
+                HtmlCache skuCache = HtmlPageLoader.getInstance().loadHtmlPage(url, true);
+                skuItems.add(parseSku(code, skuCache));
+                if ( skuCache.getUpdatetime()==null ) {
+                    skuCache.setUpdatetime(Calendar.getInstance().getTime());
+                    SQLExecutor.insert(skuCache);
+                }
             } catch (Exception e) {
-                e.printStackTrace();
+                System.out.println(e.getMessage());
             }
 
         }
-
-
-
-        System.out.println("[SKU]Total: " + skuItems.size());
-
-
 
         return skuItems;
 
     }
 
-    public static HtmlCache loadHtmlPage(String url) throws Exception {
 
-        HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, url);
-        if ( cache == null ) {
-            String content = HttpUtils.get(url, "https://www.grainger.cn");
-            if ( content==null || content.trim().length()==0 ) {
-                return null;
-            }
-
-            cache = new HtmlCache();
-            cache.setUrl(url.trim());
-            cache.setHtml(content);
-            cache.setContentlen(content.length());
-            cache.setUpdatetime(Calendar.getInstance().getTime());
-            SQLExecutor.insert(cache);
-        }
-        return cache;
-    }
-
-    private static SkuItem parseSku(String code) throws Exception {
+    private static SkuItem parseSku(String code, HtmlCache cache) throws Exception {
 
         if ( code==null || code.trim().length()==0 ) {
             return null;
@@ -84,17 +68,24 @@ public class GraingerProductParser {
 
         SkuItem skuItem = new SkuItem(code);
 
-        String url = "https://www.grainger.cn/u-" + code.trim() + ".html";
-        System.out.println("URL: " + url);
-
-        HtmlCache cache = loadHtmlPage(url);
+        String url = cache.getUrl();
         if ( cache==null || cache.getHtml()==null || cache.getHtml().trim().length()==0 ) {
             throw new Exception("[" + url + "]获取Html页面异常");
         }
 
-        skuItem.setHtml(cache.getHtml());
 
         Document doc = Jsoup.parse(cache.getHtml());
+
+        Element err = doc.selectFirst("div.err-notice");
+        if ( err!=null ) {
+            throw new Exception("[" + url + "]页面未找到");
+        }
+
+        // 品牌 + 标题
+        Element proDetailCon = doc.selectFirst("div.proDetailCon");
+        if ( proDetailCon==null ) {
+            throw new Exception("[" + url + "]Html内容有异常: " + doc.title());
+        }
 
         // 4级类目 + 产品组ID
         Elements elements = doc.select("div.crumbs  a");
@@ -103,11 +94,11 @@ public class GraingerProductParser {
         Element c3 = elements.get(3);
         Element c4 = elements.get(4);
         Element c5 = elements.get(5);
-        System.out.print(StringUtils.getCode(c1.attr("href")) + " > ");
-        System.out.print(StringUtils.getCode(c2.attr("href")) + " > ");
-        System.out.print(StringUtils.getCode(c3.attr("href")) + " > ");
-        System.out.print(StringUtils.getCode(c4.attr("href")) + " > ");
-        System.out.println(StringUtils.getCode(c5.attr("href")));
+//        System.out.print(StringUtils.getCode(c1.attr("href")) + " > ");
+//        System.out.print(StringUtils.getCode(c2.attr("href")) + " > ");
+//        System.out.print(StringUtils.getCode(c3.attr("href")) + " > ");
+//        System.out.print(StringUtils.getCode(c4.attr("href")) + " > ");
+//        System.out.println(StringUtils.getCode(c5.attr("href")));
 
 
 
@@ -115,33 +106,36 @@ public class GraingerProductParser {
         Elements imgs = doc.select("div.xiaotu > div.xtu > dl > dd > img");
         for (Element img : imgs) {
             String  src = img.attr("src");
+
+            if ( src.equals("/Content/images/hp_np.png") ) {
+                src = "https://www.grainger.cn/Content/images/hp_np.png";
+            }
+
             if ( src!=null && src.startsWith("//") ) {
                 src = "https:" + src;
             }
+
             src = src.replace("product_images_new/350/", "product_images_new/800/");
-            System.out.println(src);
+            //System.out.println(src);
 
             ImageLoader.loadIamge(src);
         }
 
 
-
-        // 品牌 + 标题
-        Element proDetailCon = doc.selectFirst("div.proDetailCon");
         // 标题前 品牌
         String brand1 =  proDetailCon.selectFirst("h3 > span > a").html();
-        System.out.print("[" + StringUtils.getCode(proDetailCon.selectFirst("h3 > span > a").attr("href")) + "][" + brand1 + "]");
+        // System.out.print("[" + StringUtils.getCode(proDetailCon.selectFirst("h3 > span > a").attr("href")) + "][" + brand1 + "]");
         // 标题
-        System.out.println(proDetailCon.selectFirst("h3 > a"));
+        // System.out.println(proDetailCon.selectFirst("h3 > a"));
 
         // 产品组
         Element g = proDetailCon.selectFirst(" > a");
         skuItem.setProduct(StringUtils.getCode(g.attr("href")));
-        System.out.println(g.text());
+        //  System.out.println(g.text());
 
         // 价格
         Element price = doc.selectFirst("b#bSalePrice");
-        System.out.println(price);
+        //  System.out.println(price);
 
 
         List<Pair<String, String>> attrs = new ArrayList<>();
@@ -177,14 +171,9 @@ public class GraingerProductParser {
 
 
             attrs.add(new Pair(tname, tvalue));
-            System.out.println(tname + ": " + tvalue);
+            // System.out.println(tname + ": " + tvalue);
         }
-        System.out.println("");
 
-
-
-
-        System.out.println("");
 
 
 
@@ -195,14 +184,14 @@ public class GraingerProductParser {
         String url = "https://www.grainger.cn/g-307598.html";
 
 
-        HtmlCache htmlCache = loadHtmlPage(url);
+        HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(url, true);
 
         if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
             System.out.println("[URL: " + url + "]网页打开失败");
             return;
         }
 
-        parse(htmlCache.getHtml());
+        parse(htmlCache);
     }
 
 }
