@@ -7,12 +7,9 @@ import okhttp3.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
@@ -93,20 +90,13 @@ public class HttpUtils {
 				.header("User-Agent", USERAGENT)
 				.build();
 
-		OkHttpClient httpClient = client;
-		if ( proxy!=null ) {
-			httpClient = new OkHttpClient.Builder()
-					.proxy(new java.net.Proxy(java.net.Proxy.Type.HTTP, new InetSocketAddress(proxy.getIp(),proxy.getPort())))
-					.build();
-		}
-
         Response response = null;
         while ( true ) {
         	if ( tryTimes > 0 ) {
 				System.out.println("第 " + tryTimes + " 次重试...");
 			}
 			try {
-				response = httpClient.newCall(request).execute();
+				response = client.newCall(request).execute();
 				if (!response.isSuccessful())
 					throw new RuntimeException("请求失败： " + response);
 				return response.body().string();

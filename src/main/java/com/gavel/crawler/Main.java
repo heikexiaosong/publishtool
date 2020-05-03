@@ -46,13 +46,13 @@ public class Main {
 
         DriverHtmlLoader.getInstance().start();
 
-        List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? and STATUS <> ? ", SearchItem.class, task.getId(), SearchItem.Status.SUCCESS);
+        List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? and STATUS <> ? order by skunum ", SearchItem.class, task.getId(), SearchItem.Status.SUCCESS);
 
         System.out.println("Product: " + searchItemList.size());
 
         for (int i = 0; i < searchItemList.size(); i++) {
             SearchItem searchItem = searchItemList.get(i);
-            System.out.println( (i+1) + ". " + searchItem.getUrl());
+            System.out.println( (i+1) + ". " + searchItem.getUrl() + ": " + searchItem.getSkunum());
 
             searchItem.setActual(searchItem.getSkunum());
             if ( searchItem.getType().equalsIgnoreCase("g") ){

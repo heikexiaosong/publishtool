@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import java.net.URL?>
-<BorderPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane fx:id="root" prefHeight="400.0" prefWidth="600.0" fx:controller="com.gavel.application.controller.FXMLMainAppController"
+            xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
 
   <stylesheets>
     <URL value="@../css/app.css" />
@@ -42,8 +42,9 @@
    <left>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <Hyperlink prefHeight="24.0" prefWidth="120.0" text="采集" />
-            <Hyperlink prefHeight="24.0" prefWidth="110.0" text="上架" />
+            <Hyperlink onAction="#handlSettingAction" prefHeight="24.0" prefWidth="110.0" text="设置" />
+            <Hyperlink onAction="#handlCollectionAction" prefHeight="24.0" prefWidth="120.0" text="采集" />
+            <Hyperlink onAction="#handlShelvesAction" prefHeight="24.0" prefWidth="110.0" text="上架" />
          </children>
       </VBox>
    </left>

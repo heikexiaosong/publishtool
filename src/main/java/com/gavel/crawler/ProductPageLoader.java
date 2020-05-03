@@ -35,31 +35,30 @@ public class ProductPageLoader {
             return items;
         }
 
-        Item item = null;
         if ( "g".equalsIgnoreCase(searchItem.getType()) ) {
 
             Document doc = null;
 
             HtmlCache cache = null;
 
-//            cache = SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, searchItem.getUrl());
-//            if ( cache != null && cache.getHtml()!=null ) {
-//                doc = Jsoup.parse(cache.getHtml());
-//                if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
-//                    SQLExecutor.execute("delete from htmlcache  where url = ? ", searchItem.getUrl());
-//                    cache = null;
-//                }
-//            }
+            cache = SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, searchItem.getUrl());
+            if ( cache != null && cache.getHtml()!=null ) {
+                doc = Jsoup.parse(cache.getHtml());
+                if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
+                    SQLExecutor.execute("delete from htmlcache  where url = ? ", searchItem.getUrl());
+                    cache = null;
+                }
+            }
 
             if ( cache == null ) {
                 cache = DriverHtmlLoader.getInstance().loadHtmlPage(searchItem.getUrl(), true);
             }
             if ( cache != null ) {
 
-//                if ( cache.getUpdatetime()==null ) {
-//                    cache.setUpdatetime(Calendar.getInstance().getTime());
-//                    SQLExecutor.insert(cache);
-//                }
+                if ( cache.getUpdatetime()==null ) {
+                    cache.setUpdatetime(Calendar.getInstance().getTime());
+                    SQLExecutor.insert(cache);
+                }
 
                 doc = Jsoup.parse(cache.getHtml());
                 Elements skuList = doc.select("div.leftTable2 tr.trsku2");
