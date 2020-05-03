@@ -42,9 +42,9 @@
    <left>
       <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
          <children>
-            <Hyperlink onAction="#handlSettingAction" prefHeight="24.0" prefWidth="110.0" text="设置" />
             <Hyperlink onAction="#handlCollectionAction" prefHeight="24.0" prefWidth="120.0" text="采集" />
             <Hyperlink onAction="#handlShelvesAction" prefHeight="24.0" prefWidth="110.0" text="上架" />
+             <Hyperlink onAction="#handlSettingAction" prefHeight="24.0" prefWidth="110.0" text="设置" />
          </children>
       </VBox>
    </left>

@@ -41,12 +41,22 @@ public class ProductPageLoader {
 
             HtmlCache cache = null;
 
-            cache = SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, searchItem.getUrl());
+            cache = SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? ", HtmlCache.class, searchItem.getUrl());
             if ( cache != null && cache.getHtml()!=null ) {
                 doc = Jsoup.parse(cache.getHtml());
                 if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
-                    SQLExecutor.execute("delete from htmlcache  where url = ? ", searchItem.getUrl());
+                    SQLExecutor.delete(cache);
                     cache = null;
+                } else {
+                    Elements fonts = doc.select("div.loadMoreBox div.rightTxt span font");
+                    if (  fonts.size() == 2) {
+                        int load = Integer.parseInt(fonts.get(0).text());
+                        int total = Integer.parseInt(fonts.get(1).text());
+                        if ( load < total ) {
+                            SQLExecutor.delete(cache);
+                            cache = null;
+                        }
+                    }
                 }
             }
 

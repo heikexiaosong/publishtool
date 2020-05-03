@@ -45,6 +45,19 @@ public class FXMLMainAppController {
      * @param actionEvent
      */
     public void handlCollectionAction(ActionEvent actionEvent) {
+
+        try {
+            // Load person overview.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/collection.fxml"));
+
+            // Set person overview into the center of root layout.
+            root.setCenter(loader.load());
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -52,5 +65,18 @@ public class FXMLMainAppController {
      * @param actionEvent
      */
     public void handlShelvesAction(ActionEvent actionEvent) {
+
+        try {
+            // Load person overview.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/shelves.fxml"));
+
+            // Set person overview into the center of root layout.
+            root.setCenter(loader.load());
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
