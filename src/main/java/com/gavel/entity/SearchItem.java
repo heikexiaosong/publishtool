@@ -6,6 +6,11 @@ import com.gavel.annotation.TableMeta;
 @TableMeta(name = "SEARCHITEM", title = "搜索结果表")
 public class SearchItem {
 
+    public static class Status {
+        public static final String SUCCESS = "success";
+        public static final String EXCEPTION = "exception";
+    }
+
     @FieldMeta(name = "ID", title = "ID", length = 32, primary = true)
     private String id;
 
@@ -27,11 +32,25 @@ public class SearchItem {
     @FieldMeta(name = "TITLE", title = "标题", length = 100)
     private String title;
 
+    @FieldMeta(name = "PIC", title = "图片", length = 1024)
+    private String pic;
+
     @FieldMeta(name = "URL", title = "URL", length = 1024)
     private String url;
 
     @FieldMeta(name = "SKUNUM", title = "包含sku数")
     private int skunum;
+
+    @FieldMeta(name = "ACTUAL", title = "爬取sku数")
+    private int actual;
+
+    @FieldMeta(name = "STATUS", title = "状态", length = 20)
+    private String status;
+
+    @FieldMeta(name = "REMARKS", title = "备注", length = 1024)
+    private String remarks;
+
+
 
     public String getId() {
         return id;
@@ -97,11 +116,43 @@ public class SearchItem {
         this.title = title;
     }
 
+    public String getPic() {
+        return pic;
+    }
+
+    public void setPic(String pic) {
+        this.pic = pic;
+    }
+
     public int getSkunum() {
         return skunum;
     }
 
     public void setSkunum(int skunum) {
         this.skunum = skunum;
+    }
+
+    public int getActual() {
+        return actual;
+    }
+
+    public void setActual(int actual) {
+        this.actual = actual;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 }

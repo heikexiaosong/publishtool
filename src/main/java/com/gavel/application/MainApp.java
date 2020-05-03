@@ -52,7 +52,7 @@ public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
-        this.primaryStage.setTitle("AddressApp");
+        this.primaryStage.setTitle("京苏商品上架工具");
 
         initRootLayout();
 
@@ -73,6 +73,9 @@ public class MainApp extends Application {
             Scene scene = new Scene(rootLayout);
             primaryStage.setScene(scene);
             primaryStage.show();
+
+            primaryStage.setMaximized(true);
+
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -22,15 +22,17 @@ public class Item {
     @FieldMeta(name = "BRAND", title = "品牌", length = 64)
     private String brand;
 
+    @FieldMeta(name = "BRANDNAME", title = "品牌名称", length = 64)
+    private String brandname;
+
     @FieldMeta(name = "CATEGORY", title = "类目", length = 64)
     private String category;
 
+    @FieldMeta(name = "CATEGORYNAME", title = "类目名称", length = 64)
+    private String categoryname;
+
     @FieldMeta(name = "URL", title = "SKUURL", length = 1024)
     private String url;
-
-
-    @FieldMeta(name = "HTML", title = "html", length = 99999)
-    private String html;
 
     public String getProductcode() {
         return productcode;
@@ -88,11 +90,19 @@ public class Item {
         this.url = url;
     }
 
-    public String getHtml() {
-        return html;
+    public String getBrandname() {
+        return brandname;
     }
 
-    public void setHtml(String html) {
-        this.html = html;
+    public void setBrandname(String brandname) {
+        this.brandname = brandname;
+    }
+
+    public String getCategoryname() {
+        return categoryname;
+    }
+
+    public void setCategoryname(String categoryname) {
+        this.categoryname = categoryname;
     }
 }

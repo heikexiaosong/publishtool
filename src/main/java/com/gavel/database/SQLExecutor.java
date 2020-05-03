@@ -223,6 +223,52 @@ public class SQLExecutor {
     }
 
 
+    public static void delete(Object record) throws Exception {
+        if ( record==null ){
+            return;
+        }
+
+        Class clz = record.getClass();
+        TableMeta tableMeta = (TableMeta)clz.getAnnotation(TableMeta.class);
+        if ( tableMeta==null ){
+            System.out.println("非实体类");
+            return;
+        }
+
+        String table = tableMeta.name();
+        // UPDATE image set URL = ?  where id = ?;
+        StringBuilder builder = new StringBuilder("DELETE from ").append(table).append(" where ");
+
+        boolean hasPrimary = false;
+
+        List<Object> paramObjs = new ArrayList<>();
+        Field[] fs = clz.getDeclaredFields();
+        for (Field f : fs) {
+            FieldMeta fieldMeta =  f.getAnnotation(FieldMeta.class);
+            if ( fieldMeta!=null && fieldMeta.primary() ){
+                hasPrimary = true;
+                builder.append(" ").append(fieldMeta.name()).append(" = ? and");
+                boolean access =  f.isAccessible();
+                f.setAccessible(true);
+                paramObjs.add(f.get(record));
+                f.setAccessible(access);
+            }
+        }
+
+        if ( !hasPrimary ) {
+            return;
+        }
+
+        builder.delete(builder.length()-3, builder.length());
+        QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
+        try {
+            runner.execute(builder.toString(), paramObjs.toArray(new Object[paramObjs.size()]));
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+
 
     public static void main(String[] args) throws Exception {
         createTable(Brand.class);
@@ -231,7 +277,6 @@ public class SQLExecutor {
         createTable(GraingerCategory.class);
         createTable(Product.class);
         createTable(Itemparameter.class);
-        createTable(Item.class);
         createTable(HtmlCache.class);
 
         createTable(ImageCache.class);
@@ -242,5 +287,6 @@ public class SQLExecutor {
         createTable(Proxy.class);
         createTable(Task.class);
         createTable(SearchItem.class);
+        createTable(Item.class);
     }
 }
