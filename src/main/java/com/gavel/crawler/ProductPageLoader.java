@@ -63,17 +63,17 @@ public class ProductPageLoader {
                 doc = Jsoup.parse(cache.getHtml());
                 Elements skuList = doc.select("div.leftTable2 tr.trsku2");
                 for (Element sku : skuList) {
+                    String code = sku.child(0).attr("title");
+                    Item item1 = SQLExecutor.executeQueryBean("select * from ITEM where code = ?", Item.class, code);
+                    if ( item1!=null ) {
+                        items.add(item1);
+                        continue;
+                    }
+
+
+                    String url = "https://www.grainger.cn/u-" + code.trim() + ".html";
+                    HtmlCache skuCache = HtmlPageLoader.getInstance().loadHtmlPage(url, true);
                     try {
-                        String code = sku.child(0).attr("title");
-
-                        Item item1 = SQLExecutor.executeQueryBean("select * from ITEM where code = ?", Item.class, code);
-                        if ( item1!=null ) {
-                            items.add(item1);
-                            continue;
-                        }
-
-                        String url = "https://www.grainger.cn/u-" + code.trim() + ".html";
-                        HtmlCache skuCache = HtmlPageLoader.getInstance().loadHtmlPage(url, true);
                         item1 = parseSku(code, skuCache);
                         if ( item1!=null ) {
                             items.add(item1);
@@ -85,6 +85,9 @@ public class ProductPageLoader {
                         }
                     } catch (Exception e) {
                         System.out.println("\t" + sku.child(0).attr("title") + ": " + e.getMessage());
+                        if ( skuCache!=null ) {
+                            SQLExecutor.delete(skuCache);
+                        }
                     }
 
                 }

@@ -37,17 +37,26 @@ public class HtmlPageLoader {
         return loadHtmlPage(url, useCache, false);
     }
 
-    public HtmlCache loadHtmlPage(String url, boolean useCache, boolean loadMore) throws Exception {
+    public HtmlCache loadHtmlPage(String url, boolean useCache, boolean loadMore) {
 
         HtmlCache cache = null;
         if ( useCache ) {
-            cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, url);
+            try {
+                cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, url);
+            } catch (Exception e) {
+                System.out.println("[executeQueryBean]SQLExecutor: " + e.getMessage());
+            }
         }
 
         if ( cache!=null && cache.getHtml()!=null )  {
             Document doc = Jsoup.parse(cache.getHtml());
             if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
-                SQLExecutor.delete(cache);
+                try {
+                    SQLExecutor.delete(cache);
+                } catch (Exception e) {
+
+                    System.out.println("[delete]SQLExecutor: " + e.getMessage());
+                }
                 cache = null;
             }
         }
@@ -56,7 +65,11 @@ public class HtmlPageLoader {
             cache = DriverHtmlLoader.getInstance().loadHtmlPage(url, loadMore);
             if ( cache!=null  ) {
                 cache.setUpdatetime(Calendar.getInstance().getTime());
-                SQLExecutor.insert(cache);
+                try {
+                    SQLExecutor.insert(cache);
+                } catch (Exception e) {
+                    System.out.println("[insert]SQLExecutor: " + e.getMessage());
+                }
             }
         }
         return cache;
