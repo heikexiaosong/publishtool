@@ -3,8 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import java.net.URL?>
-<AnchorPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLCollectionController">
+<AnchorPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLCollectionController">
 
     <stylesheets>
         <URL value="@../css/collection.css" />
@@ -107,7 +106,7 @@
                                 </GridPane>
                             </children>
                         </AnchorPane>
-                        <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="297.0" prefWidth="397.0" AnchorPane.bottomAnchor="7.0" AnchorPane.leftAnchor="13.0" AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="104.0">
+                        <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="297.0" prefWidth="397.0" AnchorPane.bottomAnchor="7.0" AnchorPane.leftAnchor="13.0" AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="138.0">
                      <content>
                          <AnchorPane prefHeight="1080.0" prefWidth="200.0">
                              <children>

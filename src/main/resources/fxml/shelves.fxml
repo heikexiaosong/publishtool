@@ -108,24 +108,32 @@
 
                                     </children>
                                 </GridPane>
+
+                                <ButtonBar layoutX="54.0" layoutY="250.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="15.0">
+                                    <buttons>
+                                        <Button mnemonicParsing="false" onAction="#handleAddSkuPerson" text="添加上架商品" />
+                                        <Button mnemonicParsing="false" onAction="#handleShelvesAction" text="上架" />
+                                    </buttons>
+                                </ButtonBar>
                             </children>
                         </AnchorPane>
-                        <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="297.0" prefWidth="397.0" AnchorPane.bottomAnchor="7.0" AnchorPane.leftAnchor="13.0" AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="104.0">
+                        <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="297.0" prefWidth="397.0" AnchorPane.bottomAnchor="7.0" AnchorPane.leftAnchor="13.0" AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="154.0">
                             <content>
                                 <AnchorPane prefHeight="1080.0" prefWidth="200.0">
                                     <children>
-                                        <TableView fx:id="searchList" prefHeight="217.0" prefWidth="389.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                        <TableView fx:id="skuList" prefHeight="217.0" prefWidth="389.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <columns>
-                                                <TableColumn fx:id="pagenumCol" prefWidth="75.0" text="页数" />
-                                                <TableColumn prefWidth="75.0" text="页面序号" fx:id="xhCol" />
-                                                <TableColumn fx:id="typeCol" prefWidth="75.0" text="类型" />
-                                                <TableColumn fx:id="codeCol" prefWidth="75.0" text="编码" />
-                                                <TableColumn fx:id="titleCol" prefWidth="75.0" text="标题" />
+                                                <TableColumn prefWidth="75.0" text="序号" fx:id="xhCol" />
                                                 <TableColumn fx:id="picCol" prefWidth="75.0" text="图片" />
-                                                <TableColumn fx:id="urlCol" prefWidth="75.0" text="URL" />
-                                                <TableColumn fx:id="skunumCol" prefWidth="75.0" text="包含sku数" />
-                                                <TableColumn fx:id="actualCol" prefWidth="75.0" text="爬取sku数" />
+                                                <TableColumn fx:id="codeCol" prefWidth="75.0" text="SKU编码" />
+                                                <TableColumn fx:id="graingerbrandnameCol" prefWidth="75.0" text="固安捷品牌" />
+                                                <TableColumn fx:id="graingercategorynameCol" prefWidth="75.0" text="固安捷类目" />
+                                                <TableColumn fx:id="brandnameCol" prefWidth="75.0" text="固安捷品牌" />
+                                                <TableColumn fx:id="categorynameCol" prefWidth="75.0" text="固安捷类目" />
                                                 <TableColumn fx:id="statusCol" prefWidth="75.0" text="状态" />
+                                                <TableColumn fx:id="msgCol" prefWidth="75.0" text="提示" />
+                                                <TableColumn fx:id="updatetimeCol" prefWidth="75.0" text="更新时间" />
+
                                             </columns>
                                         </TableView>
                                         <Pagination fx:id="pagination" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />

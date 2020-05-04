@@ -25,7 +25,19 @@ public class Main {
 
         //loadSearchItems("1588407103792");
 
-        loadSkus("1588407103792");
+        // loadSkus("1588409885438");
+
+
+
+
+        Document doc = Jsoup.parse("<html><body><div class=\"price\">\n" +
+                "                            价格:\n" +
+                "                            <b id=\"bSalePrice\" class=\"bSalePrice\">\n" +
+                "¥6.30                            </b>\n" +
+                "                            元/包\n" +
+                "                           \n" +
+                "                        </div></body></html>");
+
 
     }
 

@@ -11,6 +11,9 @@ public class ShelvesItem {
     @FieldMeta(name = "ID", title = "ID", length = 32, primary = true)
     private String id;
 
+    @FieldMeta(name = "TASKID", title = "任务ID", length = 32)
+    private String taskid;
+
     @FieldMeta(name = "XH", title = "序号")
     private int xh;
 
@@ -59,6 +62,14 @@ public class ShelvesItem {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getTaskid() {
+        return taskid;
+    }
+
+    public void setTaskid(String taskid) {
+        this.taskid = taskid;
     }
 
     public int getXh() {

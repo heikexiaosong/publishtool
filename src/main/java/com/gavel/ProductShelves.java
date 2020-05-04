@@ -3,6 +3,7 @@ package com.gavel;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.ImageCache;
+import com.gavel.entity.Item;
 import com.gavel.entity.Itemparameter;
 import com.gavel.grainger.StringUtils;
 import com.gavel.suning.SuningClient;
@@ -21,8 +22,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
+import java.util.List;
 
 public class ProductShelves {
 
@@ -66,7 +71,9 @@ public class ProductShelves {
         StringBuilder builder = new StringBuilder();
         builder.append(brandb);
 
-        builder.append(" ").append(model);
+        if ( builder.length() + model.length() + title.length() < 60 ) {
+            builder.append(" ").append(model);
+        }
         builder.append(" ").append(title);
 
         boolean preBlank = true;
@@ -103,17 +110,24 @@ public class ProductShelves {
 
     public static void main(String[] args) throws Exception {
 
-        String code = "1m2369";
-        String suningBrand = "04XT";
-        String suningCate = "R9002778";
 
-        HtmlCache htmlCache = loadHtmlPage("https://www.grainger.cn/u-" + code + ".html", null);
-        if ( htmlCache==null || htmlCache.getHtml().trim().length() <=0 ) {
-            System.out.println("Html 获取失败。。");
-            return;
+        List<Item> items = SQLExecutor.executeQueryBeanList("select * from ITEM where PRODUCTCODE = '291735'", Item.class);
+        String suningBrand = "285R";
+        String suningCate = "R9002847";
+        for (Item item : items) {
+            String code = "5W4470";
+            HtmlCache htmlCache = loadHtmlPage("https://www.grainger.cn/u-" + code + ".html", null);
+            if ( htmlCache==null || htmlCache.getHtml().trim().length() <=0 ) {
+                System.out.println("Html 获取失败。。");
+                return;
+            }
+
+            run(htmlCache, suningCate, suningBrand);
+
+            break;
         }
 
-        run(htmlCache, suningCate, suningBrand);
+
     }
 
 
@@ -232,7 +246,7 @@ public class ProductShelves {
 
 
 
-        String sellingPoint = proDetailCon.selectFirst("h4  span").text();
+        String sellingPoint = proDetailCon.select("h4  span").last().text().replace("固安捷", "帷易胜");
         System.out.println("子标题(卖点):" + sellingPoint);
         System.out.println("");
 
@@ -341,20 +355,129 @@ public class ProductShelves {
             System.out.println(src);
         }
 
-
         Map<String, String> imageMap = new HashMap<>();
         for (String picUrl : picUrls) {
             String picSuningUrl = uploadImage(picUrl);
             imageMap.put(picUrl, picSuningUrl);
         }
 
+        if ( picUrls.size() < 5 ) {
+            int diff = 5 - picUrls.size();
+            for (int i = 0; i < diff; i++) {
+
+                ImageCache image = ImageLoader.loadIamge(picUrls.get(0));
+
+                BufferedImage image1 = ImageIO.read(new File(ImageLoader.PIC_DIR + File.separator + image.getFilepath()));
+
+
+                int x = new Random().nextInt(image1.getWidth());
+                int y = new Random().nextInt(image1.getHeight());
+
+
+                image1.setRGB(x, y, new Color(i, i, i, 72).getRGB());
+                String file = "pic_" + i + ".jpg";
+
+                File outputfile = new File(ImageLoader.PIC_DIR + File.separator + file);
+                ImageIO.write(image1, "jpg", outputfile);
+
+
+
+
+                String picUrl = null;
+                {
+                    String localFilePath = outputfile.getAbsolutePath();
+                    NPicAddRequest request = new NPicAddRequest();
+                    request.setPicFileData(localFilePath);
+                    try {
+                        NPicAddResponse response = client.excuteMultiPart(request);
+                        System.out.println("ApplyAddRequest :" + response.getBody());
+                        SuningResponse.SnError error = response.getSnerror();
+                        if ( error!=null ) {
+                            System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                        } else {
+                            picUrl = response.getSnbody().getAddNPic().getPicUrl();
+                            System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
+                            image.setPicurl(picUrl);
+                            SQLExecutor.update(image);
+                        }
+                    } catch (SuningApiException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+                imageMap.put(file, picUrl);
+
+                picUrls.add(file);
+            }
+        }
+
+
+
+        Element price = doc.selectFirst("div.price");
+        Element bSalePrice = doc.selectFirst("b#bSalePrice");
+
+        bSalePrice.remove();
+        float _price = Float.parseFloat(bSalePrice.text().replace(",", "").replace("¥", ""));
+        String unit = price.text().replace("价格:", "").trim();
+        String unit1 = unit ;
+        if ( unit.contains("/") ) {
+            unit1 = unit.split("/")[1];
+        }
+
+
 
         // 详情
         Element proDetailTit = doc.selectFirst("div.proDetailTit").nextElementSibling().child(0);
 
+
+        List<String> detailUrls = new ArrayList<>();
+        Map<String, String> detailImageMap = new HashMap<>();
+        Elements detailImgs = doc.selectFirst("div.proDetailTit").nextElementSibling().select("img");
+        if ( detailImgs!=null && detailImgs.size()>0 ) {
+
+            for (Element img : detailImgs) {
+                String  src = img.attr("src");
+                if ( src!=null && src.startsWith("//") ) {
+                    src = "https:" + src;
+                }
+
+                if ( src!=null && src.trim().length() > 0 ) {
+                    detailUrls.add(src);
+                }
+                System.out.println(src);
+            }
+
+            for (String picUrl : detailUrls) {
+                String picSuningUrl = uploadImage(picUrl);
+                detailImageMap.put(picUrl, picSuningUrl);
+            }
+        }
+
+
         System.out.println(proDetailTit.outerHtml());
 
         StringBuilder builder = new StringBuilder();
+
+
+        if ( _price < 100 ) {
+            builder.append("<div class=\"box\">");
+
+
+            builder.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\">" +
+                    "<span>商品起定量</span><span style=\"color:red;\">(请按起订量拍，否则无法发货)</span></div>");
+
+
+            builder.append(" <span style=\"color:red;\">起订量： ").append( (int)Math.ceil(100/_price)).append(unit1).append("</span><br>");
+
+            if ( number.contains(unit1) ) {
+                builder.append(" 包装数量： ").append(number).append("<br>");
+            } else {
+                builder.append(" 包装数量： ").append(number).append("/").append(unit1).append("<br>");
+            }
+
+            builder.append("</div>");
+        }
+
         builder.append("<div class=\"box\">");
 
 
@@ -370,7 +493,14 @@ public class ProductShelves {
         builder.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品描述</div>");
         builder.append(proDetailTit.html());
 
-
+        if ( detailUrls.size() > 0 ) {
+            builder.append("<br>");
+            for (String picUrl : detailUrls) {
+                String picSuningUrl = detailImageMap.get(picUrl);
+                builder.append("<img alt=\"\" src=\"" + picSuningUrl + "\">");
+                builder.append("<br>");
+            }
+        }
 
         builder.append("</div>");
 
@@ -383,11 +513,7 @@ public class ProductShelves {
         }
         builder.append("</div>");
 
-
-
-
-        String introduction = Base64.encodeBase64String(builder.toString().getBytes());
-
+        String introduction = Base64.encodeBase64String(builder.toString().replace("固安捷", "帷易胜").getBytes());
 
         System.out.println(introduction);
 
@@ -425,13 +551,13 @@ public class ProductShelves {
         String suffix = "-测试";
 
         request.setItemCode(code + suffix); // 供应商商品编码
-        request.setProductName(title + suffix);  // 大衣	商品名称
-        request.setCmTitle(title); // 商品标题
+        request.setProductName(title.replace("固安捷", "帷易胜") + suffix);  // 大衣	商品名称
+        request.setCmTitle(title.replace("固安捷", "帷易胜")); // 商品标题
 
         request.setSellingPoints(sellingPoint.length()>10?sellingPoint.substring(0, 10) : sellingPoint); // 商品卖点
-        request.setHighlightWordone( brand.length()>4?brand.substring(0, 4) : brand);
+        //request.setHighlightWordone( brand.length()>4?brand.substring(0, 4) : brand);
         //request.setHighlightWordtwo(model);
-        request.setHighlightWordthree(sellingPoint.length()>6?sellingPoint.substring(0, 6) : sellingPoint);
+        //request.setHighlightWordthree(sellingPoint.length()>6?sellingPoint.substring(0, 6) : sellingPoint);
 
         /**
          * 商家商品介绍，UTF-8格式。将html内容的txt文本文件读取为字节数组,然后base64加密，去除空格回车后作为字段，传输时所涉及的图片不得使用外部url。允许写入CSS（禁止引用外部CSS）不支持JS。
