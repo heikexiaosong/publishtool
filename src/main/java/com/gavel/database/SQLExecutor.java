@@ -288,5 +288,8 @@ public class SQLExecutor {
         createTable(Task.class);
         createTable(SearchItem.class);
         createTable(Item.class);
+
+        createTable(ShelvesTask.class);
+        createTable(ShelvesItem.class);
     }
 }

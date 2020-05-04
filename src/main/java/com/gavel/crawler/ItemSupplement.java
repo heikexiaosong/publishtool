@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Main {
+public class ItemSupplement {
 
     private static final Pattern CODE_PATTERN = Pattern.compile("/([a-zA-Z])-([^\\.]*).html", Pattern.CASE_INSENSITIVE);
 
@@ -23,14 +23,12 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        //loadSearchItems("1588407103792");
-
-        loadSkus("1588407103792");
+        supplement("1588407103792");
 
     }
 
 
-    public static void loadSkus(String taskid) throws Exception {
+    public static void supplement(String taskid) throws Exception {
 
         if ( taskid==null || taskid.trim().length()==0 ) {
             System.out.println("[taskid: " + taskid + "]is blank!");
@@ -46,51 +44,104 @@ public class Main {
 
         DriverHtmlLoader.getInstance().start();
 
-        while ( true) {
+        List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? order by skunum ", SearchItem.class, task.getId());
 
-            List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? and STATUS <> ? order by skunum ", SearchItem.class, task.getId(), SearchItem.Status.SUCCESS);
+        System.out.println("Product: " + searchItemList.size());
 
-            System.out.println("Product: " + searchItemList.size());
+        if ( searchItemList==null || searchItemList.size() ==0 ) {
+            return;
+        }
 
-            if ( searchItemList==null || searchItemList.size() ==0 ) {
-                break;
+        for (int i = 0; i < searchItemList.size(); i++) {
+            SearchItem searchItem = searchItemList.get(i);
+            //System.out.println( (i+1) + ". " + searchItem.getUrl() + ": " + searchItem.getSkunum());
+
+            int actual = 0;
+            if ( searchItem.getType().equalsIgnoreCase("g") ){
+                actual = SQLExecutor.intQuery("select count(1) from item where PRODUCTCODE= ? ",  searchItem.getCode());
+
+            } else {
+                actual = SQLExecutor.intQuery("select count(1) from item where CODE= ? ", searchItem.getCode());
             }
 
-            for (int i = 0; i < searchItemList.size(); i++) {
-                SearchItem searchItem = searchItemList.get(i);
-                System.out.println( (i+1) + ". " + searchItem.getUrl() + ": " + searchItem.getSkunum());
+            System.out.print( "\r" + (i+1) + ". [" + searchItem.getUrl() + "][Expected: " + searchItem.getSkunum() + "]Got: " + actual);
 
-                searchItem.setActual(searchItem.getSkunum());
-                if ( searchItem.getType().equalsIgnoreCase("g") ){
+            if (actual==searchItem.getSkunum() ) {
+                continue;
+            }
 
-                    List<Item>  skus = ProductPageLoader.getInstance().loadPage(searchItem);
-                    searchItem.setStatus(SearchItem.Status.SUCCESS);
-                    if ( skus==null || skus.size() < searchItem.getSkunum() ) {
-                        searchItem.setActual((skus==null ? 0: skus.size()));
-                        searchItem.setStatus(SearchItem.Status.EXCEPTION);
-                        searchItem.setRemarks("预期: " + searchItem.getSkunum() + "; 实际: " + (skus==null ? 0: skus.size()));
-                        System.out.println("\t...... 预期: " + searchItem.getSkunum() + "; 实际: " + (skus==null ? 0: skus.size()) );
-                    }
+            System.out.println("\r" + (i+1) + ". [" + searchItem.getUrl() + "][Expected: " + searchItem.getSkunum() + "]Got: " + actual);
 
-                } else {
-                    Item item =  SkuPageLoader.getInstance().loadPage(searchItem);
-                    searchItem.setStatus(SearchItem.Status.SUCCESS);
-                    if ( item==null ) {
-                        searchItem.setActual(0);
-                        searchItem.setStatus(SearchItem.Status.EXCEPTION);
-                        searchItem.setRemarks("");
-                        System.out.println("\t...... load failed!");
+
+
+
+
+            if ( searchItem.getType().equalsIgnoreCase("g") ){
+
+                Document doc = null;
+
+                HtmlCache cache = SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? ", HtmlCache.class, searchItem.getUrl());
+
+                if ( cache != null ) {
+                    doc = Jsoup.parse(cache.getHtml());
+                    Elements skuList = doc.select("div.leftTable2 tr.trsku2");
+                    if ( skuList==null|| skuList.size() < searchItem.getSkunum() ) {
+                        SQLExecutor.delete(cache);
+                        cache = null;
                     }
                 }
 
-                SQLExecutor.update(searchItem);
+
+                if ( cache == null ) {
+                    System.out.println("Load Html From Netork...");
+                    cache = DriverHtmlLoader.getInstance().loadHtmlPage(searchItem.getUrl(), true);
+                }
+                if ( cache != null ) {
+
+                    if ( cache.getUpdatetime()==null ) {
+                        cache.setUpdatetime(Calendar.getInstance().getTime());
+                        SQLExecutor.insert(cache);
+                    }
+
+
+                    doc = Jsoup.parse(cache.getHtml());
+                    Elements skuList = doc.select("div.leftTable2 tr.trsku2");
+                    for (Element sku : skuList) {
+                        String code = sku.child(0).attr("title");
+                        Item item1 = SQLExecutor.executeQueryBean("select * from ITEM where code = ?", Item.class, code);
+                        if ( item1!=null ) {
+
+                            continue;
+                        }
+
+
+
+                        String url = "https://www.grainger.cn/u-" + code.trim() + ".html";
+                        HtmlCache skuCache = HtmlPageLoader.getInstance().loadHtmlPage(url, true);
+                        try {
+                            item1 = ProductPageLoader.parseSku(code, skuCache);
+                            if ( item1!=null ) {
+                                SQLExecutor.insert(item1);
+                            }
+                            if ( skuCache.getUpdatetime()==null ) {
+                                skuCache.setUpdatetime(Calendar.getInstance().getTime());
+                                SQLExecutor.insert(skuCache);
+                            }
+                        } catch (Exception e) {
+                            System.out.println("\t" + sku.child(0).attr("title") + ": " + e.getMessage());
+                            if ( skuCache!=null ) {
+                                SQLExecutor.delete(skuCache);
+                            }
+                        }
+
+                    }
+
+                }
             }
-
-            Thread.sleep(1000*60*10);
-
-
-            System.out.println("Finish...");
         }
+
+
+        System.out.println("Finish...");
 
 
         DriverHtmlLoader.getInstance().quit();

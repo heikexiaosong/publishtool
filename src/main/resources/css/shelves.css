@@ -1,0 +1,7 @@
+.title {
+    -fx-pref-width: 100;
+    -fx-min-width: 100;
+    -fx-max-width: 100;
+
+    -fx-alignment: CENTER_RIGHT;
+}

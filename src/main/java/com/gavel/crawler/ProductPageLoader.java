@@ -109,7 +109,7 @@ public class ProductPageLoader {
         return items;
     }
 
-    private static Item parseSku(String code, HtmlCache cache) throws Exception {
+    public static Item parseSku(String code, HtmlCache cache) throws Exception {
 
         if ( code==null || code.trim().length()==0 ) {
             return null;
