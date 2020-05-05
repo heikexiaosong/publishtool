@@ -258,7 +258,11 @@ public class HttpUtils {
 		Response response = call.execute();
 		if ( response.isSuccessful() ) {
 
-			Files.write(response.body().bytes(), new File(localFilePath));
+			try {
+				Files.write(response.body().bytes(), new File(localFilePath));
+			} finally {
+				response.close();
+			}
 
 		}
 

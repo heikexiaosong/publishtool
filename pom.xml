@@ -62,6 +62,14 @@
 			<systemPath>${basedir}\lib\suning-sdk-1.0.0.jar</systemPath> <!-- ${basedir} 是当前项目里的路径和pom.xml同级的路径-->
 		</dependency>
 
+		<dependency>
+			<groupId>org.opencv</groupId>
+			<artifactId>opencv-430</artifactId>
+			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${basedir}\lib\opencv-430-1.0.0.jar</systemPath> <!-- ${basedir} 是当前项目里的路径和pom.xml同级的路径-->
+		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->
 		<dependency>
 			<groupId>org.jsoup</groupId>
@@ -109,7 +117,6 @@
 			<artifactId>selenium-chrome-driver</artifactId>
 			<version>3.14.0</version>
 		</dependency>
-
 		<!-- https://mvnrepository.com/artifact/com.github.detro/ghostdriver -->
 		<!--<dependency>-->
 			<!--<groupId>com.github.detro</groupId>-->

@@ -13,10 +13,13 @@ public class Item {
     @FieldMeta(name = "PRODUCTCODE", title = "产品编码", length = 32)
     private String productcode;
 
-    @FieldMeta(name = "NAME", title = "名称", length = 128)
+    @FieldMeta(name = "PRODUCTNAME", title = "商品名称", length = 128)
+    private String productname;
+
+    @FieldMeta(name = "NAME", title = "商品标题", length = 128)
     private String name;
 
-    @FieldMeta(name = "SUBNAME", title = "副标题", length = 128)
+    @FieldMeta(name = "SUBNAME", title = "商品卖点", length = 128)
     private String subname;
 
     @FieldMeta(name = "BRAND", title = "品牌", length = 64)
@@ -34,12 +37,23 @@ public class Item {
     @FieldMeta(name = "URL", title = "SKUURL", length = 1024)
     private String url;
 
+    @FieldMeta(name = "PICNUM", title = "图片数")
+    private int picnum;
+
     public String getProductcode() {
         return productcode;
     }
 
     public void setProductcode(String productcode) {
         this.productcode = productcode;
+    }
+
+    public String getProductname() {
+        return productname;
+    }
+
+    public void setProductname(String productname) {
+        this.productname = productname;
     }
 
     public String getCode() {
@@ -104,5 +118,13 @@ public class Item {
 
     public void setCategoryname(String categoryname) {
         this.categoryname = categoryname;
+    }
+
+    public int getPicnum() {
+        return picnum;
+    }
+
+    public void setPicnum(int picnum) {
+        this.picnum = picnum;
     }
 }

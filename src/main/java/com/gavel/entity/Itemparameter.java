@@ -42,6 +42,9 @@ public class Itemparameter {
     @FieldMeta(name = "OPTIONS", title = "选项", length = 4000)
     private String options;
 
+    @FieldMeta(name = "PARAM", title = "默认值", length = 1024)
+    private String param;
+
     private List<ParOption> parOption = new ArrayList<>();
 
     public static class ParOption {
@@ -161,4 +164,11 @@ public class Itemparameter {
         return parOption;
     }
 
+    public String getParam() {
+        return param;
+    }
+
+    public void setParam(String param) {
+        this.param = param;
+    }
 }

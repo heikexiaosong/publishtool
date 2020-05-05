@@ -6,6 +6,9 @@ import com.gavel.entity.ImageCache;
 import com.gavel.entity.Item;
 import com.gavel.entity.Itemparameter;
 import com.gavel.grainger.StringUtils;
+import com.gavel.shelves.CatetoryBrand;
+import com.gavel.shelves.CatetoryBrandSelector;
+import com.gavel.shelves.suning.SuningCatetoryBrandSelector;
 import com.gavel.suning.SuningClient;
 import com.gavel.utils.ImageLoader;
 import com.google.gson.Gson;
@@ -174,7 +177,7 @@ public class ProductShelves {
 
         String picUrl = null;
         {
-            String localFilePath = ImageLoader.PIC_DIR + File.separator + image.getFilepath();
+            String localFilePath = ImageLoader.PICS_DIR + File.separator + image.getFilepath();
             NPicAddRequest request = new NPicAddRequest();
             request.setPicFileData(localFilePath);
             try {
@@ -367,7 +370,7 @@ public class ProductShelves {
 
                 ImageCache image = ImageLoader.loadIamge(picUrls.get(0));
 
-                BufferedImage image1 = ImageIO.read(new File(ImageLoader.PIC_DIR + File.separator + image.getFilepath()));
+                BufferedImage image1 = ImageIO.read(new File(ImageLoader.PICS_DIR + File.separator + image.getFilepath()));
 
 
                 int x = new Random().nextInt(image1.getWidth());
@@ -377,7 +380,7 @@ public class ProductShelves {
                 image1.setRGB(x, y, new Color(i, i, i, 72).getRGB());
                 String file = "pic_" + i + ".jpg";
 
-                File outputfile = new File(ImageLoader.PIC_DIR + File.separator + file);
+                File outputfile = new File(ImageLoader.PICS_DIR + File.separator + file);
                 ImageIO.write(image1, "jpg", outputfile);
 
 
@@ -540,19 +543,29 @@ public class ProductShelves {
 
 
 
+        // ---------------------------------------------------------------
+
+
+        // 类目 品牌 信息
+        CatetoryBrandSelector selector = new SuningCatetoryBrandSelector();
+        CatetoryBrand catetoryBrand = selector.selectCatetoryBrand();
+
         ApplyAddRequest request = new ApplyAddRequest();
-
-
-
-        // https://www.grainger.cn/u-3C3377.html
-        request.setCategoryCode(suningCate);  // 类目编码
-        request.setBrandCode(suningBrand);       // 品牌编码
 
         String suffix = "-测试";
 
-        request.setItemCode(code + suffix); // 供应商商品编码
-        request.setProductName(title.replace("固安捷", "帷易胜") + suffix);  // 大衣	商品名称
-        request.setCmTitle(title.replace("固安捷", "帷易胜")); // 商品标题
+        String itemCode = code + suffix; //  供应商商品编码
+        String productName = title + suffix; // 大衣	商品名称
+        String cmTitle = title + suffix; // 商品标题
+
+        request.setCategoryCode(catetoryBrand.getCategoryCode());  // 类目编码
+        request.setBrandCode(catetoryBrand.getBrandCode());       // 品牌编码
+
+
+
+        request.setItemCode(itemCode); // 供应商商品编码
+        request.setProductName(productName);
+        request.setCmTitle(cmTitle); // 商品标题
 
         request.setSellingPoints(sellingPoint.length()>10?sellingPoint.substring(0, 10) : sellingPoint); // 商品卖点
         //request.setHighlightWordone( brand.length()>4?brand.substring(0, 4) : brand);

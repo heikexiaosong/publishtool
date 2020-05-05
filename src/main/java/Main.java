@@ -18,12 +18,15 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
 
-       List<Item> items = SQLExecutor.executeQueryBeanList("select * from ITEM", Item.class);
+       List<Item> items = SQLExecutor.executeQueryBeanList("select * from ITEM ", Item.class);
 
         System.out.println(items.size());
 
 
         BufferedWriter writer = Files.newWriter(new File("brand.csv"), Charset.forName("GB2312"));
+
+        writer.write("一级类目ID,一级类目,二级类目ID,二级类目,三级类目ID,三级类目,四级类目ID,四级类目,五级类目ID,五级类目,SKU编码,产品标题,制造商型号,中文品牌,英文品牌,价格,促销价,URL ");
+        writer.newLine();
 
         for (int i = 0; i < items.size(); i++) {
             Item item = items.get(i);
@@ -62,26 +65,34 @@ public class Main {
 
 
             writer.write(StringUtils.getCode(c1.attr("href")) + ",");
-            writer.write(c1.text() + ",");
+            writer.write(escape(c1.text()) + ",");
             writer.write(StringUtils.getCode(c2.attr("href")) + ",");
-            writer.write(c2.text() + ",");
+            writer.write(escape(c2.text()) + ",");
             writer.write(StringUtils.getCode(c3.attr("href")) + ",");
-            writer.write(c3.text() + ",");
+            writer.write(escape(c3.text()) + ",");
             writer.write(StringUtils.getCode(c4.attr("href")) + ",");
-            writer.write(c4.text() + ",");
+            writer.write(escape(c4.text()) + ",");
             writer.write(StringUtils.getCode(c5.attr("href")) + ",");
-            writer.write(c5.text() + ",");
+            writer.write(escape(c5.text()) + ",");
             writer.write(StringUtils.getCode(c6.attr("href")) + ",");
-            writer.write(c6.text() + ",");
+            writer.write(escape(c6.text()) + ",");
+
 
 
             // 标题前 品牌
             String brand1 =  proDetailCon.selectFirst("h3 > span > a").html();
 
+            Element price = doc.selectFirst("div.price");
+            price.remove();
+
 
             Elements fonts = proDetailCon.select("div font");
             String brand = fonts.get(1).text();
             String model = fonts.get(2).text();
+
+
+
+            writer.write(escape(model) + ",");
 
             /**
              * 订 货 号：5W8061
@@ -99,24 +110,15 @@ public class Main {
              */
 
             if ( brand1.trim().equalsIgnoreCase(brand.trim()) ) {
-                writer.write(brand1.trim() + ",");
-
-                writer.write(brand.trim() + ",");
+                writer.write(escape(brand1.trim()) + ",");
+                writer.write(escape(brand.trim()) + ",");
             } else {
-                writer.write(brand1.trim() + ",");
-
-                writer.write(brand.replace(brand1, "").trim() + ",");
+                writer.write(escape(brand1.trim()) + ",");
+                writer.write(escape(brand.replace(brand1, "").trim()) + ",");
             }
 
 
-
-
-
-            writer.write(model + ",");
-
-            writer.write(item.getCode() + ",");
-
-            Elements prices = doc.select("div.price b");
+            Elements prices = price.select("b");
             if ( prices.size()==1 ) {
                 writer.write(prices.get(0).text().replace(",", "").replace("¥", "").trim() + ", ,");
 
@@ -124,9 +126,22 @@ public class Main {
                 writer.write(prices.get(0).text().replace(",", "").replace("¥", "").trim() + ", " + prices.get(1).text().replace(",", "").replace("¥", "").trim() + ",");
             }
 
-            writer.write(item.getUrl() + "\n");
+            writer.write(item.getUrl());
+            writer.newLine();
+
+            writer.flush();
 
         }
+        writer.close();
 
+    }
+
+    private static String escape(String text) {
+        String res = text;
+        if ( text!=null && text.contains(",") ) {
+            res = "\"" + text + "\"";
+        }
+
+        return res;
     }
 }
