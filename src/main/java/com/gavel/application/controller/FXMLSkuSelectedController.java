@@ -68,11 +68,11 @@ public class FXMLSkuSelectedController {
 
         for (Item item : skuList.getItems()) {
             ShelvesItem shelvesItem = new ShelvesItem();
-            shelvesItem.setCode(item.getCode());
-            shelvesItem.setGraingerbrand(item.getBrand());
-            shelvesItem.setGraingerbrandname(item.getBrandname());
-            shelvesItem.setGraingercategory(item.getCategory());
-            shelvesItem.setGraingercategoryname(item.getCategoryname());
+            shelvesItem.setItemCode(item.getCode());
+            shelvesItem.setBrandCode(item.getBrand());
+            //shelvesItem.setGraingerbrandname(item.getBrandname());
+            shelvesItem.setCategoryCode(item.getCategory());
+            //shelvesItem.setGraingercategoryname(item.getCategoryname());
             items.add(shelvesItem);
 
         }

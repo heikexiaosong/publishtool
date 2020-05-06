@@ -91,12 +91,18 @@ public class PicDownload {
                     }
 
 
-                    File new_image = new File("E:\\物业", imgCache.getFilepath());
+                    File new_image = new File("E:\\aa", imgCache.getFilepath());
                     if ( !new_image.getParentFile().exists() ) {
                         new_image.getParentFile().mkdirs();
                     }
 
-                    Files.copy(image, new_image);
+
+                    File taskimage = new File(new_image.getParentFile(), item.getCode());
+                    if ( !taskimage.exists() ) {
+                        taskimage.mkdirs();
+                    }
+
+                    Files.copy(image, new File(taskimage, new_image.getName()));
 
                     writer.write(src + ", " );
                 }

@@ -1,6 +1,7 @@
 package com.gavel.shelves.suning;
 
-import com.gavel.entity.Item;
+import com.gavel.database.SQLExecutor;
+import com.gavel.entity.ShelvesItem;
 import com.gavel.shelves.ParameterLoader;
 import com.gavel.shelves.ShelvesService;
 import com.gavel.suning.SuningClient;
@@ -23,32 +24,29 @@ public class SuningShelvesService implements ShelvesService {
     private Logger logger = LoggerFactory.getLogger(SuningShelvesService.class);
 
     @Override
-    public void shelves(Item item) throws Exception {
+    public void shelves(ShelvesItem item) throws Exception {
 
         if ( item==null ) {
            throw new Exception("Item 不能为空");
         }
 
+        ApplyAddRequest request = new ApplyAddRequest();
+
+        request.setCategoryCode(item.getCategoryCode());  // 类目编码
+        request.setBrandCode(item.getBrandCode());        // 品牌编码
+        request.setItemCode(item.getItemCode()); // 供应商商品编码
+        request.setProductName(item.getProductName());
+        request.setCmTitle(item.getCmTitle());         // 商品标题
+        request.setSellingPoints(item.getSellingPoints()); // 商品卖点
+
         /**
          * 商家商品介绍，UTF-8格式。将html内容的txt文本文件读取为字节数组,然后base64加密，去除空格回车后作为字段，传输时所涉及的图片不得使用外部url。允许写入CSS（禁止引用外部CSS）不支持JS。
          */
-        String introduction = "";
-
-
-        ApplyAddRequest request = new ApplyAddRequest();
-
-        request.setCategoryCode(item.getCategory());  // 类目编码
-        request.setBrandCode(item.getBrand());        // 品牌编码
-        request.setItemCode(item.getCode()); // 供应商商品编码
-        request.setProductName(item.getProductname());
-        request.setCmTitle(item.getName());         // 商品标题
-        request.setSellingPoints(item.getSubname()); // 商品卖点
-
-        request.setIntroduction(introduction); // 商品介绍
+        request.setIntroduction(item.getIntroduction()); // 商品介绍
 
         // 商品属性设置
         ParameterLoader parameterLoader = new SuningParameterLoader();
-        List<ParameterLoader.Parameter> parameters = parameterLoader.loadParameters(item.getCategory());
+        List<ParameterLoader.Parameter> parameters = parameterLoader.loadParameters(item.getCategoryCode());
 
         List<ApplyAddRequest.Pars> parsList =new ArrayList<ApplyAddRequest.Pars>();
         for (ParameterLoader.Parameter parameter : parameters) {
@@ -75,7 +73,9 @@ public class SuningShelvesService implements ShelvesService {
 
         // 商品图片 urlA~urlE
         List<ApplyAddRequest.SupplierImgUrl> supplierImgUrls = new ArrayList<>();
+        request.setSupplierImgUrl(supplierImgUrls);
         ApplyAddRequest.SupplierImgUrl supplierImgUrl = new ApplyAddRequest.SupplierImgUrl();
+        supplierImgUrls.add(supplierImgUrl);
 
         String image = "";
         supplierImgUrl.setUrlA(image);
@@ -83,10 +83,8 @@ public class SuningShelvesService implements ShelvesService {
         supplierImgUrl.setUrlC(image);
         supplierImgUrl.setUrlD(image);
         supplierImgUrl.setUrlE(image);
-        supplierImgUrls.add(supplierImgUrl);
-        request.setSupplierImgUrl(supplierImgUrls);
 
-        List<ParameterLoader.Parameter> commonParameters = parameterLoader.loadCommonParameters(item.getCategory());
+        List<ParameterLoader.Parameter> commonParameters = parameterLoader.loadCommonParameters(item.getCategoryCode());
         // 含有通子码 需要添加子型号
         if ( commonParameters!=null && commonParameters.size() > 0 ) {
             List<ApplyAddRequest.ChildItem> childItems = new ArrayList<>();
@@ -122,9 +120,20 @@ public class SuningShelvesService implements ShelvesService {
                 System.out.println(new Gson().toJson(response.getSnbody().getAddApply()));
             }
         } catch (SuningApiException e) {
-           logger.error("[Item: " + item.getCode() + "]Exception: " + e.getMessage());
+           logger.error("[Item: " + item.getItemCode() + "]Exception: " + e.getMessage());
            throw e;
         }
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        ShelvesService shelvesService = new SuningShelvesService();
+
+        String code = "10D2148";
+
+        ShelvesItem item = SQLExecutor.executeQueryBean("select * from SHELVESITEM where ITEMCODE = ?", ShelvesItem.class, code);
+        shelvesService.shelves(item);
+
     }
 
 }

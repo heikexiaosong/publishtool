@@ -34,9 +34,9 @@
                 </AnchorPane>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
                     <children>
-                        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="143.0" prefWidth="415.0">
+                        <AnchorPane maxHeight="154.0" minHeight="154.0" minWidth="0.0" prefHeight="154.0" prefWidth="415.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                             <children>
-                                <GridPane prefHeight="173.0" prefWidth="417.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                <GridPane prefHeight="173.0" prefWidth="419.0" AnchorPane.bottomAnchor="40.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                     <columnConstraints>
                                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="300.0" minWidth="10.0" prefWidth="300.0" />
                                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="300.0" minWidth="10.0" prefWidth="300.0" />
@@ -109,10 +109,11 @@
                                     </children>
                                 </GridPane>
 
-                                <ButtonBar layoutX="54.0" layoutY="250.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="15.0">
+                                <ButtonBar layoutX="54.0" layoutY="250.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="115.0">
                                     <buttons>
-                                        <Button mnemonicParsing="false" onAction="#handleAddSkuPerson" text="添加上架商品" />
-                                        <Button mnemonicParsing="false" onAction="#handleShelvesAction" text="上架" />
+                                        <Button mnemonicParsing="false" onAction="#handleAddSkuPerson" text="添加SKU" />
+                                        <Button mnemonicParsing="false" onAction="#handleEditSkuPerson" text="编 辑" />
+                                        <Button mnemonicParsing="false" onAction="#handleShelvesAction" text="上 架" />
                                     </buttons>
                                 </ButtonBar>
                             </children>
@@ -121,7 +122,7 @@
                             <content>
                                 <AnchorPane prefHeight="1080.0" prefWidth="200.0">
                                     <children>
-                                        <TableView fx:id="skuList" prefHeight="217.0" prefWidth="389.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                        <TableView fx:id="skuList" prefHeight="217.0" prefWidth="389.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <columns>
                                                 <TableColumn prefWidth="75.0" text="序号" fx:id="xhCol" />
                                                 <TableColumn fx:id="picCol" prefWidth="75.0" text="图片" />
@@ -133,7 +134,6 @@
                                                 <TableColumn fx:id="statusCol" prefWidth="75.0" text="状态" />
                                                 <TableColumn fx:id="msgCol" prefWidth="75.0" text="提示" />
                                                 <TableColumn fx:id="updatetimeCol" prefWidth="75.0" text="更新时间" />
-
                                             </columns>
                                         </TableView>
                                         <Pagination fx:id="pagination" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />

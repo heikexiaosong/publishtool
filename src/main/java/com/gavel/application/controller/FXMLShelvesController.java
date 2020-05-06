@@ -14,6 +14,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Pagination;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -66,17 +67,20 @@ public class FXMLShelvesController {
     private TableColumn<ShelvesItem, String> updatetimeCol;
 
     @FXML
+    private Pagination pagination;
+
+    @FXML
     private void initialize() {
 
 
 
         xhCol.setCellValueFactory(new PropertyValueFactory<>("xh"));
-        picCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCode()));
-        codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCode()));
-        graingerbrandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getGraingerbrandname()));
-        graingercategorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getGraingercategoryname()));
-        brandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandname()));
-        categorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryname()));
+        picCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getItemCode()));
+        codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getItemCode()));
+        graingerbrandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandCode()));
+        graingercategorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryCode()));
+        brandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandCode()));
+        categorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryCode()));
         statusCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStatus()));
         msgCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMsg()));
         updatetimeCol.setCellValueFactory(new PropertyValueFactory<>("updatetime"));
@@ -94,7 +98,6 @@ public class FXMLShelvesController {
 
 
         taskTable.getItems().addAll(loadData());
-
     }
 
     private void showShelvesDetails(ShelvesTask newValue) {
@@ -115,6 +118,10 @@ public class FXMLShelvesController {
         }
 
         skuList.getItems().addAll(items);
+
+        pagination.setPageCount(1);
+
+        skuList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, _newValue) -> System.out.println(_newValue.getItemCode()));
 
     }
 
@@ -193,7 +200,7 @@ public class FXMLShelvesController {
             ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
             for (ShelvesItem item : items) {
                 //mainApp.getPersonData().add(tempPerson);
-                item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getCode()));
+                item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
                 item.setTaskid(taskSelected.getId());
                 try {
                     SQLExecutor.insert(item);
@@ -250,7 +257,7 @@ public class FXMLShelvesController {
 
         for (ShelvesItem shelvesItem : skuList.getItems()) {
 
-            String code = shelvesItem.getCode();
+            String code = shelvesItem.getItemCode();
             String suningBrand = "04XT";
             String suningCate = "R9002778";
 
@@ -272,5 +279,61 @@ public class FXMLShelvesController {
 
         }
 
+    }
+
+    /**
+     * 操作
+     *
+     * @param actionEvent
+     */
+    public void handleEditSkuPerson(ActionEvent actionEvent) {
+        List<ShelvesItem> items = new ArrayList<>();
+        boolean okClicked = shelvesItemEditDialog();
+        if (okClicked) {
+
+            ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
+            for (ShelvesItem item : items) {
+                //mainApp.getPersonData().add(tempPerson);
+                item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
+                item.setTaskid(taskSelected.getId());
+                try {
+                    SQLExecutor.insert(item);
+                    skuList.getItems().add(item);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+    }
+
+    private boolean shelvesItemEditDialog() {
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/ShelvesItemEditDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("选择上架商品");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(stage());
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            ShelvesItemEditDialogController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            //controller.bindItems(shelvesItems);
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 }

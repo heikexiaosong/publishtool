@@ -17,44 +17,36 @@ public class ShelvesItem {
     @FieldMeta(name = "XH", title = "序号")
     private int xh;
 
-    @FieldMeta(name = "CODE", title = "SKU编码", length = 32)
-    private String code;
+    @FieldMeta(name = "ITEMCODE", title = "供应商商品编码", length = 32)
+    private String itemCode;
 
-    @FieldMeta(name = "NAME", title = "名称", length = 128)
-    private String name;
+    @FieldMeta(name = "PRODUCTNAME", title = "商品名称", length = 128)
+    private String productName;
 
-    @FieldMeta(name = "GRAINGERBRAND", title = "固安捷品牌", length = 64)
-    private String graingerbrand;
+    @FieldMeta(name = "CMTITLE", title = "商品标题", length = 100)
+    private String cmTitle;
 
-    @FieldMeta(name = "GRAINGERBRANDNAME", title = "固安捷品牌名称", length = 64)
-    private String graingerbrandname;
+    @FieldMeta(name = "SELLINGPOINTS", title = "商品卖点", length = 100)
+    private String sellingPoints;
 
-    @FieldMeta(name = "GRAINGERCATEGORY", title = "固安捷类目", length = 64)
-    private String graingercategory;
+    @FieldMeta(name = "CATEGORYCODE", title = "类目", length = 64)
+    private String categoryCode;
 
-    @FieldMeta(name = "GRAINGERCATEGORYNAME", title = "固安捷类目名称", length = 64)
-    private String graingercategoryname;
+    @FieldMeta(name = "BRANDCODE", title = "品牌", length = 64)
+    private String brandCode;
 
-    @FieldMeta(name = "BRAND", title = "品牌", length = 64)
-    private String brand;
-
-    @FieldMeta(name = "BRANDNAME", title = "品牌名称", length = 64)
-    private String brandname;
-
-    @FieldMeta(name = "CATEGORY", title = "类目", length = 64)
-    private String category;
-
-    @FieldMeta(name = "CATEGORYNAME", title = "类目名称", length = 64)
-    private String categoryname;
+    @FieldMeta(name = "INTRODUCTION", title = "商品描述", length = 4000)
+    private String introduction;
 
     @FieldMeta(name = "STATUS", title = "状态", length = 20)
     private String status;
 
-    @FieldMeta(name = "MESSAGE", title = "状态", length = 20)
+    @FieldMeta(name = "MESSAGE", title = "消息", length = 20)
     private String msg;
 
     @FieldMeta(name = "UPDATETIME", title = "更新时间")
     private Date updatetime;
+
 
     public String getId() {
         return id;
@@ -80,84 +72,60 @@ public class ShelvesItem {
         this.xh = xh;
     }
 
-    public String getCode() {
-        return code;
+    public String getItemCode() {
+        return itemCode;
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void setItemCode(String itemCode) {
+        this.itemCode = itemCode;
     }
 
-    public String getName() {
-        return name;
+    public String getProductName() {
+        return productName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 
-    public String getGraingerbrand() {
-        return graingerbrand;
+    public String getCmTitle() {
+        return cmTitle;
     }
 
-    public void setGraingerbrand(String graingerbrand) {
-        this.graingerbrand = graingerbrand;
+    public void setCmTitle(String cmTitle) {
+        this.cmTitle = cmTitle;
     }
 
-    public String getGraingerbrandname() {
-        return graingerbrandname;
+    public String getSellingPoints() {
+        return sellingPoints;
     }
 
-    public void setGraingerbrandname(String graingerbrandname) {
-        this.graingerbrandname = graingerbrandname;
+    public void setSellingPoints(String sellingPoints) {
+        this.sellingPoints = sellingPoints;
     }
 
-    public String getGraingercategory() {
-        return graingercategory;
+    public String getCategoryCode() {
+        return categoryCode;
     }
 
-    public void setGraingercategory(String graingercategory) {
-        this.graingercategory = graingercategory;
+    public void setCategoryCode(String categoryCode) {
+        this.categoryCode = categoryCode;
     }
 
-    public String getGraingercategoryname() {
-        return graingercategoryname;
+    public String getBrandCode() {
+        return brandCode;
     }
 
-    public void setGraingercategoryname(String graingercategoryname) {
-        this.graingercategoryname = graingercategoryname;
+    public void setBrandCode(String brandCode) {
+        this.brandCode = brandCode;
     }
 
-    public String getBrand() {
-        return brand;
+    public String getIntroduction() {
+        return introduction;
     }
 
-    public void setBrand(String brand) {
-        this.brand = brand;
-    }
-
-    public String getBrandname() {
-        return brandname;
-    }
-
-    public void setBrandname(String brandname) {
-        this.brandname = brandname;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getCategoryname() {
-        return categoryname;
-    }
-
-    public void setCategoryname(String categoryname) {
-        this.categoryname = categoryname;
+    public void setIntroduction(String introduction) {
+        this.introduction = introduction;
     }
 
     public String getStatus() {

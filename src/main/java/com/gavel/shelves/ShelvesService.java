@@ -1,9 +1,9 @@
 package com.gavel.shelves;
 
-import com.gavel.entity.Item;
+import com.gavel.entity.ShelvesItem;
 
 public interface ShelvesService {
 
-    void shelves(Item item) throws Exception;
+    void shelves(ShelvesItem item) throws Exception;
 
 }
