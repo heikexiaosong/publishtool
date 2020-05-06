@@ -6,14 +6,21 @@
    <children>
        <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
            <buttons>
-            <Label maxWidth="36.0" minWidth="36.0" prefHeight="18.0" prefWidth="36.0" text="SKU编码: " />
+               <Label maxWidth="57.0" minWidth="57.0" prefHeight="18.0" prefWidth="36.0" text="采集任务: " />
+               <ComboBox fx:id="taskid" prefWidth="150.0" promptText="-选择采集任务-" />
+               <Label maxWidth="57.0" minWidth="57.0" prefHeight="18.0" prefWidth="36.0" text="固安捷类目: " />
+               <ComboBox fx:id="category" editable="true" prefWidth="150.0" promptText="-选择类目-" />
+               <Label maxWidth="57.0" minWidth="57.0" prefHeight="18.0" prefWidth="36.0" text="固安捷品牌: " />
+               <ComboBox fx:id="brand" prefWidth="150.0" promptText="-选择品牌-" />
+
+            <Label maxWidth="57.0" minWidth="57.0" prefHeight="18.0" prefWidth="36.0" text="SKU编码: " />
             <TextField fx:id="skucode" />
                <Button mnemonicParsing="false" onAction="#handleSearchAction" text="搜 索" />
            </buttons>
        </ButtonBar>
       <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="50.0">
         <content>
-            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0" >
+            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
                 <children>
                     <TableView fx:id="skuList" prefHeight="217.0" prefWidth="389.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                         <columns>
