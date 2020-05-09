@@ -77,8 +77,7 @@
                                     </ScrollPane>
                                             <ButtonBar layoutX="54.0" layoutY="250.0" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0">
                                                 <buttons>
-                                                    <Button mnemonicParsing="false" text="清空" />
-                                                    <Button mnemonicParsing="false" text="保存" />
+                                                    <Button onAction="#handleCateParamsUpdateAction" mnemonicParsing="false" text="保存" />
                                                 </buttons>
                                             </ButtonBar>
                                         </children>

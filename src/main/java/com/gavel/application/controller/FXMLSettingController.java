@@ -6,8 +6,11 @@ import com.gavel.entity.Category;
 import com.gavel.entity.CategoryMapping;
 import com.gavel.entity.Itemparameter;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -60,6 +63,8 @@ public class FXMLSettingController {
     @FXML
     private GridPane params;
 
+    private List<Itemparameter> itemparameters;
+
     @FXML
     private void initialize() {
 
@@ -107,6 +112,10 @@ public class FXMLSettingController {
 
     }
 
+    /**
+     * 类目属性详情
+     * @param newValue
+     */
     private void showCategoryDetails(Category newValue) {
 
         if ( newValue==null ) {
@@ -115,7 +124,7 @@ public class FXMLSettingController {
 
         params.getChildren().clear();
 
-        List<Itemparameter> itemparameters = null;
+        itemparameters = null;
         try {
             itemparameters = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where categoryCode = ? ", Itemparameter.class, newValue.getCategoryCode());
             if ( itemparameters!=null ) {
@@ -130,20 +139,16 @@ public class FXMLSettingController {
                         label.setStyle("-fx-text-fill: red;");
                     }
 
-                    TextField field = new TextField();
-
                     params.add(label, 0, i1);
                     params.add( new Label(itemparameter.getParUnit()), 2, i1);
                     params.add( new Label(itemparameter.getParaTemplateCode()), 3, i1);
                     params.add( new Label(itemparameter.getParaTemplateDesc()), 4, i1);
-                    params.add( new Label(itemparameter.getIsMust()), 5, i1);
-                    params.add( new Label(itemparameter.getParType()), 6, i1);
-                    params.add( new Label(itemparameter.getOptions()), 7, i1);
+                    params.add( new Label(itemparameter.getDataType()), 5, i1);
 
 
                     switch (itemparameter.getParType()) {
                         case "1":
-
+                        case "2":
 
                             ComboBox<Itemparameter.ParOption> parOptionComboBox = new ComboBox<Itemparameter.ParOption>();
 
@@ -171,11 +176,38 @@ public class FXMLSettingController {
 
                            params.add(parOptionComboBox, 1, i1);
 
-                            break;
-                        case "2":
-                            params.add(field, 1, i1);
+                           if ( itemparameter.getParam()!=null && itemparameter.getParam().trim().length() > 0 ) {
+
+                              String defaultValue = itemparameter.getParam();
+                               Itemparameter.ParOption value = itemparameter.getParOption().get(0);
+                               for (Itemparameter.ParOption option : itemparameter.getParOption()) {
+                                   if ( defaultValue.equalsIgnoreCase(option.getParOptionCode()) ) {
+                                       value = option;
+                                       break;
+                                   }
+                               }
+                               parOptionComboBox.getSelectionModel().select(value);
+
+                           }
+
+
+                            parOptionComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Itemparameter.ParOption>() {
+                                @Override
+                                public void changed(ObservableValue<? extends Itemparameter.ParOption> observable, Itemparameter.ParOption oldValue, Itemparameter.ParOption newValue) {
+                                    itemparameter.setParam(newValue.getParOptionCode());
+                                }
+                            });
+
                             break;
                         case "3":
+                            final TextField field = new TextField();
+                            field.setText(itemparameter.getParam());
+                            field.setOnAction(new EventHandler<ActionEvent>() {
+                                @Override
+                                public void handle(ActionEvent event) {
+                                    itemparameter.setParam(field.getText());
+                                }
+                            });
                             params.add(field, 1, i1);
                             break;
                     }
@@ -280,5 +312,26 @@ public class FXMLSettingController {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * 类目属性更新
+     * @param actionEvent
+     */
+    public void handleCateParamsUpdateAction(ActionEvent actionEvent) {
+
+        if ( itemparameters==null || itemparameters.size()==0 ) {
+            return;
+        }
+
+        for (Itemparameter itemparameter : itemparameters) {
+            try {
+                SQLExecutor.update(itemparameter);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+
     }
 }

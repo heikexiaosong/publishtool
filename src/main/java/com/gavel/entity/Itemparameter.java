@@ -11,7 +11,7 @@ import java.util.List;
 @TableMeta(name = "ITEMPARAMETER", title = "类目参数")
 public class Itemparameter {
 
-    @FieldMeta(name = "CATEGORYCODE", title = "类目编码", length = 32)
+    @FieldMeta(name = "CATEGORYCODE", title = "类目编码", length = 32, primary = true)
     private String categoryCode;
 
     @FieldMeta(name = "PARATEMPLATECODE", title = "参数模板代码", length = 32)
@@ -20,7 +20,7 @@ public class Itemparameter {
     @FieldMeta(name = "PARATEMPLATEDESC", title = "参数模板名称", length = 256)
     private String paraTemplateDesc;
 
-    @FieldMeta(name = "PARCODE", title = "参数代码", length = 32)
+    @FieldMeta(name = "PARCODE", title = "参数代码", length = 32, primary = true)
     private String parCode;
 
     @FieldMeta(name = "PARNAME", title = "参数名称", length = 32)
