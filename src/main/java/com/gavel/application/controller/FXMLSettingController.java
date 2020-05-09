@@ -1,5 +1,6 @@
 package com.gavel.application.controller;
 
+import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Category;
 import com.gavel.entity.CategoryMapping;
@@ -8,11 +9,16 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,6 +27,10 @@ public class FXMLSettingController {
 
     @FXML
     private AnchorPane root;
+
+    private Stage stage() {
+        return (Stage) root.getScene().getWindow();
+    }
 
 
     // 类目
@@ -222,5 +232,53 @@ public class FXMLSettingController {
      */
     public void handleCateMappingAction(ActionEvent actionEvent) {
 
+        CategoryMapping categoryMapping = cateMapping.getSelectionModel().getSelectedItem();
+        if ( categoryMapping==null ) {
+            return;
+        }
+
+        Category mappingCate = new Category();
+        boolean okClicked = showCategoryMappingEditDialog(mappingCate);
+        if (okClicked) {
+            //mainApp.getPersonData().add(tempPerson);
+            try {
+                categoryMapping.setCategoryCode(mappingCate.getCategoryCode());
+                categoryMapping.setCategoryName(mappingCate.getCategoryName());
+                categoryMapping.setDescPath(mappingCate.getDescPath());
+                SQLExecutor.update(categoryMapping);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private boolean showCategoryMappingEditDialog(Category mappingCate) {
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/SuningCategorySelectDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("上架类目映射");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(stage());
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            FXMLSuningCateSelectedController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            controller.bind(mappingCate);
+
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
