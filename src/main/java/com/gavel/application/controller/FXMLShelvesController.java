@@ -9,6 +9,7 @@ import com.gavel.entity.HtmlCache;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.entity.ShelvesTask;
 import com.gavel.utils.MD5Utils;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -91,24 +92,17 @@ public class FXMLShelvesController {
     @FXML
     private void initialize() {
 
-        //初始化所有checkbox复选框
-        select.setCellValueFactory(new PropertyValueFactory<ShelvesItem,Boolean>("selected"));
-        select.setCellFactory( col -> {
-            CheckBoxTableCell<ShelvesItem, Boolean> cell = new CheckBoxTableCell<ShelvesItem, Boolean>(){
-                @Override
-                public void updateItem(Boolean item, boolean empty) {
-                    super.updateItem(item, empty);
-                    this.setText(null);
-                    this.setGraphic(null);
-                    if (!empty) {
-                        int rowIndex = this.getIndex();
-//                        double d = tbView.getItems().get(rowIndex).getWage();
-//                        this.setText(StringUtils.formatNumber(2, d));
-                    }
-                }
-            };
-            return cell;
-        } );
+        select.setCellFactory(column -> new CheckBoxTableCell<>());
+        select.setCellValueFactory(cellData -> {
+            ShelvesItem cellValue = cellData.getValue();
+            BooleanProperty property = cellValue.selectedProperty();
+
+            // Add listener to handler change
+            property.addListener((observable, oldValue, newValue) -> cellValue.selectedProperty().setValue(newValue));
+
+            return property;
+        });
+
 
         xhCol.setCellValueFactory(new PropertyValueFactory<>("xh"));
         cmTitleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCmTitle()));
@@ -458,6 +452,11 @@ public class FXMLShelvesController {
      */
     public void handleCurPageAction(ActionEvent actionEvent) {
         allPage.setSelected(false);
+
+        for (ShelvesItem shelvesItem : itemList.getItems()) {
+            shelvesItem.selectedProperty().setValue(curPage.isSelected());
+        }
+
         if ( curPage.isSelected() ) {
             selectedNum.setText(String.valueOf(itemList.getItems().size()));
         } else {
