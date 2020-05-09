@@ -14,6 +14,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -42,15 +43,22 @@ public class FXMLShelvesController {
     @FXML
     private TableColumn<ShelvesTask, Integer> success;
 
+    @FXML
+    private Label idField;
+    @FXML
+    private Label titleField;
+    @FXML
+    private Label remarkField;
+
     // 产品SKU列表
     @FXML
     private TableView<ShelvesItem> skuList;
     @FXML
     private TableColumn<ShelvesItem, Integer> xhCol;
     @FXML
-    private TableColumn<ShelvesItem, String> picCol;
-    @FXML
     private TableColumn<ShelvesItem, String> codeCol;
+    @FXML
+    private TableColumn<ShelvesItem, String> cmTitleCol;
     @FXML
     private TableColumn<ShelvesItem, String> graingerbrandnameCol;
     @FXML
@@ -75,12 +83,12 @@ public class FXMLShelvesController {
 
 
         xhCol.setCellValueFactory(new PropertyValueFactory<>("xh"));
-        picCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getItemCode()));
+        cmTitleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCmTitle()));
         codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getItemCode()));
-        graingerbrandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandCode()));
-        graingercategorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryCode()));
-        brandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandCode()));
-        categorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryCode()));
+        graingerbrandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandname()));
+        graingercategorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryname()));
+        brandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMappingbrandname()));
+        categorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMappingcategoryname()));
         statusCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStatus()));
         msgCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMsg()));
         updatetimeCol.setCellValueFactory(new PropertyValueFactory<>("updatetime"));
@@ -106,6 +114,11 @@ public class FXMLShelvesController {
         if ( newValue==null ) {
             return;
         }
+
+
+        idField.setText(newValue.getId());
+        titleField.setText(newValue.getTitle());
+        remarkField.setText(newValue.getRemark());
 
         List<ShelvesItem> items = new ArrayList<>();
         try {
@@ -287,8 +300,82 @@ public class FXMLShelvesController {
      * @param actionEvent
      */
     public void handleEditSkuPerson(ActionEvent actionEvent) {
+
+       String  taskid =  idField.getText();
+
+        EditTask editTask = new EditTask();
+
+        boolean okClicked = shelvesItemEditDialog(editTask);
+        if (okClicked) {
+            ObservableList<ShelvesItem> items = skuList.getItems();
+            if ( items!=null && items.size() > 0 ) {
+                for (ShelvesItem item : items) {
+                    if ( editTask.getPrefix()!=null && editTask.getPrefix().trim().length()>0 ) {
+                        item.setCmTitle( editTask.getPrefix().trim() + item.getCmTitle() );
+                    }
+
+                    if ( editTask.getSuffix()!=null && editTask.getSuffix().trim().length()>0 ) {
+                        item.setCmTitle( editTask.getSuffix().trim() + item.getCmTitle() );
+                    }
+
+                    if ( editTask.getSrc()!=null && editTask.getSrc().trim().length()>0 ) {
+                        String src = editTask.getSrc().trim();
+                        String desc = editTask.getDest().trim();
+                        item.setCmTitle(item.getCmTitle().replace(src, desc));
+                    }
+
+                    try {
+                        SQLExecutor.update(item);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                skuList.setItems(items);
+            }
+
+        }
+    }
+
+    private boolean shelvesItemEditDialog(EditTask editTask) {
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/ShelvesItemEditDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("编辑上架商品");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(stage());
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            ShelvesItemEditDialogController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            controller.bindEditTask(editTask);
+            //controller.bindItems(shelvesItems);
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * 导入采集任务中的SKU
+     * @param actionEvent
+     */
+    public void handleImportSkuPerson(ActionEvent actionEvent) {
+
         List<ShelvesItem> items = new ArrayList<>();
-        boolean okClicked = shelvesItemEditDialog();
+        boolean okClicked = showShelvesItemImportDialog(items);
         if (okClicked) {
 
             ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
@@ -305,13 +392,14 @@ public class FXMLShelvesController {
             }
 
         }
+
     }
 
-    private boolean shelvesItemEditDialog() {
+    private boolean showShelvesItemImportDialog(List<ShelvesItem> shelvesItems) {
         try {
             // Load the fxml file and create a new stage for the popup dialog.
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(MainApp.class.getResource("/fxml/ShelvesItemEditDialog.fxml"));
+            loader.setLocation(MainApp.class.getResource("/fxml/SkuImportDialog.fxml"));
             AnchorPane page = (AnchorPane) loader.load();
 
             // Create the dialog Stage.
@@ -323,9 +411,9 @@ public class FXMLShelvesController {
             dialogStage.setScene(scene);
 
             // Set the person into the controller.
-            ShelvesItemEditDialogController controller = loader.getController();
+            FXMLSkuImportController controller = loader.getController();
             controller.setDialogStage(dialogStage);
-            //controller.bindItems(shelvesItems);
+            controller.bindItems(shelvesItems);
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
 
@@ -335,5 +423,48 @@ public class FXMLShelvesController {
         }
 
         return false;
+    }
+
+    public static class EditTask {
+
+        private String prefix;
+
+        private String suffix;
+
+        private String src;
+
+        private String dest;
+
+        public String getPrefix() {
+            return prefix;
+        }
+
+        public void setPrefix(String prefix) {
+            this.prefix = prefix;
+        }
+
+        public String getSuffix() {
+            return suffix;
+        }
+
+        public void setSuffix(String suffix) {
+            this.suffix = suffix;
+        }
+
+        public String getSrc() {
+            return src;
+        }
+
+        public void setSrc(String src) {
+            this.src = src;
+        }
+
+        public String getDest() {
+            return dest;
+        }
+
+        public void setDest(String dest) {
+            this.dest = dest;
+        }
     }
 }

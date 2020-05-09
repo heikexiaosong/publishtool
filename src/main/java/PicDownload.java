@@ -1,17 +1,11 @@
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
-import com.gavel.entity.ImageCache;
 import com.gavel.entity.Item;
-import com.gavel.utils.ImageCachedLoader;
-import com.google.common.io.Files;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.nio.charset.Charset;
 import java.util.List;
 
 public class PicDownload {
@@ -19,25 +13,20 @@ public class PicDownload {
     public static void main(String[] args) throws Exception {
 
 
-       List<Item> items = SQLExecutor.executeQueryBeanList("select * from ITEM ", Item.class);
+       List<Item> items = SQLExecutor.executeQueryBeanList("select * from ITEM", Item.class);
 
         System.out.println(items.size());
-
-
-        BufferedWriter writer = Files.newWriter(new File("picinfo.csv"), Charset.forName("GB2312"));
 
 
         for (int i = 0; i < items.size(); i++) {
 
             try {
                 Item item = items.get(i);
-                System.out.print( "\r" + i + ". " + item.getCode());
+                System.out.print( "\r[" + Math.ceil(i*100/items.size()) + "%]" + i + ". " + item.getCode() + " " + item.getUrl());
 
 
                 HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, item.getUrl());
                 if ( cache==null ) {
-                    writer.write(item.getCode() + "," + item.getName() + "," + item.getUrl() + ", htmlCache is null" );
-                    writer.newLine();
                     System.out.println(" htmlCache is null \n");
                     continue;
                 }
@@ -56,66 +45,31 @@ public class PicDownload {
                     throw new Exception("[" + item.getUrl() + "]Html内容有异常: " + doc.title());
                 }
 
-                writer.write(item.getCode() + "," + item.getName() + "," + item.getUrl() + ", " );
+                // 4级类目 + 产品组ID + ID
+                Elements elements = doc.select("div.crumbs  a");
+                Element c1 = elements.get(1);
+                Element c2 = elements.get(2);
+                Element c3 = elements.get(3);
+                Element c4 = elements.get(4);
+                Element c5 = elements.get(5);
+                Element c6 = elements.get(6);
 
+                item.setName(c6.text());
+                item.setCategoryname(c4.text());
 
-                Elements imgs = doc.select("div.xiaotu > div.xtu > dl > dd > img");
-                writer.write((imgs==null?0:imgs.size()) + ", " );
-                item.setPicnum(imgs.size());
                 SQLExecutor.update(item);
 
-                for (Element img : imgs) {
-                    String  src = img.attr("src");
-
-                    if ( src.equalsIgnoreCase("/Content/images/hp_np.png") ) {
-                        src = "https://www.grainger.cn/Content/images/hp_np.png";
-                    }
-
-                    if ( src!=null && src.startsWith("//") ) {
-                        src = "https:" + src;
-                    }
-
-                    src = src.replace("product_images_new/350/", "product_images_new/800/");
-
-                    ImageCache imgCache = ImageCachedLoader.loadIamge(src);
-
-                    if ( imgCache==null || imgCache.getFilepath()==null || imgCache.getFilepath().trim().length()==0 ) {
-                        System.out.println("[Img: " + src + "]download failed.");
-                        continue;
-                    }
-
-                    File image = new File(ImageCachedLoader.PICS_DIR, imgCache.getFilepath());
-                    if ( !image.exists() ) {
-                        System.out.println("[Img: " + src + "][File: " + image + "]not exist");
-                        continue;
-                    }
 
 
-                    File new_image = new File("E:\\aa", imgCache.getFilepath());
-                    if ( !new_image.getParentFile().exists() ) {
-                        new_image.getParentFile().mkdirs();
-                    }
 
-
-                    File taskimage = new File(new_image.getParentFile(), item.getCode());
-                    if ( !taskimage.exists() ) {
-                        taskimage.mkdirs();
-                    }
-
-                    Files.copy(image, new File(taskimage, new_image.getName()));
-
-                    writer.write(src + ", " );
-                }
             } catch (Exception e) {
+
+                e.printStackTrace();
                 System.out.println(": " + e.getMessage());
             }
 
-            writer.newLine();
-
-            writer.flush();
 
         }
-        writer.close();
 
     }
 

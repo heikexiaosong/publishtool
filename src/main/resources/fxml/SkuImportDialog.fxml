@@ -2,17 +2,14 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane prefHeight="768.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLSkuSelectedController">
+<AnchorPane prefHeight="768.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.gavel.application.controller.FXMLSkuImportController">
    <children>
        <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
            <buttons>
-               <Label maxWidth="57.0" minWidth="57.0" prefHeight="18.0" prefWidth="36.0" text="固安捷类目: " />
-               <ComboBox fx:id="category" editable="true" prefWidth="150.0" promptText="-选择类目-" />
-               <Label maxWidth="57.0" minWidth="57.0" prefHeight="18.0" prefWidth="36.0" text="固安捷品牌: " />
-               <ComboBox fx:id="brand" prefWidth="150.0" promptText="-选择品牌-" />
-            <Label maxWidth="57.0" minWidth="57.0" prefHeight="18.0" prefWidth="36.0" text="SKU编码: " />
-            <TextField fx:id="skucode" />
-               <Button mnemonicParsing="false" onAction="#handleSearchAction" text="搜 索" />
+               <Label maxWidth="57.0" minWidth="57.0" prefHeight="18.0" prefWidth="36.0" text="采集任务: " />
+               <ComboBox fx:id="taskid" editable="true" prefWidth="150.0" promptText="-选择任务-" />
+               <Button mnemonicParsing="false" onAction="#handleImportAction" text="导 入" />
            </buttons>
        </ButtonBar>
       <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="50.0">

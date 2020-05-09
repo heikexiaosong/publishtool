@@ -1,7 +1,10 @@
 package com.gavel.application.controller;
 
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.*;
+import com.gavel.entity.GraingerBrand;
+import com.gavel.entity.GraingerCategory;
+import com.gavel.entity.Item;
+import com.gavel.entity.ShelvesItem;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -14,9 +17,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class FXMLSkuSelectedController {
-
-    @FXML
-    private ComboBox<Task> taskid;
 
     @FXML
     private ComboBox<GraingerCategory> category;
@@ -58,9 +58,6 @@ public class FXMLSkuSelectedController {
         nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
         brandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandname()));
         categorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryname()));
-
-        //任务列表
-        initTaskcombox();
 
         // 类目列表
         initCatecombox();
@@ -148,40 +145,6 @@ public class FXMLSkuSelectedController {
         });
     }
 
-    // 初始化任务列表
-    private void initTaskcombox() {
-        List<Task> taskList = null;
-        try {
-            taskList = SQLExecutor.executeQueryBeanList("select * from TASK", Task.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            taskList = Collections.EMPTY_LIST;
-        }
-        taskid.setItems(FXCollections.observableArrayList(taskList));
-
-
-        taskid.setConverter(new StringConverter<Task>(){
-            @Override
-            public String toString(Task object) {
-                return object == null ? null : object.getTitle();
-            }
-            @Override
-            public Task fromString(String string) {
-                return taskid.getItems().stream().filter(i -> i.getTitle().equals(string)).findAny().orElse(null);
-            }
-
-        });
-
-        taskid.setCellFactory(lv -> new ListCell<Task>() {
-            @Override
-            protected void updateItem(Task item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(item == null ? null : item.getTitle());
-            }
-
-        });
-    }
-
     public void setDialogStage(Stage dialogStage) {
         this.dialogStage = dialogStage;
     }
@@ -192,8 +155,6 @@ public class FXMLSkuSelectedController {
 
     @FXML
     private void handleOk() {
-
-
         for (Item item : skuList.getItems()) {
             ShelvesItem shelvesItem = new ShelvesItem();
             shelvesItem.setItemCode(item.getCode());
@@ -242,6 +203,8 @@ public class FXMLSkuSelectedController {
         }
 
         skuList.getItems().addAll(items);
+
+
 
     }
 }

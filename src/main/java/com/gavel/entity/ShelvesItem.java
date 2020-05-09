@@ -32,8 +32,26 @@ public class ShelvesItem {
     @FieldMeta(name = "CATEGORYCODE", title = "类目", length = 64)
     private String categoryCode;
 
+    @FieldMeta(name = "CATEGORYNAME", title = "类目", length = 64)
+    private String categoryname;
+
     @FieldMeta(name = "BRANDCODE", title = "品牌", length = 64)
     private String brandCode;
+
+    @FieldMeta(name = "BRANDNAME", title = "品牌", length = 64)
+    private String brandname;
+
+    @FieldMeta(name = "MAPPINGCATEGORYCODE", title = "上架类目", length = 64)
+    private String mappingcategorycode;
+
+    @FieldMeta(name = "MAPPINGBRANDCODE", title = "上架品牌", length = 64)
+    private String mappingbrandcode;
+
+    @FieldMeta(name = "MAPPINGCATEGORYNAME", title = "上架类目", length = 64)
+    private String mappingcategoryname;
+
+    @FieldMeta(name = "MAPPINGBRANDNAME", title = "上架品牌", length = 64)
+    private String mappingbrandname;
 
     @FieldMeta(name = "INTRODUCTION", title = "商品描述", length = 4000)
     private String introduction;
@@ -112,12 +130,60 @@ public class ShelvesItem {
         this.categoryCode = categoryCode;
     }
 
+    public String getCategoryname() {
+        return categoryname;
+    }
+
+    public void setCategoryname(String categoryname) {
+        this.categoryname = categoryname;
+    }
+
     public String getBrandCode() {
         return brandCode;
     }
 
     public void setBrandCode(String brandCode) {
         this.brandCode = brandCode;
+    }
+
+    public String getBrandname() {
+        return brandname;
+    }
+
+    public void setBrandname(String brandname) {
+        this.brandname = brandname;
+    }
+
+    public String getMappingcategorycode() {
+        return mappingcategorycode;
+    }
+
+    public void setMappingcategorycode(String mappingcategorycode) {
+        this.mappingcategorycode = mappingcategorycode;
+    }
+
+    public String getMappingbrandcode() {
+        return mappingbrandcode;
+    }
+
+    public void setMappingbrandcode(String mappingbrandcode) {
+        this.mappingbrandcode = mappingbrandcode;
+    }
+
+    public String getMappingcategoryname() {
+        return mappingcategoryname;
+    }
+
+    public void setMappingcategoryname(String mappingcategoryname) {
+        this.mappingcategoryname = mappingcategoryname;
+    }
+
+    public String getMappingbrandname() {
+        return mappingbrandname;
+    }
+
+    public void setMappingbrandname(String mappingbrandname) {
+        this.mappingbrandname = mappingbrandname;
     }
 
     public String getIntroduction() {

@@ -34,6 +34,9 @@ public class Item {
     @FieldMeta(name = "CATEGORYNAME", title = "类目名称", length = 64)
     private String categoryname;
 
+    @FieldMeta(name = "CATEGORYDESC", title = "类目描述", length = 64)
+    private String categorydesc;
+
     @FieldMeta(name = "URL", title = "SKUURL", length = 1024)
     private String url;
 
@@ -118,6 +121,14 @@ public class Item {
 
     public void setCategoryname(String categoryname) {
         this.categoryname = categoryname;
+    }
+
+    public String getCategorydesc() {
+        return categorydesc;
+    }
+
+    public void setCategorydesc(String categorydesc) {
+        this.categorydesc = categorydesc;
     }
 
     public int getPicnum() {
