@@ -42,7 +42,7 @@ public class FXMLSkuImportController {
     private Stage dialogStage;
     private boolean okClicked = false;
 
-    private List<ShelvesItem> items;
+    private List<ShelvesItem> items = new ArrayList<>();
 
     private List<Item> datas = new ArrayList<>();
 
@@ -59,6 +59,13 @@ public class FXMLSkuImportController {
 
 
         initTaskcombox();
+
+        DataPagination dataPagination = new DataPagination(items, 30);
+        pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
+        pagination.setPageFactory(pageIndex -> {
+            skuList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
+            return skuList;
+        });
 
     }
 
@@ -156,6 +163,7 @@ public class FXMLSkuImportController {
 
         try {
             List<Item> items = SQLExecutor.executeQueryBeanList(" select item.* from item left join searchitem on searchitem.CODE = item.CODE where TYPE = 'u' and TASKID = ? ", Item.class,  taskId);
+            System.out.println("u");
             if ( items!=null ) {
                 datas.addAll(items);
             }
@@ -165,6 +173,7 @@ public class FXMLSkuImportController {
 
         try {
             List<Item> items = SQLExecutor.executeQueryBeanList(" select item.* from item left join searchitem on searchitem.CODE = item.PRODUCTCODE where TYPE = 'g' and TASKID = ? ", Item.class,  taskId);
+            System.out.println("g");
             if ( items!=null ) {
                 datas.addAll(items);
             }
