@@ -13,6 +13,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.util.StringConverter;
 
+import java.util.Collections;
 import java.util.List;
 
 
@@ -52,20 +53,6 @@ public class FXMLSettingController {
     @FXML
     private void initialize() {
 
-        // 类目 --------
-//        @FXML
-//        private TableView<CategoryMapping> cateMapping;
-//        @FXML
-//        private TableColumn<CategoryMapping, String> cmCode;
-//        @FXML
-//        private TableColumn<CategoryMapping, String> cmName;
-//        @FXML
-//        private TableColumn<CategoryMapping, String> cmCategoryCode;
-//        @FXML
-//        private TableColumn<CategoryMapping, String> cmCategoryName;
-//        @FXML
-//        private TableColumn<CategoryMapping, String> cmDescPath;
-
         cmCode.setCellValueFactory(cellData -> new SimpleStringProperty( cellData.getValue().getCode()));
         cmName.setCellValueFactory(cellData -> new SimpleStringProperty( cellData.getValue().getName()));
         cmCategoryCode.setCellValueFactory(cellData -> new SimpleStringProperty( cellData.getValue().getCategoryCode()));
@@ -81,6 +68,9 @@ public class FXMLSettingController {
         }
 
         cateMapping.setItems(FXCollections.observableArrayList(categoryMappings));
+
+
+
         // 类目 ----------
 
         // Initialize the person table with the two columns.
@@ -185,6 +175,52 @@ public class FXMLSettingController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+    }
+
+    /**
+     * 自动匹配类目
+     * @param actionEvent
+     */
+    public void handleAutoMappingAction(ActionEvent actionEvent) {
+
+
+        List<Category> categories = null;
+        try {
+            categories = SQLExecutor.executeQueryBeanList("select * from CATEGORY", Category.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            categories = Collections.EMPTY_LIST;
+        }
+
+
+        for (CategoryMapping categoryMapping : cateMapping.getItems()) {
+            String cateName = categoryMapping.getName();
+
+            for (Category category : categories) {
+                if ( category.getCategoryName().contains(cateName) || cateName.contains(category.getCategoryName()) || category.getDescPath().contains(cateName)  ) {
+                    categoryMapping.setCategoryCode(category.getCategoryCode());
+                    categoryMapping.setCategoryName(category.getCategoryName());
+                    categoryMapping.setDescPath(category.getDescPath());
+                    try {
+                        SQLExecutor.update(categoryMapping);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    continue;
+                }
+            }
+
+        }
+
+        initialize();
+    }
+
+    /**
+     * 类目匹配修改
+     * @param actionEvent
+     */
+    public void handleCateMappingAction(ActionEvent actionEvent) {
 
     }
 }

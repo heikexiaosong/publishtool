@@ -10,17 +10,23 @@
             <content>
                 <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                     <children>
-                        <SplitPane dividerPositions="0.29797979797979796" layoutX="153.0" layoutY="70.0" prefHeight="300.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <SplitPane dividerPositions="0.8" layoutX="153.0" layoutY="70.0" prefHeight="300.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                             <items>
-                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="400.0">
                                     <children>
-                                        <TableView fx:id="cateMapping" layoutX="-12.0" layoutY="49.0" prefHeight="298.0" prefWidth="175.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                        <ButtonBar prefHeight="30.0" prefWidth="464.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                            <buttons>
+                                                <Button onAction="#handleAutoMappingAction" mnemonicParsing="false" text="自动映射" />
+                                                <Button onAction="#handleCateMappingAction" mnemonicParsing="false" text="映射设置" />
+                                            </buttons>
+                                        </ButtonBar>
+                                        <TableView fx:id="cateMapping" editable="true" layoutX="-12.0" layoutY="49.0" prefHeight="298.0" prefWidth="175.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="30.0">
                                             <columns>
-                                                <TableColumn fx:id="cmCode" prefWidth="75.0" text="固安捷类目编码" />
-                                                <TableColumn fx:id="cmName" prefWidth="75.0" text="固安捷类目名称" />
-                                                <TableColumn fx:id="cmCategoryCode" prefWidth="75.0" text="固安捷类目名称" />
-                                                <TableColumn fx:id="cmCategoryName" prefWidth="75.0" text="苏宁类目名称" />
-                                                <TableColumn fx:id="cmDescPath" prefWidth="75.0" text="苏宁目录描述" />
+                                                <TableColumn fx:id="cmCode" prefWidth="100.0" text="固安捷类目编码" />
+                                                <TableColumn fx:id="cmName" prefWidth="100.0" text="固安捷类目" />
+                                                <TableColumn fx:id="cmCategoryCode" prefWidth="100.0" text="苏宁类目编码" />
+                                                <TableColumn fx:id="cmCategoryName" prefWidth="100.0" text="苏宁类目名称" />
+                                                <TableColumn fx:id="cmDescPath" prefWidth="200.0" text="苏宁目录描述" />
                                             </columns>
                                             <columnResizePolicy>
                                                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
@@ -46,12 +52,6 @@
                                                 </GridPane>
                                             </content>
                                         </ScrollPane>
-                                        <ButtonBar layoutX="54.0" layoutY="250.0" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0">
-                                            <buttons>
-                                                <Button mnemonicParsing="false" text="清空" />
-                                                <Button mnemonicParsing="false" text="保存" />
-                                            </buttons>
-                                        </ButtonBar>
                                     </children>
                                 </AnchorPane>
                             </items>
