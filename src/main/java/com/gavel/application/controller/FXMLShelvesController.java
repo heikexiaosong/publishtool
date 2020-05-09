@@ -1,6 +1,7 @@
 package com.gavel.application.controller;
 
 import com.gavel.ProductShelves;
+import com.gavel.application.DataPagination;
 import com.gavel.application.MainApp;
 import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.database.SQLExecutor;
@@ -9,15 +10,13 @@ import com.gavel.entity.ShelvesItem;
 import com.gavel.entity.ShelvesTask;
 import com.gavel.utils.MD5Utils;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.Pagination;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
@@ -52,7 +51,7 @@ public class FXMLShelvesController {
 
     // 产品SKU列表
     @FXML
-    private TableView<ShelvesItem> skuList;
+    private TableView<ShelvesItem> itemList;
     @FXML
     private TableColumn<ShelvesItem, Integer> xhCol;
     @FXML
@@ -73,6 +72,15 @@ public class FXMLShelvesController {
     private TableColumn<ShelvesItem, String> msgCol;
     @FXML
     private TableColumn<ShelvesItem, String> updatetimeCol;
+
+    @FXML
+    private CheckBox curPage;
+
+    @FXML
+    private CheckBox allPage;
+
+    @FXML
+    private Label selectedNum;
 
     @FXML
     private Pagination pagination;
@@ -110,11 +118,10 @@ public class FXMLShelvesController {
 
     private void showShelvesDetails(ShelvesTask newValue) {
 
-        skuList.getItems().clear();
+        itemList.setItems(FXCollections.observableArrayList());
         if ( newValue==null ) {
             return;
         }
-
 
         idField.setText(newValue.getId());
         titleField.setText(newValue.getTitle());
@@ -130,11 +137,12 @@ public class FXMLShelvesController {
             e.printStackTrace();
         }
 
-        skuList.getItems().addAll(items);
-
-        pagination.setPageCount(1);
-
-        skuList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, _newValue) -> System.out.println(_newValue.getItemCode()));
+        DataPagination dataPagination = new DataPagination(items, 30);
+        pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
+        pagination.setPageFactory(pageIndex -> {
+            itemList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
+            return itemList;
+        });
 
     }
 
@@ -217,7 +225,7 @@ public class FXMLShelvesController {
                 item.setTaskid(taskSelected.getId());
                 try {
                     SQLExecutor.insert(item);
-                    skuList.getItems().add(item);
+                    itemList.getItems().add(item);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -263,12 +271,12 @@ public class FXMLShelvesController {
     public void handleShelvesAction(ActionEvent actionEvent) {
         // TODO 上架
 
-        ObservableList<ShelvesItem> items = skuList.getItems();
+        ObservableList<ShelvesItem> items = itemList.getItems();
         if ( items==null || items.size()==0 ) {
             return;
         }
 
-        for (ShelvesItem shelvesItem : skuList.getItems()) {
+        for (ShelvesItem shelvesItem : itemList.getItems()) {
 
             String code = shelvesItem.getItemCode();
             String suningBrand = "04XT";
@@ -301,21 +309,19 @@ public class FXMLShelvesController {
      */
     public void handleEditSkuPerson(ActionEvent actionEvent) {
 
-       String  taskid =  idField.getText();
-
         EditTask editTask = new EditTask();
 
         boolean okClicked = shelvesItemEditDialog(editTask);
         if (okClicked) {
-            ObservableList<ShelvesItem> items = skuList.getItems();
+            ObservableList<ShelvesItem> items = itemList.getItems();
             if ( items!=null && items.size() > 0 ) {
                 for (ShelvesItem item : items) {
                     if ( editTask.getPrefix()!=null && editTask.getPrefix().trim().length()>0 ) {
-                        item.setCmTitle( editTask.getPrefix().trim() + item.getCmTitle() );
+                        item.setCmTitle( editTask.getPrefix().trim() + item.getCmTitle().trim() );
                     }
 
                     if ( editTask.getSuffix()!=null && editTask.getSuffix().trim().length()>0 ) {
-                        item.setCmTitle( editTask.getSuffix().trim() + item.getCmTitle() );
+                        item.setCmTitle(item.getCmTitle().trim() + editTask.getSuffix().trim() );
                     }
 
                     if ( editTask.getSrc()!=null && editTask.getSrc().trim().length()>0 ) {
@@ -331,7 +337,8 @@ public class FXMLShelvesController {
                         e.printStackTrace();
                     }
                 }
-                skuList.setItems(items);
+                itemList.setItems(items);
+                itemList.refresh();
             }
 
         }
@@ -385,7 +392,7 @@ public class FXMLShelvesController {
                 item.setTaskid(taskSelected.getId());
                 try {
                     SQLExecutor.insert(item);
-                    skuList.getItems().add(item);
+                    itemList.getItems().add(item);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -423,6 +430,32 @@ public class FXMLShelvesController {
         }
 
         return false;
+    }
+
+    /**
+     * 当前页选择改变
+     * @param actionEvent
+     */
+    public void handleCurPageAction(ActionEvent actionEvent) {
+        allPage.setSelected(false);
+        if ( curPage.isSelected() ) {
+            selectedNum.setText(String.valueOf(itemList.getItems().size()));
+        } else {
+            selectedNum.setText("0");
+        }
+    }
+
+    /**
+     * 所有页选择改变
+     * @param actionEvent
+     */
+    public void handleALlPageAction(ActionEvent actionEvent) {
+        curPage.setSelected(false);
+        if ( allPage.isSelected() ) {
+            selectedNum.setText(String.valueOf(itemList.getItems().size()));
+        } else {
+            selectedNum.setText("0");
+        }
     }
 
     public static class EditTask {
