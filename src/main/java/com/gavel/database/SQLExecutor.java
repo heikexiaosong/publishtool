@@ -2,7 +2,8 @@ package com.gavel.database;
 
 import com.gavel.annotation.FieldMeta;
 import com.gavel.annotation.TableMeta;
-import com.gavel.entity.*;
+import com.gavel.entity.BrandMapping;
+import com.gavel.entity.GraingerBrand;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
@@ -271,25 +272,25 @@ public class SQLExecutor {
 
 
     public static void main(String[] args) throws Exception {
-        createTable(Brand.class);
-        createTable(Category.class);
+//        createTable(Brand.class);
+//        createTable(Category.class);
         createTable(GraingerBrand.class);
-        createTable(GraingerCategory.class);
-        createTable(Product.class);
-        createTable(Itemparameter.class);
-        createTable(HtmlCache.class);
-
-        createTable(ImageCache.class);
-
+//        createTable(GraingerCategory.class);
+//        createTable(Product.class);
+//        createTable(Itemparameter.class);
+//        createTable(HtmlCache.class);
+//
+//        createTable(ImageCache.class);
+//
         createTable(BrandMapping.class);
-        createTable(CategoryMapping.class);
-
-        createTable(Proxy.class);
-        createTable(Task.class);
-        createTable(SearchItem.class);
-        createTable(Item.class);
-
-        createTable(ShelvesTask.class);
-        createTable(ShelvesItem.class);
+//        createTable(CategoryMapping.class);
+//
+//        createTable(Proxy.class);
+//        createTable(Task.class);
+//        createTable(SearchItem.class);
+//        createTable(Item.class);
+//
+//        createTable(ShelvesTask.class);
+//        createTable(ShelvesItem.class);
     }
 }

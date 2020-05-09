@@ -2,6 +2,7 @@ package com.gavel.application.controller;
 
 import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
+import com.gavel.entity.BrandMapping;
 import com.gavel.entity.Category;
 import com.gavel.entity.CategoryMapping;
 import com.gavel.entity.Itemparameter;
@@ -65,6 +66,25 @@ public class FXMLSettingController {
 
     private List<Itemparameter> itemparameters;
 
+    // 品牌
+    @FXML
+    private TableView<BrandMapping> brandMapping;
+    @FXML
+    private TableColumn<BrandMapping, String> graingercode;
+    @FXML
+    private TableColumn<BrandMapping, String> name1;
+    @FXML
+    private TableColumn<BrandMapping, String> name2;
+    @FXML
+    private TableColumn<BrandMapping, String> replacename_zh;
+    @FXML
+    private TableColumn<BrandMapping, String> replacename_en;
+    @FXML
+    private TableColumn<BrandMapping, String> brand;
+    @FXML
+    private TableColumn<BrandMapping, String> brandname;
+
+
     @FXML
     private void initialize() {
 
@@ -109,6 +129,28 @@ public class FXMLSettingController {
         }
 
         cateParams.setItems(FXCollections.observableArrayList(categories));
+
+
+
+        // 品牌
+        graingercode.setCellValueFactory(cellData -> new SimpleStringProperty( cellData.getValue().getGraingercode()));
+        name1.setCellValueFactory(cellData -> new SimpleStringProperty( cellData.getValue().getName1()));
+        name2.setCellValueFactory(cellData -> new SimpleStringProperty( cellData.getValue().getName2()));
+        replacename_zh.setCellValueFactory(cellData -> new SimpleStringProperty( cellData.getValue().getReplacename_zh()));
+        replacename_en.setCellValueFactory(cellData -> new SimpleStringProperty( cellData.getValue().getReplacename_en()));
+        brand.setCellValueFactory(cellData -> new SimpleStringProperty( cellData.getValue().getBrand()));
+        brandname.setCellValueFactory(cellData -> new SimpleStringProperty( cellData.getValue().getBrandname()));
+
+
+        List<BrandMapping> brandMappings = null;
+        try {
+            brandMappings = SQLExecutor.executeQueryBeanList("select * from BRANDMAPPING where TASKID = ? ", BrandMapping.class, "0");
+        } catch (Exception e) {
+            e.printStackTrace();
+            brandMappings = Collections.EMPTY_LIST;
+        }
+
+        brandMapping.setItems(FXCollections.observableArrayList(brandMappings));
 
     }
 

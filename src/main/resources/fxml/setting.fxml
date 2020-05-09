@@ -93,11 +93,13 @@
                             </ButtonBar>
                             <TableView fx:id="brandMapping" editable="true" layoutX="-12.0" layoutY="49.0" prefHeight="298.0" prefWidth="175.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="30.0">
                                 <columns>
-                                    <TableColumn fx:id="cmCode" prefWidth="100.0" text="固安捷类目编码" />
-                                    <TableColumn fx:id="cmName" prefWidth="100.0" text="固安捷类目" />
-                                    <TableColumn fx:id="cmCategoryCode" prefWidth="100.0" text="苏宁类目编码" />
-                                    <TableColumn fx:id="cmCategoryName" prefWidth="100.0" text="苏宁类目名称" />
-                                    <TableColumn fx:id="cmDescPath" prefWidth="200.0" text="苏宁目录描述" />
+                                    <TableColumn fx:id="graingercode" prefWidth="120.0" text="固安捷品牌编码" />
+                                    <TableColumn fx:id="name1" prefWidth="160.0" text="固安捷品牌中文品牌" />
+                                    <TableColumn fx:id="name2" prefWidth="160.0" text="固安捷品牌英文品牌" />
+                                    <TableColumn fx:id="replacename_zh" prefWidth="160.0" text="替换中文品牌" />
+                                    <TableColumn fx:id="replacename_en" prefWidth="160.0" text="替换英文品牌" />
+                                    <TableColumn fx:id="brand" prefWidth="160.0" text="苏宁品牌编码" />
+                                    <TableColumn fx:id="brandname" prefWidth="160.0" text="苏宁品牌" />
                                 </columns>
                             </TableView>
                         </children>
