@@ -176,7 +176,7 @@ public class FXMLSettingController {
 
                            params.add(parOptionComboBox, 1, i1);
 
-                           if ( itemparameter.getParam()!=null && itemparameter.getParam().trim().length() > 0 ) {
+                          if ( itemparameter.getParam()!=null && itemparameter.getParam().trim().length() > 0 ) {
 
                               String defaultValue = itemparameter.getParam();
                                Itemparameter.ParOption value = itemparameter.getParOption().get(0);
@@ -332,6 +332,22 @@ public class FXMLSettingController {
             }
         }
 
+
+    }
+
+    /**
+     * 品牌自动匹配
+     * @param actionEvent
+     */
+    public void handleBrandAutoMappingAction(ActionEvent actionEvent) {
+
+    }
+
+    /**
+     * 品牌映射
+     * @param actionEvent
+     */
+    public void handleBrandCateMappingAction(ActionEvent actionEvent) {
 
     }
 }

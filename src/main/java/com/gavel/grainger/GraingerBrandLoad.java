@@ -1,13 +1,13 @@
 package com.gavel.grainger;
 
 import com.gavel.HttpUtils;
-import com.gavel.database.DataSourceHolder;
+import com.gavel.database.SQLExecutor;
+import com.gavel.entity.GraingerBrand;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,36 +70,12 @@ public class GraingerBrandLoad {
 
 
         for (GraingerBrand graingerBrand : graingerBrandList) {
-            System.out.println(graingerBrand);
+            try {
+                SQLExecutor.insert(graingerBrand);
+            } catch (Exception e) {
+                System.out.println(graingerBrand.getName1() + ": " + e.getMessage());
+            }
         }
-
-
-        Connection conn = DataSourceHolder.dataSource().getConnection();
-
-        PreparedStatement stmt = conn.prepareStatement("INSERT INTO GRAINGERBRAND VALUES(?, ?, ?, ?, ?)");
-
-
-        for (GraingerBrand graingerBrand : graingerBrandList) {
-            System.out.println(graingerBrand);
-
-            //新增
-            stmt.setObject(1, graingerBrand.getCode());
-            stmt.setObject(2, graingerBrand.getName1());
-            stmt.setObject(3, graingerBrand.getName2());
-            stmt.setObject(4, graingerBrand.getLogo());
-            stmt.setObject(5, graingerBrand.getUrl());
-
-            stmt.addBatch();
-        }
-
-
-
-        stmt.executeBatch();
-
-        //释放资源
-        stmt.close();
-        //关闭连接
-        conn.close();
 
 
     }

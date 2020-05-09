@@ -1,14 +1,10 @@
 package com.gavel.grainger;
 
 import com.gavel.HttpUtils;
-import com.gavel.database.DataSourceHolder;
+import com.gavel.entity.GraingerBrand;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
