@@ -8,6 +8,16 @@ import java.util.Date;
 @TableMeta(name = "SHELVESITEM", title = "上架产品")
 public class ShelvesItem {
 
+    private Boolean selected = Boolean.FALSE;
+
+    public Boolean getSelected() {
+        return selected;
+    }
+
+    public void setSelected(Boolean selected) {
+        this.selected = selected;
+    }
+
     @FieldMeta(name = "ID", title = "ID", length = 32, primary = true)
     private String id;
 

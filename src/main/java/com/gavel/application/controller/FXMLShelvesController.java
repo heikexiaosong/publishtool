@@ -17,6 +17,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
@@ -53,6 +54,8 @@ public class FXMLShelvesController {
     @FXML
     private TableView<ShelvesItem> itemList;
     @FXML
+    private TableColumn<ShelvesItem, Boolean> select;
+    @FXML
     private TableColumn<ShelvesItem, Integer> xhCol;
     @FXML
     private TableColumn<ShelvesItem, String> codeCol;
@@ -88,7 +91,24 @@ public class FXMLShelvesController {
     @FXML
     private void initialize() {
 
-
+        //初始化所有checkbox复选框
+        select.setCellValueFactory(new PropertyValueFactory<ShelvesItem,Boolean>("selected"));
+        select.setCellFactory( col -> {
+            CheckBoxTableCell<ShelvesItem, Boolean> cell = new CheckBoxTableCell<ShelvesItem, Boolean>(){
+                @Override
+                public void updateItem(Boolean item, boolean empty) {
+                    super.updateItem(item, empty);
+                    this.setText(null);
+                    this.setGraphic(null);
+                    if (!empty) {
+                        int rowIndex = this.getIndex();
+//                        double d = tbView.getItems().get(rowIndex).getWage();
+//                        this.setText(StringUtils.formatNumber(2, d));
+                    }
+                }
+            };
+            return cell;
+        } );
 
         xhCol.setCellValueFactory(new PropertyValueFactory<>("xh"));
         cmTitleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCmTitle()));
