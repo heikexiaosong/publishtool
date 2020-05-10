@@ -280,11 +280,11 @@ public class FXMLSettingController {
 
             for (Category category : categories) {
                 if ( category.getCategoryName().contains(cateName) || cateName.contains(category.getCategoryName()) || category.getDescPath().contains(cateName)  ) {
-                    categoryMapping.setCategoryCode(category.getCategoryCode());
-                    categoryMapping.setCategoryName(category.getCategoryName());
-                    categoryMapping.setDescPath(category.getDescPath());
                     try {
                         SQLExecutor.update(categoryMapping);
+                        categoryMapping.setCategoryCode(category.getCategoryCode());
+                        categoryMapping.setCategoryName(category.getCategoryName());
+                        categoryMapping.setDescPath(category.getDescPath());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -294,7 +294,8 @@ public class FXMLSettingController {
 
         }
 
-        initialize();
+
+        cateMapping.refresh();
     }
 
     /**
@@ -313,14 +314,15 @@ public class FXMLSettingController {
         if (okClicked) {
             //mainApp.getPersonData().add(tempPerson);
             try {
+                SQLExecutor.update(categoryMapping);
                 categoryMapping.setCategoryCode(mappingCate.getCategoryCode());
                 categoryMapping.setCategoryName(mappingCate.getCategoryName());
                 categoryMapping.setDescPath(mappingCate.getDescPath());
-                SQLExecutor.update(categoryMapping);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        cateMapping.refresh();
     }
 
     private boolean showCategoryMappingEditDialog(Category mappingCate) {
@@ -475,5 +477,57 @@ public class FXMLSettingController {
             return false;
         }
 
+    }
+
+    /**
+     * 品牌替换
+     * @param actionEvent
+     */
+    public void handleBrandReplaceMappingAction(ActionEvent actionEvent) {
+        BrandMapping _brandMapping = brandMapping.getSelectionModel().getSelectedItem();
+        if ( _brandMapping==null ) {
+            return;
+        }
+
+        boolean okClicked = showBrandReplaceEditDialog(_brandMapping);
+        if (okClicked) {
+            try {
+                SQLExecutor.update(_brandMapping);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                brandMapping.refresh();
+            }
+        }
+    }
+
+    private boolean showBrandReplaceEditDialog(BrandMapping _brandMapping) {
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/SuningBrandReplaceDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("上架类目映射");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(stage());
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            FXMLSuningBrandReplaceController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            controller.bind(_brandMapping);
+
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

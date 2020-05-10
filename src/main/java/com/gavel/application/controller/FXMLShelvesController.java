@@ -89,6 +89,8 @@ public class FXMLShelvesController {
     @FXML
     private Pagination pagination;
 
+    private List<ShelvesItem> items = new ArrayList<>();
+
     @FXML
     private void initialize() {
 
@@ -137,11 +139,15 @@ public class FXMLShelvesController {
             return;
         }
 
+        allPage.setSelected(false);
+        curPage.setSelected(false);
+        selectedNum.setText("0");
+
         idField.setText(newValue.getId());
         titleField.setText(newValue.getTitle());
         remarkField.setText(newValue.getRemark());
 
-        List<ShelvesItem> items = new ArrayList<>();
+        items.clear();
         try {
             List<ShelvesItem> temp = SQLExecutor.executeQueryBeanList("select * from SHELVESITEM where TASKID = ? ", ShelvesItem.class, newValue.getId());
             if ( temp!=null ) {
@@ -453,6 +459,10 @@ public class FXMLShelvesController {
     public void handleCurPageAction(ActionEvent actionEvent) {
         allPage.setSelected(false);
 
+        for (ShelvesItem shelvesItem : items) {
+            shelvesItem.selectedProperty().setValue(allPage.isSelected());
+        }
+
         for (ShelvesItem shelvesItem : itemList.getItems()) {
             shelvesItem.selectedProperty().setValue(curPage.isSelected());
         }
@@ -470,11 +480,18 @@ public class FXMLShelvesController {
      */
     public void handleALlPageAction(ActionEvent actionEvent) {
         curPage.setSelected(false);
+
+        for (ShelvesItem shelvesItem : items) {
+            shelvesItem.selectedProperty().setValue(allPage.isSelected());
+        }
+
         if ( allPage.isSelected() ) {
-            selectedNum.setText(String.valueOf(itemList.getItems().size()));
+            selectedNum.setText(String.valueOf(items.size()));
         } else {
             selectedNum.setText("0");
         }
+
+        itemList.refresh();
     }
 
     public static class EditTask {

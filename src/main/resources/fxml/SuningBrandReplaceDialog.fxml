@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane prefHeight="768.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLSuningBrandReplaceController">
+    <children>
+      <GridPane AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <Label alignment="CENTER_RIGHT" prefHeight="45.0" prefWidth="315.0" text="固安捷品牌" GridPane.rowIndex="3" />
+            <Label alignment="CENTER_RIGHT" prefHeight="58.0" prefWidth="315.0" text="品牌中文名" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+             <Label alignment="CENTER_RIGHT" prefHeight="58.0" prefWidth="315.0" text="品牌英文名" GridPane.columnIndex="4" GridPane.rowIndex="3" />
+             <Label alignment="CENTER_RIGHT" prefHeight="58.0" prefWidth="315.0" text="品牌中文名" GridPane.columnIndex="2" GridPane.rowIndex="6" />
+             <Label alignment="CENTER_RIGHT" prefHeight="58.0" prefWidth="315.0" text="品牌英文名" GridPane.columnIndex="4" GridPane.rowIndex="6" />
+            <TextField fx:id="srcCode" disable="true" editable="false" prefHeight="40.0" prefWidth="210.0" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+            <TextField fx:id="srcName1" disable="true" editable="false" prefHeight="57.0" prefWidth="210.0" GridPane.columnIndex="3" GridPane.rowIndex="3" />
+             <TextField fx:id="srcName2" disable="true" editable="false" prefHeight="40.0" prefWidth="210.0" GridPane.columnIndex="5" GridPane.rowIndex="3" />
+             <TextField fx:id="destName1" prefHeight="40.0" prefWidth="210.0" GridPane.columnIndex="3" GridPane.rowIndex="6" />
+             <TextField fx:id="destName2" prefHeight="57.0" prefWidth="210.0" GridPane.columnIndex="5" GridPane.rowIndex="6" />
+            <Label alignment="CENTER_RIGHT" prefHeight="76.0" prefWidth="210.0" text="替换成" textFill="#f50000" GridPane.rowIndex="6" />
+         </children>
+      </GridPane>
+
+        <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
+            <buttons>
+                <Button mnemonicParsing="false" onAction="#handleCancel" text="取 消" />
+                <Button mnemonicParsing="false" onAction="#handleOk" text="确 定" />
+            </buttons>
+        </ButtonBar>
+    </children>
+</AnchorPane>
