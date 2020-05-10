@@ -2,10 +2,7 @@ package com.gavel.application.controller;
 
 import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.BrandMapping;
-import com.gavel.entity.Category;
-import com.gavel.entity.CategoryMapping;
-import com.gavel.entity.Itemparameter;
+import com.gavel.entity.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -383,6 +380,43 @@ public class FXMLSettingController {
      */
     public void handleBrandAutoMappingAction(ActionEvent actionEvent) {
 
+
+        List<Brand> brands = null;
+        try {
+            brands = SQLExecutor.executeQueryBeanList("select * from BRAND", Brand.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            brands = Collections.EMPTY_LIST;
+        }
+
+
+        for (BrandMapping brandMapping : brandMapping.getItems()) {
+            String name1 = brandMapping.getName1();
+            String name2 = brandMapping.getName2();
+
+            String brandName = name1.trim() + "(" + name2 +")";
+            if ( name2.equalsIgnoreCase(name1) ) {
+                brandName = name1.trim();
+            }
+
+
+            for (Brand brand : brands) {
+                if ( brandName.equalsIgnoreCase(brand.getName())  ) {
+                    try {
+                        SQLExecutor.update(brandMapping);
+                        brandMapping.setBrand(brand.getCode());
+                        brandMapping.setBrandname(brand.getName());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                }
+            }
+
+
+        }
+
+        brandMapping.refresh();
     }
 
     /**
@@ -390,6 +424,56 @@ public class FXMLSettingController {
      * @param actionEvent
      */
     public void handleBrandCateMappingAction(ActionEvent actionEvent) {
+
+        BrandMapping _brandMapping = brandMapping.getSelectionModel().getSelectedItem();
+        if ( _brandMapping==null ) {
+            return;
+        }
+
+        Brand mappingBrand = new Brand();
+        boolean okClicked = showBrandMappingEditDialog(mappingBrand);
+        if (okClicked) {
+            //mainApp.getPersonData().add(tempPerson);
+            try {
+                SQLExecutor.update(_brandMapping);
+                _brandMapping.setBrand(mappingBrand.getCode());
+                _brandMapping.setBrandname(mappingBrand.getName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                brandMapping.refresh();
+            }
+        }
+    }
+
+    private boolean showBrandMappingEditDialog(Brand mappingBrand) {
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/SuningBrandSelectDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("上架类目映射");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(stage());
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            FXMLSuningBrandSelectedController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            controller.bind(mappingBrand);
+
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
 
     }
 }
