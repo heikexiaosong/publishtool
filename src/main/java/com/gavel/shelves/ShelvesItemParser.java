@@ -22,6 +22,11 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -124,6 +129,7 @@ public class ShelvesItemParser {
         String model = attrs.get(2).text();
         String number = attrs.get(3).text();
         String fahuori = attrs.get(4).text();
+        shelvesItem.setModel(model);
 
         System.out.println("制造商型号： " + model);
         System.out.println("包装内件数： " + number);
@@ -464,11 +470,59 @@ public class ShelvesItemParser {
                 System.out.println(src);
             }
 
-            Map<String, String> imageMap = new HashMap<>();
+            if ( picUrls==null || picUrls.size() ==0 ) {
+                return images;
+            }
+
             for (String picUrl : picUrls) {
                 String picSuningUrl = uploadImageWithoutDownload(picUrl);
                 if ( picSuningUrl!=null ) {
                     images.add(picSuningUrl);
+                }
+            }
+
+            while ( images.size() < 5 ) {
+                String id = MD5Utils.md5Hex(picUrls.get(0).trim());
+                ImageCache image =  SQLExecutor.executeQueryBean("select * from image  where id = ? ", ImageCache.class, id);
+
+                if ( image==null || image.getFilepath()==null || image.getFilepath().trim().length()==0 ) {
+                    continue;
+                }
+
+                String localFilePath = ImageLoader.PICS_COMPLETE_DIR + File.separator + image.getFilepath();
+
+                System.out.println(localFilePath);
+                Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
+                Imgproc.putText(src,String.valueOf(images.size()), new Point(60,60),Imgproc.FONT_HERSHEY_SCRIPT_SIMPLEX, 1.0, new Scalar(255, 255, 255),1,Imgproc.LINE_AA,false);
+
+
+                String target = ImageLoader.PICS_TEMP_DIR + File.separator + image.getFilepath();
+
+                File tempfile = new File(target);
+                if ( !tempfile.getParentFile().exists() ) {
+                    tempfile.getParentFile().mkdirs();
+                }
+
+                Imgcodecs.imwrite(target, src);
+
+                String picUrl = null;
+                {
+                    NPicAddRequest request = new NPicAddRequest();
+                    request.setPicFileData(target);
+                    try {
+                        NPicAddResponse response = client.excuteMultiPart(request);
+                        System.out.println("ApplyAddRequest :" + response.getBody());
+                        SuningResponse.SnError error = response.getSnerror();
+                        if ( error!=null ) {
+                            System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                        } else {
+                            System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
+                            picUrl = response.getSnbody().getAddNPic().getPicUrl();
+                            images.add(picUrl);
+                        }
+                    } catch (SuningApiException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         } catch (Exception e) {

@@ -8,6 +8,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import org.opencv.core.Core;
 
 import java.io.IOException;
 
@@ -21,6 +22,9 @@ public class MainApp extends Application {
      */
     private ObservableList<Person> personData = FXCollections.observableArrayList();
 
+    static {
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    }
     /**
      * Constructor
      */
