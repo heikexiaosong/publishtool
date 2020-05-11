@@ -38,6 +38,79 @@ public class ShelvesItemParser {
 
     private  static  final DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET, "json");
 
+    /**
+     *
+     *  合成新标题
+     *  *
+     * @param title
+     * @param branda
+     * @param brandb
+     * @param model
+     * @param number
+     * @return
+     */
+    public static String title(String title, String branda, String brandb, String model, String number){
+
+
+        String brandc = brandb;
+        if ( brandb!=null ){
+            brandc = brandb.replace(branda, "").trim();
+        }
+
+        title = title.trim();
+        if ( title.startsWith(brandb.trim()) ) {
+            title = title.replace(brandb.trim(), "").trim();
+        }
+        if ( title.startsWith(brandc.trim()) ) {
+            title = title.replace(brandc.trim(), "").trim();
+        }
+        if ( title.startsWith(branda.trim()) ) {
+            title = title.replace(branda.trim(), "").trim();
+        }
+
+        if ( title.startsWith(model.trim()) ) {
+            title = title.replace(model.trim(), "").trim();
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(brandb);
+
+        if ( builder.length() + model.length() + title.length() < 60 ) {
+            builder.append(" ").append(model);
+        }
+        builder.append(" ").append(title);
+
+        boolean preBlank = true;
+        for (int i = 0; i < builder.length(); i++) {
+            char c = builder.charAt(i);
+            if ( c!=' '){
+                preBlank=false;
+                continue;
+            }
+            if ( preBlank ){
+                builder.deleteCharAt(i);
+                i--;
+            }
+            preBlank = true;
+        }
+
+
+        if ( builder.length() < 50 && number!=null && number.trim().length()>0 ) {
+            builder.append("(包装数量 ").append(number).append(")");
+        }
+
+        while ( builder.length() > 60 ) {
+            for (int i = 0; i < builder.length(); i++) {
+                char c = builder.charAt(i);
+                if ( c==' ' && i > 0){
+                    builder = builder.delete(0, i);
+                    break;
+                }
+            }
+        }
+
+        return builder.toString();
+    }
 
     public static ShelvesItem parse(Item item) throws Exception {
 
@@ -89,6 +162,7 @@ public class ShelvesItemParser {
         System.out.println("标题: " + title.text());
         shelvesItem.setCmTitle(title.text());
 
+
         Element sellPoint = proDetailCon.select(" > h4 span").last();
         sellPoint.remove();
         shelvesItem.setSellingPoints(sellPoint.text());
@@ -136,6 +210,9 @@ public class ShelvesItemParser {
         System.out.println("预计发货日： " + fahuori);
 
 
+        String _title = title(title.text(), brandCn.text(), brandEle.text(), model, number);
+        shelvesItem.setCmTitle(_title);
+
 
         // 规格数据表格
         Element tableDiv = doc.selectFirst("div.tableDiv");
@@ -173,7 +250,7 @@ public class ShelvesItemParser {
         if ( trskus.size() > 1 ) {
             for (Element trsku : trskus) {
                 System.out.println(trsku);
-                Element selected = trsku.selectFirst("td > a > span.dweight");
+                Element selected = trsku.selectFirst("td  span.dweight");
                 if ( selected!=null ) {
 
                     Elements tds = trsku.children();
@@ -532,7 +609,7 @@ public class ShelvesItemParser {
     }
 
     public static void main(String[] args) throws Exception {
-        Item item = SQLExecutor.executeQueryBean("select * from ITEM where CODE = ?", Item.class, "1K9303");
+        Item item = SQLExecutor.executeQueryBean("select * from ITEM where CODE = ?", Item.class, "10D2389");
         ShelvesItem shelvesItem = parse(item);
         System.out.println(shelvesItem);
     }
