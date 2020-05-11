@@ -1,6 +1,7 @@
 package com.gavel.application.controller;
 
 import com.gavel.application.DataPagination;
+import com.gavel.application.DateUtil;
 import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.ShelvesItem;
@@ -111,8 +112,7 @@ public class FXMLShelvesController {
         categorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMappingcategoryname()));
         statusCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStatus()));
         msgCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMsg()));
-        updatetimeCol.setCellValueFactory(new PropertyValueFactory<>("updatetime"));
-
+        updatetimeCol.setCellValueFactory(cellData -> new SimpleStringProperty(DateUtil.format(cellData.getValue().getUpdatetime())));
 
 
         title.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));

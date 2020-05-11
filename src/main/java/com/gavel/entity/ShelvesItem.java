@@ -32,6 +32,9 @@ public class ShelvesItem {
     @FieldMeta(name = "ITEMCODE", title = "供应商商品编码", length = 32)
     private String itemCode;
 
+    @FieldMeta(name = "MODEL", title = "制造商型号", length = 100)
+    private String model;
+
     @FieldMeta(name = "PRODUCTNAME", title = "商品名称", length = 128)
     private String productName;
 
@@ -108,6 +111,14 @@ public class ShelvesItem {
 
     public void setItemCode(String itemCode) {
         this.itemCode = itemCode;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
     }
 
     public String getProductName() {

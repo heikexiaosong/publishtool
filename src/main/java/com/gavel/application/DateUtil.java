@@ -1,8 +1,9 @@
 package com.gavel.application;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Helper functions for handling dates.
@@ -12,11 +13,10 @@ import java.time.format.DateTimeParseException;
 public class DateUtil {
 
     /** The date pattern that is used for conversion. Change as you wish. */
-    private static final String DATE_PATTERN = "dd.MM.yyyy";
+    private static final String DATE_PATTERN = "yyyy-MM-dd HH:mm:ss";
 
     /** The date formatter. */
-    private static final DateTimeFormatter DATE_FORMATTER = 
-            DateTimeFormatter.ofPattern(DATE_PATTERN);
+    private static final DateFormat DATE_FORMATTER = new SimpleDateFormat(DATE_PATTERN);
 
     /**
      * Returns the given date as a well formatted String. The above defined 
@@ -25,7 +25,7 @@ public class DateUtil {
      * @param date the date to be returned as a string
      * @return formatted string
      */
-    public static String format(LocalDate date) {
+    public static String format(Date date) {
         if (date == null) {
             return null;
         }
@@ -34,17 +34,18 @@ public class DateUtil {
 
     /**
      * Converts a String in the format of the defined {@link DateUtil#DATE_PATTERN} 
-     * to a {@link LocalDate} object.
+     * to a {@link Date} object.
      * 
      * Returns null if the String could not be converted.
      * 
      * @param dateString the date as String
      * @return the date object or null if it could not be converted
      */
-    public static LocalDate parse(String dateString) {
+    public static Date parse(String dateString) {
         try {
-            return DATE_FORMATTER.parse(dateString, LocalDate::from);
-        } catch (DateTimeParseException e) {
+            return DATE_FORMATTER.parse(dateString);
+        }  catch (ParseException e) {
+            e.printStackTrace();
             return null;
         }
     }

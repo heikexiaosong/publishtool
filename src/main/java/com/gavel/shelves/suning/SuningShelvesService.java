@@ -63,9 +63,20 @@ public class SuningShelvesService implements ShelvesService {
         for (ParameterLoader.Parameter parameter : parameters) {
             ApplyAddRequest.Pars pars= new ApplyAddRequest.Pars();
             pars.setParCode(parameter.code());
-            pars.setParValue(parameter.value());
+            System.out.println(parameter.code());
+            if ( "cmModel".equalsIgnoreCase(parameter.code())) {
+                pars.setParValue(item.getModel());
+            } else {
+                pars.setParValue(parameter.value());
+            }
+
             parsList.add(pars);
         }
+
+        for (ApplyAddRequest.Pars pars : parsList) {
+            System.out.println(pars.getParCode() + ": " + pars.getParValue());
+        }
+
         request.setPars(parsList);
 
 
