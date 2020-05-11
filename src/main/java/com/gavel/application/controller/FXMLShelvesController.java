@@ -1,13 +1,12 @@
 package com.gavel.application.controller;
 
-import com.gavel.ProductShelves;
 import com.gavel.application.DataPagination;
 import com.gavel.application.MainApp;
-import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.HtmlCache;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.entity.ShelvesTask;
+import com.gavel.shelves.ShelvesService;
+import com.gavel.shelves.suning.SuningShelvesService;
 import com.gavel.utils.MD5Utils;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -26,6 +25,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
@@ -296,28 +296,26 @@ public class FXMLShelvesController {
             return;
         }
 
+        ShelvesService shelvesService = new SuningShelvesService();
         for (ShelvesItem shelvesItem : itemList.getItems()) {
-
-            String code = shelvesItem.getItemCode();
-            String suningBrand = "04XT";
-            String suningCate = "R9002778";
-
-            HtmlCache htmlCache = null;
-            try {
-                htmlCache = HtmlPageLoader.getInstance().loadHtmlPage("https://www.grainger.cn/u-" + code + ".html", true);
-                if ( htmlCache==null || htmlCache.getHtml().trim().length() <=0 ) {
-                    System.out.println("Html 获取失败。。");
-                    continue;
+            if ( shelvesItem.isSelected() ) {
+                try {
+                    shelvesService.shelves(shelvesItem);
+                    shelvesItem.setStatus("上架成功");
+                } catch (Exception e){
+                    shelvesItem.setStatus("上架失败");
+                    shelvesItem.setMsg(e.getMessage());
                 }
 
-                ProductShelves.run(htmlCache, suningCate, suningBrand);
-            } catch (Exception e) {
-                e.printStackTrace();
+                shelvesItem.setUpdatetime(Calendar.getInstance().getTime());
+
+                try {
+                    SQLExecutor.update(shelvesItem);
+                    itemList.refresh();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-
-
-
-
         }
 
     }

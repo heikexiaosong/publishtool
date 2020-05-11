@@ -1,9 +1,9 @@
-import org.opencv.core.*;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-
-import java.util.ArrayList;
-import java.util.List;
 
 class opencv_version {
 
@@ -25,45 +25,23 @@ class opencv_version {
     }
 
 
-      Mat large = Imgcodecs.imread("D:\\pics\\src1.jpg", Imgcodecs.IMREAD_UNCHANGED);
+      Mat src = Imgcodecs.imread("D:\\pics\\1-2.jpg", Imgcodecs.IMREAD_UNCHANGED);
 
-      Mat small = Imgcodecs.imread("D:\\pics\\1-2.jpg", Imgcodecs.IMREAD_UNCHANGED);
-
-
+      Mat logo = Imgcodecs.imread("D:\\pics\\js.png", Imgcodecs.IMREAD_UNCHANGED);
 
 
-      Mat mat1_gray = new Mat();
-      Imgproc.cvtColor(large, mat1_gray, Imgproc.COLOR_BGR2GRAY);
-      Mat mat2_gray = new Mat();
-      Imgproc.cvtColor(small, mat2_gray, Imgproc.COLOR_BGR2GRAY);
+    Mat imgHSV = new Mat(logo.rows(), logo.cols(), CvType.CV_8UC3);
+    //RGB->HSV
+    Imgproc.cvtColor(logo, imgHSV, Imgproc.COLOR_BGR2GRAY);
+    Scalar minValues = new Scalar(0, 0, 0);
+    Scalar maxValues = new Scalar(180, 255, 46);
+    Mat mask = new Mat();
+    Core.inRange(imgHSV, minValues, maxValues, mask);
+    Mat blackImg = new Mat();
+    Core.bitwise_and(logo, imgHSV, blackImg);
 
 
-      Mat mat_result = new Mat();
-      Core.absdiff(mat1_gray, mat2_gray, mat_result);
-    //将灰度图按照阈值进行绝对值化
-    mat_result.convertTo(mat_result, CvType.CV_8UC1);
-    Imgcodecs.imwrite("D:\\pics\\res.png", mat_result);
-
-
-    List<MatOfPoint> mat2_list = new ArrayList<MatOfPoint>();
-    Mat mat2_hi = new Mat();
-    //寻找轮廓图
-    Imgproc.findContours(mat_result, mat2_list, mat2_hi, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE);
-    Mat mat_result1 = large;
-    Mat mat_result2 = small;
-    //使用红色标记不同点
-    System.out.println(mat2_list.size());
-    for (MatOfPoint matOfPoint : mat2_list)
-    {
-      Rect rect = Imgproc.boundingRect(matOfPoint);
-      Imgproc.rectangle(mat_result1, rect.tl(), rect.br(), new Scalar(0, 0, 255),2);
-      Imgproc.rectangle(mat_result2, rect.tl(), rect.br(), new Scalar(0, 0, 255),2);
-    }
-
-    Imgcodecs.imwrite("D:\\pics\\res_1.png", mat_result1);
-
-
-    Imgcodecs.imwrite("D:\\pics\\res_2.png", mat_result2);
+    Imgcodecs.imwrite("D:\\pics\\js_1.png", logo);
 
 
   }

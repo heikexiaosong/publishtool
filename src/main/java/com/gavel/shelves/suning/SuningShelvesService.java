@@ -30,10 +30,21 @@ public class SuningShelvesService implements ShelvesService {
            throw new Exception("Item 不能为空");
         }
 
+        if ( item.getMappingcategorycode()==null || item.getMappingcategorycode().trim().length()==0 ) {
+            throw new Exception("[Item: " + item.getItemCode() + "]上架类目没有设置");
+        }
+
+        if ( item.getMappingbrandcode()==null || item.getMappingbrandcode().trim().length()==0 ) {
+            throw new Exception("[Item: " + item.getItemCode() + "]上架品牌没有设置");
+        }
+
+        String category = item.getMappingcategorycode().trim();
+        String brand = item.getMappingbrandcode().trim();
+
         ApplyAddRequest request = new ApplyAddRequest();
 
-        request.setCategoryCode(item.getCategoryCode());  // 类目编码
-        request.setBrandCode(item.getBrandCode());        // 品牌编码
+        request.setCategoryCode(category);  // 类目编码
+        request.setBrandCode(brand);        // 品牌编码
         request.setItemCode(item.getItemCode()); // 供应商商品编码
         request.setProductName(item.getProductName());
         request.setCmTitle(item.getCmTitle());         // 商品标题
@@ -46,7 +57,7 @@ public class SuningShelvesService implements ShelvesService {
 
         // 商品属性设置
         ParameterLoader parameterLoader = new SuningParameterLoader();
-        List<ParameterLoader.Parameter> parameters = parameterLoader.loadParameters(item.getCategoryCode());
+        List<ParameterLoader.Parameter> parameters = parameterLoader.loadParameters(category);
 
         List<ApplyAddRequest.Pars> parsList =new ArrayList<ApplyAddRequest.Pars>();
         for (ParameterLoader.Parameter parameter : parameters) {
@@ -84,7 +95,7 @@ public class SuningShelvesService implements ShelvesService {
         supplierImgUrl.setUrlD(image);
         supplierImgUrl.setUrlE(image);
 
-        List<ParameterLoader.Parameter> commonParameters = parameterLoader.loadCommonParameters(item.getCategoryCode());
+        List<ParameterLoader.Parameter> commonParameters = parameterLoader.loadCommonParameters(category);
         // 含有通子码 需要添加子型号
         if ( commonParameters!=null && commonParameters.size() > 0 ) {
             List<ApplyAddRequest.ChildItem> childItems = new ArrayList<>();

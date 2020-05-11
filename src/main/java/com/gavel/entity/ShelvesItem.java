@@ -71,7 +71,7 @@ public class ShelvesItem {
     @FieldMeta(name = "STATUS", title = "状态", length = 20)
     private String status;
 
-    @FieldMeta(name = "MESSAGE", title = "消息", length = 20)
+    @FieldMeta(name = "MESSAGE", title = "消息", length = 4000)
     private String msg;
 
     @FieldMeta(name = "UPDATETIME", title = "更新时间")
