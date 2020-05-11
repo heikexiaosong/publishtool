@@ -11,6 +11,8 @@ public class ImageLoader {
 
     public static final String PICS_DIR = "D:\\images";
 
+    public static final String PICS_COMPLETE_DIR = "E:\\images_complete";
+
 
     public static ImageCache loadIamge(String url) throws Exception {
        return loadIamge(url, PICS_DIR);
