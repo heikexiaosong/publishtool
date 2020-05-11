@@ -1,19 +1,26 @@
 package com.gavel.application.controller;
 
 import com.gavel.application.DataPagination;
+import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.SearchItem;
 import com.gavel.entity.Task;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Pagination;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -21,6 +28,10 @@ public class FXMLCollectionController {
 
     @FXML
     private AnchorPane root;
+
+    private Stage stage() {
+        return (Stage) root.getScene().getWindow();
+    }
 
     @FXML
     private TableView<Task> taskTable;
@@ -153,4 +164,57 @@ public class FXMLCollectionController {
         }
     }
 
+    /**
+     * 新增任务
+     * @param actionEvent
+     */
+    public void handleNewTaskAction(ActionEvent actionEvent) {
+        Task task = new Task();
+        boolean okClicked = showAddTaskDialog(task);
+        if (okClicked) {
+            try {
+                SQLExecutor.insert(task);
+                taskTable.getItems().add(task);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private boolean showAddTaskDialog(Task task) {
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/TaskAddDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("选择采集页面");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(stage());
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            FXMLTaskAddDialogController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            controller.bindTask(task);
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * 删除任务
+     * @param actionEvent
+     */
+    public void handleDelTaskAction(ActionEvent actionEvent) {
+    }
 }

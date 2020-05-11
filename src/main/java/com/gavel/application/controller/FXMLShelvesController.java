@@ -408,9 +408,8 @@ public class FXMLShelvesController {
 
             ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
             for (ShelvesItem item : items) {
-                //mainApp.getPersonData().add(tempPerson);
-                item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
                 item.setTaskid(taskSelected.getId());
+                item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
                 try {
                     SQLExecutor.insert(item);
                     itemList.getItems().add(item);

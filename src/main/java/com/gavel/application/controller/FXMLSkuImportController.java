@@ -5,6 +5,7 @@ import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Item;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.entity.Task;
+import com.gavel.shelves.ShelvesItemParser;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -122,19 +123,13 @@ public class FXMLSkuImportController {
     @FXML
     private void handleOk() {
         for (Item item : datas) {
-            ShelvesItem shelvesItem = new ShelvesItem();
-            shelvesItem.setItemCode(item.getCode());
-            shelvesItem.setProductName(item.getProductname());
-            shelvesItem.setCmTitle(item.getName());
-            shelvesItem.setSellingPoints(item.getSubname());
-            shelvesItem.setBrandCode(item.getBrand());
-            shelvesItem.setBrandname(item.getBrandname());
-            //shelvesItem.setGraingerbrandname(item.getBrandname());
-            shelvesItem.setCategoryCode(item.getCategory());
-            shelvesItem.setCategoryname(item.getCategoryname());
-            //shelvesItem.setGraingercategoryname(item.getCategoryname());
-            items.add(shelvesItem);
-
+            ShelvesItem shelvesItem = null;
+            try {
+                shelvesItem = ShelvesItemParser.parse(item);
+                items.add(shelvesItem);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         okClicked = true;
