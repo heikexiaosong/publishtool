@@ -185,12 +185,12 @@
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
 							<mainClass>
-                                com.gavel.grainger.GraingerHtmlLoad
+                                com.gavel.application.MainApp
                             </mainClass>
 						</manifest>
 						<manifestEntries>
 							<!-- 在Class-Path下添加配置文件的路径 -->
-							<Class-Path>lib/suning-sdk-1.0.0.jar</Class-Path>
+							<Class-Path>lib/suning-sdk-1.0.0.jar lib/opencv-430-1.0.0.jar</Class-Path>
 							<!--这里表示jar路径加入到MANIFEST.MF-->
 						</manifestEntries>
 					</archive>
