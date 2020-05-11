@@ -40,7 +40,13 @@
                   <TextField fx:id="suffix" prefHeight="31.0" prefWidth="192.0" GridPane.columnIndex="3" />
                   <Label alignment="CENTER_RIGHT" prefHeight="69.0" prefWidth="149.0" text="替换: " GridPane.rowIndex="1" />
                   <TextField fx:id="src" prefHeight="32.0" prefWidth="168.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                  <TextField fx:id="dest"  prefHeight="78.0" prefWidth="149.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                  <TextField fx:id="dest" prefHeight="78.0" prefWidth="149.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+
+                  <Label alignment="CENTER_RIGHT" prefHeight="69.0" prefWidth="149.0" text="商家编码加前缀: " GridPane.rowIndex="4" />
+                   <Label alignment="CENTER_RIGHT" prefHeight="69.0" prefWidth="149.0" text="商家编码加后缀: " GridPane.columnIndex="2"  GridPane.rowIndex="4" />
+
+                   <TextField fx:id="codePrefix" prefHeight="31.0" prefWidth="169.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                   <TextField fx:id="codeSuffix" prefHeight="31.0" prefWidth="192.0" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
                </children>
             </GridPane>
          </children>

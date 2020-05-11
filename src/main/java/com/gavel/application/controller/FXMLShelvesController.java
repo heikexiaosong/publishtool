@@ -343,6 +343,14 @@ public class FXMLShelvesController {
                         item.setCmTitle(item.getCmTitle().replace(src, desc));
                     }
 
+                    if ( editTask.getCodePrefix()!=null && editTask.getCodePrefix().trim().length()>0 ) {
+                        item.setItemCode( editTask.getCodePrefix().trim() + item.getItemCode().trim() );
+                    }
+
+                    if ( editTask.getCodeSuffix()!=null && editTask.getCodeSuffix().trim().length()>0 ) {
+                        item.setItemCode(item.getItemCode().trim() + editTask.getCodeSuffix().trim() );
+                    }
+
                     try {
                         SQLExecutor.update(item);
 
@@ -497,6 +505,10 @@ public class FXMLShelvesController {
 
         private String dest;
 
+        private String codePrefix;
+
+        private String codeSuffix;
+
         public String getPrefix() {
             return prefix;
         }
@@ -527,6 +539,22 @@ public class FXMLShelvesController {
 
         public void setDest(String dest) {
             this.dest = dest;
+        }
+
+        public String getCodePrefix() {
+            return codePrefix;
+        }
+
+        public void setCodePrefix(String codePrefix) {
+            this.codePrefix = codePrefix;
+        }
+
+        public String getCodeSuffix() {
+            return codeSuffix;
+        }
+
+        public void setCodeSuffix(String codeSuffix) {
+            this.codeSuffix = codeSuffix;
         }
     }
 }

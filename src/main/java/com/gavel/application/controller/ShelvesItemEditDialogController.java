@@ -16,6 +16,11 @@ public class ShelvesItemEditDialogController {
     @FXML
     private TextField dest;
 
+    @FXML
+    private TextField codePrefix;
+    @FXML
+    private TextField codeSuffix;
+
     private Stage dialogStage;
     private boolean okClicked = false;
 
@@ -38,6 +43,9 @@ public class ShelvesItemEditDialogController {
             editTask.setSuffix(suffix.getText().trim());
             editTask.setSrc(src.getText().trim());
             editTask.setDest(dest.getText().trim());
+
+            editTask.setCodePrefix(codePrefix.getText().trim());
+            editTask.setCodeSuffix(codeSuffix.getText().trim());
         }
 
         okClicked = true;
