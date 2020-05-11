@@ -420,6 +420,63 @@ public class ShelvesItemParser {
         return picUrl;
     }
 
+    public static List<String> getImages(String skuCode){
+        List<String> images = new ArrayList<>();
+
+        try {
+            Item item = SQLExecutor.executeQueryBean("select * from ITEM where CODE = ?", Item.class, skuCode);
+            if ( item==null ) {
+                return images;
+            }
+
+
+            if ( item==null || item.getUrl()==null || item.getUrl().trim().length()==0 ) {
+                throw new Exception("item 或者 产品URL 不能为空");
+            }
+
+            HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(item.getUrl(), true);
+            if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
+                throw new Exception("[Item: " + item.getUrl() +"]html获取失败.");
+            }
+
+            Document doc = Jsoup.parse(htmlCache.getHtml());
+
+            Element err = doc.selectFirst("div.err-notice");
+            if ( err!=null ) {
+                throw new Exception("[URL: " + item.getUrl() + "]" + doc.title());
+            }
+
+            // 小图片
+            List<String> picUrls = new ArrayList<>();
+            Elements imgs = doc.select("div.xiaotu > div.xtu > dl > dd > img");
+            for (Element img : imgs) {
+                String  src = img.attr("src");
+                if ( src!=null && src.startsWith("//") ) {
+                    src = "https:" + src;
+                }
+
+
+                src = src.replace("product_images_new/350/", "product_images_new/800/");
+
+                if ( src!=null && src.trim().length() > 0 ) {
+                    picUrls.add(src);
+                }
+                System.out.println(src);
+            }
+
+            Map<String, String> imageMap = new HashMap<>();
+            for (String picUrl : picUrls) {
+                String picSuningUrl = uploadImageWithoutDownload(picUrl);
+                if ( picSuningUrl!=null ) {
+                    images.add(picSuningUrl);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return images;
+    }
+
     public static void main(String[] args) throws Exception {
         Item item = SQLExecutor.executeQueryBean("select * from ITEM where CODE = ?", Item.class, "1K9303");
         ShelvesItem shelvesItem = parse(item);

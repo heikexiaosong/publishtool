@@ -3,6 +3,7 @@ package com.gavel.shelves.suning;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.shelves.ParameterLoader;
+import com.gavel.shelves.ShelvesItemParser;
 import com.gavel.shelves.ShelvesService;
 import com.gavel.suning.SuningClient;
 import com.google.gson.Gson;
@@ -46,7 +47,7 @@ public class SuningShelvesService implements ShelvesService {
         request.setCategoryCode(category);  // 类目编码
         request.setBrandCode(brand);        // 品牌编码
         request.setItemCode(item.getItemCode()); // 供应商商品编码
-        request.setProductName(item.getProductName());
+        request.setProductName(item.getCmTitle());
         request.setCmTitle(item.getCmTitle());         // 商品标题
         request.setSellingPoints(item.getSellingPoints()); // 商品卖点
 
@@ -99,12 +100,23 @@ public class SuningShelvesService implements ShelvesService {
         ApplyAddRequest.SupplierImgUrl supplierImgUrl = new ApplyAddRequest.SupplierImgUrl();
         supplierImgUrls.add(supplierImgUrl);
 
-        String image = "";
-        supplierImgUrl.setUrlA(image);
-        supplierImgUrl.setUrlB(image);
-        supplierImgUrl.setUrlC(image);
-        supplierImgUrl.setUrlD(image);
-        supplierImgUrl.setUrlE(image);
+        List<String> images = ShelvesItemParser.getImages(item.getSkuCode());
+        if ( images.size() >= 1 ) {
+            supplierImgUrl.setUrlA(images.get(0));
+        }
+        if ( images.size() >= 2 ) {
+            supplierImgUrl.setUrlB(images.get(1));
+        }
+        if ( images.size() >= 3 ) {
+            supplierImgUrl.setUrlC(images.get(2));
+        }
+
+        if ( images.size() >= 4 ) {
+            supplierImgUrl.setUrlD(images.get(3));
+        }
+        if ( images.size() >= 5 ) {
+            supplierImgUrl.setUrlE(images.get(4));
+        }
 
         List<ParameterLoader.Parameter> commonParameters = parameterLoader.loadCommonParameters(category);
         // 含有通子码 需要添加子型号
