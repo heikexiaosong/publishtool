@@ -1,10 +1,5 @@
 package com.gavel.grainger;
 
-import com.gavel.HttpUtils;
-import com.gavel.database.DataSourceHolder;
-import com.gavel.database.SQLExecutor;
-import com.gavel.entity.Category;
-import com.gavel.entity.GraingerCategory;
 import com.gavel.entity.Itemparameter;
 import com.gavel.suning.SuningClient;
 import com.google.gson.Gson;
@@ -12,16 +7,8 @@ import com.suning.api.DefaultSuningClient;
 import com.suning.api.SuningResponse;
 import com.suning.api.entity.item.ItemparametersQueryRequest;
 import com.suning.api.entity.item.ItemparametersQueryResponse;
-import com.suning.api.entity.master.CityQueryRequest;
-import com.suning.api.entity.master.CityQueryResponse;
 import com.suning.api.exception.SuningApiException;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,49 +18,11 @@ public class ItemparamterLoad {
 
     public static void main(String[] args) throws Exception {
 
-        List<Category> graingerCategoryList =  SQLExecutor.executeQueryBeanList("select * from category where grade = '4'", Category.class);
+        List<Itemparameter>  itemparameters = loadItemparameters("R9010663");
 
-
-        Connection conn = DataSourceHolder.dataSource().getConnection();
-
-        PreparedStatement stmt = conn.prepareStatement("INSERT INTO itemparameter VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-        for (Category category : graingerCategoryList) {
-            System.out.println(category);
-
-            List<Itemparameter>  itemparameters = loadItemparameters(category.getCategoryCode());
-
-            for (Itemparameter itemparameter : itemparameters) {
-                //新增
-                stmt.setObject(1, itemparameter.getCategoryCode());
-                stmt.setObject(2, itemparameter.getParaTemplateCode());
-                stmt.setObject(3, itemparameter.getParaTemplateDesc());
-                stmt.setObject(4, itemparameter.getParCode());
-                stmt.setObject(5, itemparameter.getParName());
-                stmt.setObject(6, itemparameter.getParType());
-                stmt.setObject(7, itemparameter.getParUnit());
-                stmt.setObject(8, itemparameter.getIsMust());
-                stmt.setObject(9, itemparameter.getDataType());
-                stmt.setObject(10, itemparameter.getOptions());
-
-                stmt.addBatch();
-            }
-
-
-
-            stmt.executeBatch();
-
-            stmt.clearBatch();
-
+        for (Itemparameter itemparameter : itemparameters) {
+            System.out.println(itemparameter.getParCode() + " - " + itemparameter.getOptions());
         }
-        System.out.println("Total: " + graingerCategoryList.size());
-
-        //释放资源
-        stmt.close();
-        //关闭连接
-        conn.close();
-
-
     }
 
     private static List<Itemparameter> loadItemparameters(String categoryCode) {
