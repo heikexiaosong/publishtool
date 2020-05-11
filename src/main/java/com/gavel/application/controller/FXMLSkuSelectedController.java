@@ -1,10 +1,12 @@
 package com.gavel.application.controller;
 
+import com.gavel.application.DataPagination;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.GraingerBrand;
 import com.gavel.entity.GraingerCategory;
 import com.gavel.entity.Item;
 import com.gavel.entity.ShelvesItem;
+import com.gavel.shelves.ShelvesItemParser;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -13,6 +15,7 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,7 +52,6 @@ public class FXMLSkuSelectedController {
     private List<ShelvesItem> items;
 
 
-
     @FXML
     private void initialize() {
 
@@ -74,7 +76,7 @@ public class FXMLSkuSelectedController {
 
         List<GraingerBrand> datas = null;
         try {
-            datas = SQLExecutor.executeQueryBeanList("select * from GraingerBrand", GraingerBrand.class);
+            datas = SQLExecutor.executeQueryBeanList("select distinct  BRAND code, BRANDNAME name1 from ITEM", GraingerBrand.class);
         } catch (Exception e) {
             e.printStackTrace();
             datas = Collections.EMPTY_LIST;
@@ -112,7 +114,7 @@ public class FXMLSkuSelectedController {
 
         List<GraingerCategory> datas = null;
         try {
-            datas = SQLExecutor.executeQueryBeanList("select * from GRAINGERCATEGORY where GRADE = '4'", GraingerCategory.class);
+            datas = SQLExecutor.executeQueryBeanList("select distinct  CATEGORY code, CATEGORYNAME name from ITEM", GraingerCategory.class);
         } catch (Exception e) {
             e.printStackTrace();
             datas = Collections.EMPTY_LIST;
@@ -156,17 +158,13 @@ public class FXMLSkuSelectedController {
     @FXML
     private void handleOk() {
         for (Item item : skuList.getItems()) {
-            ShelvesItem shelvesItem = new ShelvesItem();
-            shelvesItem.setItemCode(item.getCode());
-            shelvesItem.setBrandCode(item.getBrand());
-            //shelvesItem.setGraingerbrandname(item.getBrandname());
-            shelvesItem.setCategoryCode(item.getCategory());
-            //shelvesItem.setGraingercategoryname(item.getCategoryname());
-            items.add(shelvesItem);
-
+            try {
+                ShelvesItem shelvesItem = ShelvesItemParser.parse(item);
+                items.add(shelvesItem);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-
-
 
         okClicked = true;
         dialogStage.close();
@@ -187,22 +185,54 @@ public class FXMLSkuSelectedController {
 
     public void handleSearchAction(ActionEvent actionEvent) {
 
+
+        GraingerCategory _cate = category.getSelectionModel().getSelectedItem();
+
+        GraingerBrand _brand = brand.getSelectionModel().getSelectedItem();
+
+
         String _skucode = skucode.getText().trim();
+
+
 
         skuList.getItems().clear();
 
         List<Item> items = null;
         try {
 
+            List<Object> params = new ArrayList<>();
+            StringBuilder sql = new StringBuilder("select * from ITEM where 1=1  ");
+
+            if ( _cate!=null && _cate.getCode()!=null && _cate.getCode().trim().length() > 0  ) {
+                sql.append(" and CATEGORY = ? ");
+                params.add( _cate.getCode().trim());
+            }
+
+            if ( _brand!=null && _brand.getCode()!=null && _brand.getCode().trim().length() > 0  ) {
+                sql.append(" and BRAND = ? ");
+                params.add( _brand.getCode().trim());
+            }
+
+            if ( _skucode!=null && _skucode.trim().length() > 0  ) {
+                sql.append(" and CODE like  ? ");
+                params.add("%" +  _skucode.trim() + "%");
+            }
+
             GraingerCategory cate = category.getSelectionModel().getSelectedItem();
-            System.out.println(cate.getCode());
-            items = SQLExecutor.executeQueryBeanList("select * from ITEM where CATEGORY = ? ", Item.class, cate.getCode() );
+            items = SQLExecutor.executeQueryBeanList(sql.toString(), Item.class, params.toArray(new Object[params.size()]));
         } catch (Exception e) {
             e.printStackTrace();
             items = Collections.EMPTY_LIST;
         }
 
-        skuList.getItems().addAll(items);
+        DataPagination dataPagination = new DataPagination(items, 30);
+
+        pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
+
+        pagination.setPageFactory(pageIndex -> {
+            skuList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
+            return skuList;
+        });
 
 
 

@@ -26,8 +26,8 @@ public class ShelvesItem {
     @FieldMeta(name = "TASKID", title = "任务ID", length = 32)
     private String taskid;
 
-    @FieldMeta(name = "XH", title = "序号")
-    private int xh;
+    @FieldMeta(name = "SKUCODE", title = "SKU编码")
+    private String skuCode;
 
     @FieldMeta(name = "ITEMCODE", title = "供应商商品编码", length = 32)
     private String itemCode;
@@ -94,12 +94,12 @@ public class ShelvesItem {
         this.taskid = taskid;
     }
 
-    public int getXh() {
-        return xh;
+    public String getSkuCode() {
+        return skuCode;
     }
 
-    public void setXh(int xh) {
-        this.xh = xh;
+    public void setSkuCode(String skuCode) {
+        this.skuCode = skuCode;
     }
 
     public String getItemCode() {

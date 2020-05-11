@@ -107,7 +107,6 @@
                                         <TableView fx:id="itemList" editable="true" prefHeight="217.0" prefWidth="389.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <columns>
                                                 <TableColumn fx:id="select" prefWidth="60.0" text="选择" visible="true"> </TableColumn>
-                                                <TableColumn prefWidth="40.0" text="序号" fx:id="xhCol" />
                                                 <TableColumn fx:id="codeCol" prefWidth="120.0" text="供应商编码" />
                                                 <TableColumn fx:id="cmTitleCol" prefWidth="360.0" text="商品标题" />
                                                 <TableColumn fx:id="graingerbrandnameCol" prefWidth="240.0" text="固安捷品牌" />

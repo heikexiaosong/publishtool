@@ -20,8 +20,6 @@ public class ShelvesItemParser {
             throw new Exception("item 或者 产品URL 不能为空");
         }
 
-        ShelvesItem shelvesItem = new ShelvesItem();
-
         HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(item.getUrl(), true);
         if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
             throw new Exception("[Item: " + item.getUrl() +"]html获取失败.");
@@ -35,12 +33,19 @@ public class ShelvesItemParser {
         }
 
 
+
+        ShelvesItem shelvesItem = new ShelvesItem();
+
+        shelvesItem.setSkuCode(item.getCode());
+
         // 4级类目 + 产品组ID + ID
         Elements elements = doc.select("div.crumbs  a");
         Element c4 = elements.get(4);
         Element c5 = elements.get(5);
 
         System.out.println(StringUtils.getCode(c4.attr("href")) + ": " + c4.text());
+        shelvesItem.setCategoryCode(StringUtils.getCode(c4.attr("href")));
+        shelvesItem.setCategoryname(c4.text());
 
         shelvesItem.setItemCode(item.getCode());
         shelvesItem.setProductName(c5.text());
@@ -71,6 +76,10 @@ public class ShelvesItemParser {
         Elements attrs = proDetailCon.select(" > div font");
         attrs.remove();
         System.out.println("\n属性: \n" + attrs.html());
+
+        Element brandEle = attrs.get(1).selectFirst("a");
+        shelvesItem.setBrandCode(StringUtils.getCode(brandEle.attr("href")));
+        shelvesItem.setBrandname(brandEle.text());
 
 
 

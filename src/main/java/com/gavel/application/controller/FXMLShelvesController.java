@@ -57,8 +57,6 @@ public class FXMLShelvesController {
     @FXML
     private TableColumn<ShelvesItem, Boolean> select;
     @FXML
-    private TableColumn<ShelvesItem, Integer> xhCol;
-    @FXML
     private TableColumn<ShelvesItem, String> codeCol;
     @FXML
     private TableColumn<ShelvesItem, String> cmTitleCol;
@@ -105,8 +103,6 @@ public class FXMLShelvesController {
             return property;
         });
 
-
-        xhCol.setCellValueFactory(new PropertyValueFactory<>("xh"));
         cmTitleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCmTitle()));
         codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getItemCode()));
         graingerbrandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandname()));
@@ -240,9 +236,8 @@ public class FXMLShelvesController {
 
             ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
             for (ShelvesItem item : items) {
-                //mainApp.getPersonData().add(tempPerson);
-                item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
                 item.setTaskid(taskSelected.getId());
+                item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getSkuCode()));
                 try {
                     SQLExecutor.insert(item);
                     itemList.getItems().add(item);
