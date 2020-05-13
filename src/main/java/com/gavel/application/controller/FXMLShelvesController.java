@@ -323,7 +323,7 @@ public class FXMLShelvesController {
             @Override
             public void run() {
 
-                for (ShelvesItem shelvesItem : itemList.getItems()) {
+                for (final ShelvesItem shelvesItem : itemList.getItems()) {
 
                     if ( !shelvesItem.isSelected() || "上架成功".equalsIgnoreCase(shelvesItem.getStatus())) {
                         continue;
@@ -348,7 +348,6 @@ public class FXMLShelvesController {
                     shelvesItem.setUpdatetime(Calendar.getInstance().getTime());
                     try {
                         SQLExecutor.update(shelvesItem);
-                        itemList.refresh();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
