@@ -148,15 +148,7 @@ public class ItemSupplement {
     }
 
 
-
-    public static void loadSearchItems(String taskid) throws Exception {
-
-        if ( taskid==null || taskid.trim().length()==0 ) {
-            System.out.println("[taskid: " + taskid + "]is blank!");
-            return;
-        }
-
-        Task task = SQLExecutor.executeQueryBean("select * from task  where id = ? ", Task.class, taskid);
+    public static void loadSearchItems(Task task) throws Exception {
 
         if ( task==null ) {
             System.out.println("任务为空");
@@ -172,7 +164,7 @@ public class ItemSupplement {
         int pageTotal = task.getPagenum();
 
         while ( pageCur <= pageTotal ) {
-            String pageUrl = "https://www.grainger.cn/s-1.html?page=" + pageCur;
+            String pageUrl = task.getUrl() + "?page=" + pageCur;
             HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(pageUrl, false);
 
             if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {

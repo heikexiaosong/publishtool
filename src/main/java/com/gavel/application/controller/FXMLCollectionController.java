@@ -2,6 +2,7 @@ package com.gavel.application.controller;
 
 import com.gavel.application.DataPagination;
 import com.gavel.application.MainApp;
+import com.gavel.crawler.ItemSupplement;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.SearchItem;
 import com.gavel.entity.Task;
@@ -175,6 +176,11 @@ public class FXMLCollectionController {
             try {
                 SQLExecutor.insert(task);
                 taskTable.getItems().add(task);
+                taskTable.getSelectionModel().select(task);
+
+
+                ItemSupplement.loadSearchItems(task);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -80,12 +80,12 @@
                            <children>
       
 
-                                        <HBox prefHeight="28.0" prefWidth="200.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="200.0" AnchorPane.topAnchor="0.0">
+                                        <HBox prefHeight="28.0" prefWidth="200.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="260.0" AnchorPane.topAnchor="0.0">
                                             <children>
                                                 <CheckBox fx:id="curPage" mnemonicParsing="false" onAction="#handleCurPageAction" prefHeight="37.0" prefWidth="81.0" text="选择当前页" />
                                                 <CheckBox fx:id="allPage" mnemonicParsing="false" onAction="#handleALlPageAction" prefHeight="41.0" prefWidth="69.0" text="选择所有" />
                                                 <Label alignment="CENTER_RIGHT" prefHeight="28.0" prefWidth="57.0" text="已选择： " />
-                                                <Label fx:id="selectedNum" prefHeight="28.0" prefWidth="45.0" text="0" />
+                                                <Label fx:id="selectedNum" prefHeight="28.0" prefWidth="45.0" />
                                             </children>
                                         </HBox>
                                           <ButtonBar prefHeight="30.0" prefWidth="175.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
