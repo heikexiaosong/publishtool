@@ -310,8 +310,15 @@ public class FXMLShelvesController {
             return;
         }
 
-        ShelvesService shelvesService = new SuningShelvesService();
+        ShelvesTask shelvesTask = null;
+        try {
+            shelvesTask =  SQLExecutor.executeQueryBean("select * from SHELVESTASK where ID = ? ", ShelvesTask.class, items.get(0).getTaskid());
+        } catch (Exception e) {
+            e.printStackTrace();
+            shelvesTask = taskTable.getSelectionModel().getSelectedItem();
+        }
 
+        ShelvesService shelvesService = new SuningShelvesService(shelvesTask.getMoq());
         new Thread(new Runnable() {
             @Override
             public void run() {

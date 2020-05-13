@@ -615,4 +615,289 @@ public class ShelvesItemParser {
     }
 
 
+    public static String buildIntroduction(ShelvesItem _item, int moq) throws Exception {
+
+        Item item = SQLExecutor.executeQueryBean("select * from ITEM where code = ? ", Item.class, _item.getSkuCode());
+        if ( item==null ) {
+            throw new Exception("[" + _item.getSkuCode() +"]找不到Item信息");
+        }
+
+        if ( item==null || item.getUrl()==null || item.getUrl().trim().length()==0 ) {
+            throw new Exception("item 或者 产品URL 不能为空");
+        }
+
+        HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(item.getUrl(), true);
+        if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
+            throw new Exception("[Item: " + item.getUrl() +"]html获取失败.");
+        }
+
+        Document doc = Jsoup.parse(htmlCache.getHtml());
+
+        Element err = doc.selectFirst("div.err-notice");
+        if ( err!=null ) {
+            throw new Exception("[URL: " + item.getUrl() + "]" + doc.title());
+        }
+
+        // 4级类目 + 产品组ID + ID
+        Elements elements = doc.select("div.crumbs  a");
+        Element c4 = elements.get(4);
+        Element c5 = elements.get(5);
+
+        System.out.println(StringUtils.getCode(c4.attr("href")) + ": " + c4.text());
+
+        Element proDetailCon = doc.selectFirst("div.proDetailCon");
+
+        Element h3 = proDetailCon.selectFirst(" > h3 ");
+        h3.remove();
+
+        Element brandCn = h3.selectFirst(" > span a");
+        brandCn.remove();
+        System.out.println("中文品牌: " + brandCn.text() + ": " + StringUtils.getCode(brandCn.attr("href")));
+
+        Element title = h3.selectFirst(" > a");
+        title.remove();
+        System.out.println("标题: " + title.text());
+
+
+        Element sellPoint = proDetailCon.select(" > h4 span").last();
+        sellPoint.remove();
+
+        Element price = proDetailCon.selectFirst(" > div.price");
+        price.remove();
+        System.out.println("价格: " + price.text());
+
+        Element priceEle =  (Element)price.childNodes().get(1);
+        TextNode unitEle =  (TextNode)price.childNodes().get(2);
+
+        float _price = Float.parseFloat(priceEle.text().replace(",", "").replace("¥", ""));
+        String unit = unitEle.text().trim();
+        String unit1 = unit ;
+        if ( unit.contains("/") ) {
+            unit1 = unit.split("/")[1];
+        }
+
+        System.out.println("Price: " + _price + "[" + unit + "]" + "[" + unit1 + "]");
+
+        Elements attrs = proDetailCon.select(" > div font");
+        attrs.remove();
+        /**
+         * 订 货 号：5W8061
+         * 品   牌：霍尼韦尔 Honeywell
+         * 制造商型号： SHSL00202-42
+         * 包装内件数：1双
+         * 预计发货日： 停止销售
+         */
+
+        System.out.println("\n属性: \n" + attrs.html());
+
+        Element brandEle = attrs.get(1).selectFirst("a");
+
+        String model = attrs.get(2).text();
+        String number = attrs.get(3).text();
+        String fahuori = attrs.get(4).text();
+
+        System.out.println("制造商型号： " + model);
+        System.out.println("包装内件数： " + number);
+        System.out.println("预计发货日： " + fahuori);
+
+
+        String _title = title(title.text(), brandCn.text(), brandEle.text(), model, number);
+
+
+        // 规格数据表格
+        Element tableDiv = doc.selectFirst("div.tableDiv");
+        Element leftTable2 = tableDiv.selectFirst("div.leftTable2");
+        for (Element trsku2 : leftTable2.select("tr.trsku2")) {
+
+            Element selected = trsku2.selectFirst("td[name='tdItemNo'] > span.dweight");
+            System.out.println("selected: " +selected);
+            if ( selected != null ) {
+                System.out.println("订货号： " +  trsku2.child(0).attr("title"));
+                System.out.println("制造商型号： " +  trsku2.child(1).attr("title"));
+                break;
+            }
+        }
+
+        Element rightTable1 = tableDiv.selectFirst("div#rightTable1");
+
+        List<String> columnName = new ArrayList<>();
+        Element pxTR = rightTable1.selectFirst("tr.pxTR");
+        for (Element element : pxTR.children()) {
+            String tname = element.attr("title");
+            if ( tname==null || tname.trim().length()==0 ) {
+                tname = element.text();
+            }
+            columnName.add(tname);
+            System.out.println("属性: " + tname);
+
+        }
+
+        Element rightTable2 = tableDiv.selectFirst("div#rightTable2");
+        Elements trskus = rightTable2.select("tr.trsku2");
+
+        Map<String, String> columnValues = new HashMap<>();
+
+        if ( trskus.size() > 1 ) {
+            for (Element trsku : trskus) {
+                System.out.println(trsku);
+                Element selected = trsku.selectFirst("td  span.dweight");
+                if ( selected!=null ) {
+
+                    Elements tds = trsku.children();
+                    for (int i = 0; i < tds.size(); i++) {
+                        Element td = tds.get(i);
+
+                        String tvalue = td.attr("title");
+                        if ( tvalue==null || tvalue.trim().length()==0 ) {
+                            tvalue = td.text();
+                        }
+
+                        System.out.println(columnName.get(i) + ": " + tvalue);
+                        columnValues.put(columnName.get(i), tvalue);
+                    }
+                    System.out.println("================");
+                    break;
+                }
+            }
+        } else {
+            for (Element trsku : trskus) {
+                System.out.println(trsku);
+                Element selected = trsku.selectFirst("td > span.dweight");
+                if ( selected!=null ) {
+
+                    Elements tds = trsku.children();
+                    for (int i = 0; i < tds.size(); i++) {
+                        Element td = tds.get(i);
+
+                        String tvalue = td.attr("title");
+                        if ( tvalue==null || tvalue.trim().length()==0 ) {
+                            tvalue = td.text();
+                        }
+
+                        System.out.println(columnName.get(i) + ": " + tvalue);
+                        columnValues.put(columnName.get(i), tvalue);
+                    }
+                    System.out.println("================");
+                    break;
+                }
+            }
+
+        }
+
+
+        // 产品描述
+        Element proDetailTit = doc.selectFirst("div.proDetailTit").nextElementSibling().child(0);
+
+
+        List<String> detailUrls = new ArrayList<>();
+        Map<String, String> detailImageMap = new HashMap<>();
+        Elements detailImgs = doc.selectFirst("div.proDetailTit").nextElementSibling().select("img");
+        if ( detailImgs!=null && detailImgs.size()>0 ) {
+
+            for (Element img : detailImgs) {
+                String  src = img.attr("src");
+                if ( src!=null && src.startsWith("//") ) {
+                    src = "https:" + src;
+                }
+
+                if ( src!=null && src.trim().length() > 0 ) {
+                    detailUrls.add(src);
+                }
+                System.out.println(src);
+            }
+
+            for (String picUrl : detailUrls) {
+                String picSuningUrl = uploadImage(picUrl);
+                detailImageMap.put(picUrl, picSuningUrl);
+            }
+        }
+
+
+        System.out.println(proDetailTit.outerHtml());
+
+
+        StringBuilder detail = new StringBuilder();
+
+        if ( _price < moq ) {
+            detail.append("<div class=\"box\">");
+
+
+            detail.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\">" +
+                    "<span>商品起定量</span><span style=\"color:red;\">(请按起订量拍，否则无法发货)</span></div>");
+
+
+            detail.append(" <span style=\"color:red;\">起订量： ").append( (int)Math.ceil(100/_price)).append(unit1).append("</span><br>");
+
+            if ( number.contains(unit1) ) {
+                detail.append(" 包装数量： ").append(number).append("<br>");
+            } else {
+                detail.append(" 包装数量： ").append(number).append("/").append(unit1).append("<br>");
+            }
+
+            detail.append("</div>");
+        }
+
+        detail.append("<div class=\"box\">");
+
+
+        detail.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品规格</div>");
+
+
+        detail.append("•").append("制造商型号： ").append(model).append("<br>");
+        for (String key : columnName) {
+            detail.append("•").append(key).append(": ").append(columnValues.get(key));
+            detail.append("<br>");
+        }
+
+        detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品描述</div>");
+        detail.append(proDetailTit.html());
+
+        if ( detailUrls.size() > 0 ) {
+            detail.append("<br>");
+            for (String picUrl : detailUrls) {
+                String picSuningUrl = detailImageMap.get(picUrl);
+                detail.append("<img alt=\"\" src=\"" + picSuningUrl + "\">");
+                detail.append("<br>");
+            }
+        }
+
+        detail.append("</div>");
+
+
+        // 小图片
+        List<String> picUrls = new ArrayList<>();
+        Elements imgs = doc.select("div.xiaotu > div.xtu > dl > dd > img");
+        for (Element img : imgs) {
+            String  src = img.attr("src");
+            if ( src!=null && src.startsWith("//") ) {
+                src = "https:" + src;
+            }
+
+
+            src = src.replace("product_images_new/350/", "product_images_new/800/");
+
+            if ( src!=null && src.trim().length() > 0 ) {
+                picUrls.add(src);
+            }
+            System.out.println(src);
+        }
+
+        Map<String, String> imageMap = new HashMap<>();
+        for (String picUrl : picUrls) {
+            String picSuningUrl = uploadImageWithoutDownload(picUrl);
+            imageMap.put(picUrl, picSuningUrl);
+        }
+
+
+
+        detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品图片</div>");
+        for (String picUrl : picUrls) {
+            if ( imageMap.containsKey(picUrl) && imageMap.get(picUrl)!=null ) {
+                detail.append("<p><img alt=\"\" src=\"" +  imageMap.get(picUrl).trim() + "\" class=\"product\"></p>");
+            }
+        }
+        detail.append("</div>");
+
+        return Base64.encodeBase64String(detail.toString().getBytes());
+    }
 }

@@ -2,6 +2,7 @@ package com.gavel.shelves.suning;
 
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.ShelvesItem;
+import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.ParameterLoader;
 import com.gavel.shelves.ShelvesItemParser;
 import com.gavel.shelves.ShelvesService;
@@ -24,6 +25,12 @@ public class SuningShelvesService implements ShelvesService {
 
     private Logger logger = LoggerFactory.getLogger(SuningShelvesService.class);
 
+    private final int moq;
+
+    public SuningShelvesService(int moq) {
+        this.moq = moq;
+    }
+
     @Override
     public void shelves(ShelvesItem item) throws Exception {
 
@@ -31,16 +38,32 @@ public class SuningShelvesService implements ShelvesService {
            throw new Exception("Item 不能为空");
         }
 
-        if ( item.getMappingcategorycode()==null || item.getMappingcategorycode().trim().length()==0 ) {
+        String category = item.getMappingcategorycode().trim();
+        String brand = item.getMappingbrandcode().trim();
+
+        if ( category==null || category.length()==0 || brand==null || brand.length()==0 ) {
+            CatetoryBrand catetoryBrand =  new SuningCatetoryBrandSelector().selectCatetoryBrand(item.getCategoryCode(), item.getBrandCode());
+            if (category==null || category.length()==0 ) {
+                item.setMappingcategorycode(catetoryBrand.getCategoryCode());
+                item.setMappingcategoryname(catetoryBrand.getCategory());
+                category = catetoryBrand.getCategoryCode();
+            }
+
+            if (brand==null || brand.length()==0 ) {
+                item.setMappingbrandcode(catetoryBrand.getBrandCode());
+                item.setMappingbrandname(catetoryBrand.getBrandZh());
+                brand = catetoryBrand.getBrandCode();
+            }
+
+        }
+
+        if ( category==null || category.length()==0 ) {
             throw new Exception("[Item: " + item.getItemCode() + "]上架类目没有设置");
         }
 
-        if ( item.getMappingbrandcode()==null || item.getMappingbrandcode().trim().length()==0 ) {
+        if ( brand==null || brand.length()==0 ) {
             throw new Exception("[Item: " + item.getItemCode() + "]上架品牌没有设置");
         }
-
-        String category = item.getMappingcategorycode().trim();
-        String brand = item.getMappingbrandcode().trim();
 
         ApplyAddRequest request = new ApplyAddRequest();
 
@@ -54,7 +77,15 @@ public class SuningShelvesService implements ShelvesService {
         /**
          * 商家商品介绍，UTF-8格式。将html内容的txt文本文件读取为字节数组,然后base64加密，去除空格回车后作为字段，传输时所涉及的图片不得使用外部url。允许写入CSS（禁止引用外部CSS）不支持JS。
          */
-        request.setIntroduction(item.getIntroduction()); // 商品介绍
+
+        String introduction = item.getIntroduction();
+
+        try {
+            introduction = ShelvesItemParser.buildIntroduction(item, moq);
+        } catch (Exception e) {
+            System.out.println("[" + item.getItemCode() + "]生成商品详情异常: " + e.getMessage());
+        }
+        request.setIntroduction(introduction); // 商品介绍
 
         // 商品属性设置
         ParameterLoader parameterLoader = new SuningParameterLoader();
@@ -161,7 +192,7 @@ public class SuningShelvesService implements ShelvesService {
 
     public static void main(String[] args) throws Exception {
 
-        ShelvesService shelvesService = new SuningShelvesService();
+        ShelvesService shelvesService = new SuningShelvesService(100);
 
         String code = "10D2148";
 
