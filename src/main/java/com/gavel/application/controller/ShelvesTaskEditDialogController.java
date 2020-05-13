@@ -21,6 +21,8 @@ public class ShelvesTaskEditDialogController {
     @FXML
     private TextField title;
     @FXML
+    private TextField moq;
+    @FXML
     private TextField reamark;
 
     private Stage dialogStage;
@@ -54,6 +56,7 @@ public class ShelvesTaskEditDialogController {
 
         id.setText(task.getId());
         title.setText(task.getTitle());
+        moq.setText(String.valueOf(task.getMoq()));
         reamark.setText(task.getRemark());
     }
 
@@ -75,6 +78,11 @@ public class ShelvesTaskEditDialogController {
             task.setTitle(title.getText());
             task.setRemark(reamark.getText());
             task.setUpdatetime(Calendar.getInstance().getTime());
+            try {
+                task.setMoq(Integer.parseInt(moq.getText()));
+            } catch (Exception e) {
+                task.setMoq(0);
+            }
 
 //            task.setFirstName(firstNameField.getText());
 //            task.setLastName(lastNameField.getText());

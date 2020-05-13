@@ -25,6 +25,9 @@ public class ShelvesTask {
     @FieldMeta(name = "REMARK", title = "说明", length = 1024)
     private String remark;
 
+    @FieldMeta(name = "MOQ", title = "起订量")
+    private int moq;
+
     @FieldMeta(name = "SKUNUM", title = "产品数")
     private int skunum;
 
@@ -71,6 +74,14 @@ public class ShelvesTask {
 
     public int getSkunum() {
         return skunum;
+    }
+
+    public int getMoq() {
+        return moq;
+    }
+
+    public void setMoq(int moq) {
+        this.moq = moq;
     }
 
     public void setSkunum(int skunum) {

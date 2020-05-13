@@ -20,11 +20,13 @@
          <children>
             <Label text="任务ID" />
             <Label text="任务名称" GridPane.rowIndex="1" />
-            <Label text="说明" GridPane.rowIndex="2" />
+             <Label text="起订量(元)" GridPane.rowIndex="2" />
+            <Label text="说明" GridPane.rowIndex="3" />
 
             <TextField fx:id="id" editable="false" GridPane.columnIndex="1" />
             <TextField fx:id="title" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-            <TextField fx:id="reamark" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+            <TextField fx:id="moq" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+             <TextField fx:id="reamark" GridPane.columnIndex="1" GridPane.rowIndex="3" />
          </children>
       </GridPane>
       <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0">

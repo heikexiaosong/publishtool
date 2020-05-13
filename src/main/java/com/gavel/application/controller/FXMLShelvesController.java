@@ -11,6 +11,7 @@ import com.gavel.shelves.ShelvesService;
 import com.gavel.shelves.suning.SuningCatetoryBrandSelector;
 import com.gavel.shelves.suning.SuningShelvesService;
 import com.gavel.utils.MD5Utils;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -45,7 +46,7 @@ public class FXMLShelvesController {
     @FXML
     private TableColumn<ShelvesTask, Integer> skunum;
     @FXML
-    private TableColumn<ShelvesTask, Integer> success;
+    private TableColumn<ShelvesTask, Integer> moq;
 
     @FXML
     private Label idField;
@@ -119,7 +120,7 @@ public class FXMLShelvesController {
 
         title.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
         skunum.setCellValueFactory(new PropertyValueFactory<>("skunum"));
-        success.setCellValueFactory(new PropertyValueFactory<>("success"));
+        moq.setCellValueFactory(new PropertyValueFactory<>("moq"));
 
 
 
@@ -310,27 +311,51 @@ public class FXMLShelvesController {
         }
 
         ShelvesService shelvesService = new SuningShelvesService();
-        for (ShelvesItem shelvesItem : itemList.getItems()) {
-            if ( shelvesItem.isSelected() ) {
-                try {
-                    shelvesService.shelves(shelvesItem);
-                    shelvesItem.setStatus("上架成功");
-                } catch (Exception e){
-                    shelvesItem.setStatus("上架失败");
-                    shelvesItem.setMsg(e.getMessage());
-                }
 
-                shelvesItem.setUpdatetime(Calendar.getInstance().getTime());
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
 
-                try {
-                    SQLExecutor.update(shelvesItem);
-                    itemList.refresh();
-                } catch (Exception e) {
-                    e.printStackTrace();
+                for (ShelvesItem shelvesItem : itemList.getItems()) {
+
+                    if ("上架成功".equalsIgnoreCase(shelvesItem.getStatus())) {
+                        continue;
+                    }
+
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            itemList.getSelectionModel().select(shelvesItem);
+                            shelvesItem.setStatus("正在上架...");
+                        }
+                    });
+
+                    try {
+                        shelvesService.shelves(shelvesItem);
+                        shelvesItem.setStatus("上架成功");
+                    } catch (Exception e){
+                        shelvesItem.setStatus("上架失败");
+                        shelvesItem.setMsg(e.getMessage());
+                    }
+
+                    shelvesItem.setUpdatetime(Calendar.getInstance().getTime());
+                    try {
+                        SQLExecutor.update(shelvesItem);
+                        itemList.refresh();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            itemList.getSelectionModel().select(shelvesItem);
+                            itemList.refresh();
+                        }
+                    });
                 }
             }
-        }
-
+        }).start();
     }
 
     /**
@@ -577,6 +602,24 @@ public class FXMLShelvesController {
         }
 
         return false;
+    }
+
+    /**
+     * 上架任务编辑
+     * @param actionEvent
+     */
+    public void handleEditTask(ActionEvent actionEvent) {
+        ShelvesTask tempShelvesTask = taskTable.getSelectionModel().getSelectedItem();
+        boolean okClicked = showShelvesTaskEditDialog(tempShelvesTask);
+        if (okClicked) {
+            //mainApp.getPersonData().add(tempPerson);
+            try {
+                SQLExecutor.update(tempShelvesTask);
+                taskTable.refresh();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static class EditTask {
