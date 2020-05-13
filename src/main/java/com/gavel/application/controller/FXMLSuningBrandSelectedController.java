@@ -93,6 +93,23 @@ public class FXMLSuningBrandSelectedController {
 
     public void bind(Brand _mappingBrand) {
         this.mappingBrand = _mappingBrand;
+
+        if ( mappingBrand!=null && mappingBrand.getCategoryCode()!=null && mappingBrand.getCategoryCode().trim().length() > 0) {
+            try {
+                brands = SQLExecutor.executeQueryBeanList("select distinct CODE, NAME from brand where CATEGORYCODE = ? ", Brand.class, mappingBrand.getCategoryCode().trim());
+            } catch (Exception e) {
+                e.printStackTrace();
+                brands = Collections.EMPTY_LIST;
+            }
+
+
+            DataPagination dataPagination = new DataPagination(brands, 50);
+            pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
+            pagination.setPageFactory(pageIndex -> {
+                itemList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
+                return itemList;
+            });
+        }
     }
 
     public void handleKeyPressedAction(KeyEvent keyEvent) {

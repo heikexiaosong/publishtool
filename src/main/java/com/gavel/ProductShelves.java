@@ -548,7 +548,7 @@ public class ProductShelves {
 
         // 类目 品牌 信息
         CatetoryBrandSelector selector = new SuningCatetoryBrandSelector();
-        CatetoryBrand catetoryBrand = selector.selectCatetoryBrand();
+        CatetoryBrand catetoryBrand = selector.selectCatetoryBrand("", "");
 
         ApplyAddRequest request = new ApplyAddRequest();
 

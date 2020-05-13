@@ -6,7 +6,9 @@ import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.entity.ShelvesTask;
+import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.ShelvesService;
+import com.gavel.shelves.suning.SuningCatetoryBrandSelector;
 import com.gavel.shelves.suning.SuningShelvesService;
 import com.gavel.utils.MD5Utils;
 import javafx.beans.property.BooleanProperty;
@@ -124,33 +126,32 @@ public class FXMLShelvesController {
         taskTable.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> showShelvesDetails(newValue));
 
-
         taskTable.getItems().addAll(loadData());
+
+        showShelvesDetails(null);
     }
 
     private void showShelvesDetails(ShelvesTask newValue) {
 
-        itemList.setItems(FXCollections.observableArrayList());
-        if ( newValue==null ) {
-            return;
-        }
-
-        allPage.setSelected(false);
-        curPage.setSelected(false);
-        selectedNum.setText("0");
-
-        idField.setText(newValue.getId());
-        titleField.setText(newValue.getTitle());
-        remarkField.setText(newValue.getRemark());
-
         items.clear();
-        try {
-            List<ShelvesItem> temp = SQLExecutor.executeQueryBeanList("select * from SHELVESITEM where TASKID = ? ", ShelvesItem.class, newValue.getId());
-            if ( temp!=null ) {
-                items.addAll(temp);
+        itemList.setItems(FXCollections.observableList(items));
+        if ( newValue!=null ) {
+            allPage.setSelected(false);
+            curPage.setSelected(false);
+            selectedNum.setText("0");
+
+            idField.setText(newValue.getId());
+            titleField.setText(newValue.getTitle());
+            remarkField.setText(newValue.getRemark());
+
+            try {
+                List<ShelvesItem> temp = SQLExecutor.executeQueryBeanList("select * from SHELVESITEM where TASKID = ? ", ShelvesItem.class, newValue.getId());
+                if ( temp!=null ) {
+                    items.addAll(temp);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         DataPagination dataPagination = new DataPagination(items, 30);
@@ -229,15 +230,32 @@ public class FXMLShelvesController {
         }
     }
 
+    /**
+     * 添加 SKU 商品
+     *
+     * @param actionEvent
+     */
     public void handleAddSkuPerson(ActionEvent actionEvent) {
         List<ShelvesItem> items = new ArrayList<>();
         boolean okClicked = showShelvesItemEditDialog(items);
         if (okClicked) {
 
+            SuningCatetoryBrandSelector catetoryBrandSelector = new SuningCatetoryBrandSelector();
+
             ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
             for (ShelvesItem item : items) {
                 item.setTaskid(taskSelected.getId());
                 item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getSkuCode()));
+
+
+                CatetoryBrand catetoryBrand = catetoryBrandSelector.selectCatetoryBrand(item.getCategoryCode(), item.getBrandCode());
+                if ( catetoryBrand!=null ) {
+                    item.setMappingbrandcode(catetoryBrand.getBrandCode());
+                    item.setMappingbrandname(catetoryBrand.getBrandZh());
+                    item.setMappingcategorycode(catetoryBrand.getCategoryCode());
+                    item.setMappingcategoryname(catetoryBrand.getCategory());
+                }
+
                 try {
                     SQLExecutor.insert(item);
                     itemList.getItems().add(item);
@@ -406,10 +424,21 @@ public class FXMLShelvesController {
         boolean okClicked = showShelvesItemImportDialog(items);
         if (okClicked) {
 
+            SuningCatetoryBrandSelector catetoryBrandSelector = new SuningCatetoryBrandSelector();
+
             ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
             for (ShelvesItem item : items) {
                 item.setTaskid(taskSelected.getId());
                 item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
+
+                CatetoryBrand catetoryBrand = catetoryBrandSelector.selectCatetoryBrand(item.getCategoryCode(), item.getBrandCode());
+                if ( catetoryBrand!=null ) {
+                    item.setMappingbrandcode(catetoryBrand.getBrandCode());
+                    item.setMappingbrandname(catetoryBrand.getBrandZh());
+                    item.setMappingcategorycode(catetoryBrand.getCategoryCode());
+                    item.setMappingcategoryname(catetoryBrand.getCategory());
+                }
+
                 try {
                     SQLExecutor.insert(item);
                     itemList.getItems().add(item);
@@ -492,6 +521,52 @@ public class FXMLShelvesController {
         }
 
         itemList.refresh();
+    }
+
+    /**
+     * 编 辑
+     *
+     * @param actionEvent
+     */
+    public void handleDetailEditAction(ActionEvent actionEvent) {
+
+        ShelvesItem selectedItem = itemList.getSelectionModel().getSelectedItem();
+
+        boolean okClicked = shelvesItemDetailEditDialog(selectedItem);
+        if (okClicked) {
+
+        }
+    }
+
+    private boolean shelvesItemDetailEditDialog(ShelvesItem selectedItem) {
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/ShelvesItemDetailEditDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("上架商品信息");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(stage());
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            ShelvesItemDetailEditDialogController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            controller.bind(selectedItem);
+            //controller.bindItems(shelvesItems);
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 
     public static class EditTask {

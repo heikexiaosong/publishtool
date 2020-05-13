@@ -1,5 +1,6 @@
 package com.gavel.grainger;
 
+import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Itemparameter;
 import com.gavel.suning.SuningClient;
 import com.google.gson.Gson;
@@ -18,11 +19,23 @@ public class ItemparamterLoad {
 
     public static void main(String[] args) throws Exception {
 
-        List<Itemparameter>  itemparameters = loadItemparameters("R9010663");
+        List<Itemparameter>  itemparameters =  SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER", Itemparameter.class);
 
         for (Itemparameter itemparameter : itemparameters) {
-            System.out.println(itemparameter.getParCode() + " - " + itemparameter.getOptions());
+
+            if ( itemparameter.getParOption()!=null && itemparameter.getParOption().size()==1 ) {
+
+                Itemparameter.ParOption option = itemparameter.getParOption().get(0);
+                itemparameter.setParam(option.getParOptionCode());
+                if ( option.getParOptionCode()==null || option.getParOptionCode().trim().length()==0 ) {
+                    itemparameter.setParam(option.getParOptionDesc());
+                }
+            }
+            SQLExecutor.update(itemparameter);
         }
+
+        System.out.println("Total: " + itemparameters.size());
+
     }
 
     private static List<Itemparameter> loadItemparameters(String categoryCode) {

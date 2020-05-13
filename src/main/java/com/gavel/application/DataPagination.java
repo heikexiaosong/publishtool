@@ -58,6 +58,7 @@ public class DataPagination<T> {
         int endIndex = tmp >= totalRecord.get() ? totalRecord.get() - 1 : tmp;
 
         // subList(fromIndex, toIndex) -> [fromIndex, toIndex)
+        System.out.println(rowDataList.size() + ": " + fromIndex + ", " + (endIndex+1) );
         return rowDataList.subList(fromIndex, endIndex + 1);
     }
 
