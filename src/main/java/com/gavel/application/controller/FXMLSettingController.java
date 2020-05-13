@@ -3,6 +3,7 @@ package com.gavel.application.controller;
 import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.*;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -13,6 +14,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
@@ -38,6 +42,8 @@ public class FXMLSettingController {
     @FXML
     private TableView<CategoryMapping> cateMapping;
     @FXML
+    private TableColumn<CategoryMapping, Boolean> select;
+    @FXML
     private TableColumn<CategoryMapping, String> cmCode;
     @FXML
     private TableColumn<CategoryMapping, String> cmName;
@@ -47,6 +53,15 @@ public class FXMLSettingController {
     private TableColumn<CategoryMapping, String> cmCategoryName;
     @FXML
     private TableColumn<CategoryMapping, String> cmDescPath;
+
+    @FXML
+    private CheckBox categoryAll;
+
+    @FXML
+    private Label selectedNum;
+
+    @FXML
+    private TextField cateKeyword;
 
     // 类目属性
     @FXML
@@ -60,6 +75,9 @@ public class FXMLSettingController {
 
     @FXML
     private GridPane params;
+
+    @FXML
+    private TextField itemparamKeyword;
 
     private List<Itemparameter> itemparameters;
 
@@ -80,6 +98,9 @@ public class FXMLSettingController {
     private TableColumn<BrandMapping, String> brand;
     @FXML
     private TableColumn<BrandMapping, String> brandname;
+
+    @FXML
+    private TextField brandKeyword;
 
 
     @FXML
@@ -106,6 +127,17 @@ public class FXMLSettingController {
         // 类目 ----------
 
         // Initialize the person table with the two columns.
+        select.setCellFactory(column -> new CheckBoxTableCell<>());
+        select.setCellValueFactory(cellData -> {
+            CategoryMapping cellValue = cellData.getValue();
+            BooleanProperty property = cellValue.selectedProperty();
+
+            // Add listener to handler change
+            property.addListener((observable, oldValue, newValue) -> updateSelectStatus(cellValue, newValue));
+
+            return property;
+        });
+
         categoryCode.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryCode()));
         categoryName.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryName()));
         descPath.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDescPath()));
@@ -151,6 +183,19 @@ public class FXMLSettingController {
 
     }
 
+    private void updateSelectStatus(CategoryMapping cellValue, Boolean newValue) {
+        cellValue.selectedProperty().setValue(newValue );
+
+        int count = 0;
+        for (CategoryMapping categoryMapping : cateMapping.getItems()) {
+            if ( categoryMapping.isSelected() ) {
+                count++;
+            }
+        }
+
+        selectedNum.setText(String.valueOf(count));
+    }
+
     /**
      * 类目属性详情
      * @param newValue
@@ -165,96 +210,99 @@ public class FXMLSettingController {
 
         itemparameters = null;
         try {
-            itemparameters = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where categoryCode = ? ", Itemparameter.class, newValue.getCategoryCode());
-            if ( itemparameters!=null ) {
-
-                for (int i1 = 0; i1 < itemparameters.size(); i1++) {
-                    Itemparameter itemparameter = itemparameters.get(i1);
-
-                    System.out.println(itemparameter.getParCode() + ": " + itemparameter.getParName());
-
-                    Label label = new Label("(" + itemparameter.getParCode() + ")" + itemparameter.getParName() + ": ");
-                    if ( "X".equalsIgnoreCase(itemparameter.getIsMust()) ) {
-                        label.setStyle("-fx-text-fill: red;");
-                    }
-
-                    params.add(label, 0, i1);
-                    params.add( new Label(itemparameter.getParUnit()), 2, i1);
-                    params.add( new Label(itemparameter.getParaTemplateCode()), 3, i1);
-                    params.add( new Label(itemparameter.getParaTemplateDesc()), 4, i1);
-                    params.add( new Label(itemparameter.getDataType()), 5, i1);
-
-
-                    switch (itemparameter.getParType()) {
-                        case "1":
-                        case "2":
-
-                            ComboBox<Itemparameter.ParOption> parOptionComboBox = new ComboBox<Itemparameter.ParOption>();
-
-                            parOptionComboBox.getItems().addAll( itemparameter.getParOption());
-                            parOptionComboBox.getSelectionModel().select(1);
-
-
-                            parOptionComboBox.setOnAction((ActionEvent ev) -> {
-                                Itemparameter.ParOption option =
-                                        parOptionComboBox.getSelectionModel().getSelectedItem();
-                                System.out.println(option.getParOptionCode() + ": " + option.getParOptionDesc());
-                            });
-
-                            parOptionComboBox.setConverter(new StringConverter<Itemparameter.ParOption>() {
-                                @Override
-                                public String toString(Itemparameter.ParOption object) {
-                                    return object.getParOptionDesc();
-                                }
-
-                                @Override
-                                public Itemparameter.ParOption fromString(String string) {
-                                    return null;
-                                }
-                            });
-
-                           params.add(parOptionComboBox, 1, i1);
-
-                          if ( itemparameter.getParam()!=null && itemparameter.getParam().trim().length() > 0 ) {
-
-                              String defaultValue = itemparameter.getParam();
-                               Itemparameter.ParOption value = itemparameter.getParOption().get(0);
-                               for (Itemparameter.ParOption option : itemparameter.getParOption()) {
-                                   if ( defaultValue.equalsIgnoreCase(option.getParOptionCode()) ) {
-                                       value = option;
-                                       break;
-                                   }
-                               }
-                               parOptionComboBox.getSelectionModel().select(value);
-
-                           }
-
-
-                            parOptionComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Itemparameter.ParOption>() {
-                                @Override
-                                public void changed(ObservableValue<? extends Itemparameter.ParOption> observable, Itemparameter.ParOption oldValue, Itemparameter.ParOption newValue) {
-                                    itemparameter.setParam(newValue.getParOptionCode());
-                                }
-                            });
-
-                            break;
-                        case "3":
-                            final TextField field = new TextField();
-                            field.setText(itemparameter.getParam());
-                            field.setOnAction(new EventHandler<ActionEvent>() {
-                                @Override
-                                public void handle(ActionEvent event) {
-                                    itemparameter.setParam(field.getText());
-                                }
-                            });
-                            params.add(field, 1, i1);
-                            break;
-                    }
-                }
-
-            }
+            itemparameters = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where categoryCode = ? order by isMust desc ", Itemparameter.class, newValue.getCategoryCode());
         } catch (Exception e) {
             e.printStackTrace();
+            itemparameters = Collections.EMPTY_LIST;
+        }
+
+
+        int i1 = 0;
+        for (Itemparameter itemparameter : itemparameters) {
+            System.out.println(itemparameter.getParCode() + ": " + itemparameter.getParName());
+            if ( "cmModel".equalsIgnoreCase(itemparameter.getParCode()) ) {
+                continue;
+            }
+
+
+
+            Label label = new Label(itemparameter.getParName() + ": ");
+            if ( "X".equalsIgnoreCase(itemparameter.getIsMust()) ) {
+                label.setStyle("-fx-text-fill: red;");
+            }
+
+            params.add(label, 0, i1);
+            params.add( new Label(itemparameter.getParUnit()), 2, i1);
+            params.add( new Label(itemparameter.getParCode()), 3, i1);
+            params.add( new Label(itemparameter.getParaTemplateDesc()), 4, i1);
+            params.add( new Label(itemparameter.getDataType()), 5, i1);
+
+
+            switch (itemparameter.getParType()) {
+                case "1":
+                case "2":
+
+                    ComboBox<Itemparameter.ParOption> parOptionComboBox = new ComboBox<Itemparameter.ParOption>();
+
+                    parOptionComboBox.getItems().addAll( itemparameter.getParOption());
+
+                    parOptionComboBox.setOnAction((ActionEvent ev) -> {
+                        Itemparameter.ParOption option =
+                                parOptionComboBox.getSelectionModel().getSelectedItem();
+                        System.out.println(option.getParOptionCode() + ": " + option.getParOptionDesc());
+                    });
+
+                    parOptionComboBox.setConverter(new StringConverter<Itemparameter.ParOption>() {
+                        @Override
+                        public String toString(Itemparameter.ParOption object) {
+                            return object.getParOptionDesc();
+                        }
+
+                        @Override
+                        public Itemparameter.ParOption fromString(String string) {
+                            return null;
+                        }
+                    });
+
+                    params.add(parOptionComboBox, 1, i1);
+
+                    if ( itemparameter.getParam()!=null && itemparameter.getParam().trim().length() > 0 ) {
+
+                        String defaultValue = itemparameter.getParam();
+                        Itemparameter.ParOption value = itemparameter.getParOption().get(0);
+                        for (Itemparameter.ParOption option : itemparameter.getParOption()) {
+                            if ( defaultValue.equalsIgnoreCase(option.getParOptionCode()) ) {
+                                value = option;
+                                break;
+                            }
+                        }
+                        parOptionComboBox.getSelectionModel().select(value);
+
+                    }
+
+
+                    parOptionComboBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Itemparameter.ParOption>() {
+                        @Override
+                        public void changed(ObservableValue<? extends Itemparameter.ParOption> observable, Itemparameter.ParOption oldValue, Itemparameter.ParOption newValue) {
+                            itemparameter.setParam(newValue.getParOptionCode());
+                        }
+                    });
+
+                    break;
+                case "3":
+                    final TextField field = new TextField();
+                    field.setText(itemparameter.getParam());
+                    field.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent event) {
+                            itemparameter.setParam(field.getText());
+                        }
+                    });
+                    params.add(field, 1, i1);
+                    break;
+            }
+
+            i1++;
         }
 
     }
@@ -528,6 +576,138 @@ public class FXMLSettingController {
         } catch (IOException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+
+    /**
+     * 类目 选择所有页
+     * @param actionEvent
+     */
+    public void handleCateALlPageAction(ActionEvent actionEvent) {
+
+        for (CategoryMapping categoryMapping : cateMapping.getItems()) {
+            categoryMapping.selectedProperty().setValue(categoryAll.isSelected());
+        }
+
+        if ( categoryAll.isSelected() ) {
+            selectedNum.setText(String.valueOf(cateMapping.getItems().size()));
+        } else {
+            selectedNum.setText("0");
+        }
+
+        cateMapping.refresh();
+
+    }
+
+    public void handleKeyReleasedAction(KeyEvent keyEvent) {
+
+        if ( keyEvent.getCode().equals(KeyCode.ENTER) ) {
+            String keyword = cateKeyword.getText().trim();
+
+            List<CategoryMapping> categoryMappings = null;
+            if ( keyword!=null && keyword.length()>0  ) {
+                try {
+                    String param = "%" + keyword  +"%";
+                    categoryMappings = SQLExecutor.executeQueryBeanList("select * from categorymapping where CODE like ? or NAME like ?", CategoryMapping.class, param, param);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    categoryMappings = Collections.EMPTY_LIST;
+                }
+            } else {
+                try {
+                    categoryMappings = SQLExecutor.executeQueryBeanList("select * from categorymapping", CategoryMapping.class);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    categoryMappings = Collections.EMPTY_LIST;
+                }
+            }
+
+            cateMapping.setItems(FXCollections.observableArrayList(categoryMappings));
+        }
+
+
+    }
+
+    /**
+     * 类目 批量设置
+     * @param actionEvent
+     */
+    public void handleCateBatchMappingAction(ActionEvent actionEvent) {
+
+        Category mappingCate = new Category();
+        boolean okClicked = showCategoryMappingEditDialog(mappingCate);
+        if (okClicked) {
+
+            for (CategoryMapping categoryMapping : cateMapping.getItems()) {
+                if ( categoryMapping.isSelected() ) {
+                    categoryMapping.setCategoryCode(mappingCate.getCategoryCode());
+                    categoryMapping.setCategoryName(mappingCate.getCategoryName());
+                    categoryMapping.setDescPath(mappingCate.getDescPath());
+                    try {
+                        SQLExecutor.update(categoryMapping);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        cateMapping.refresh();
+
+    }
+
+    public void itemparamKeywordAction(KeyEvent keyEvent) {
+
+        if ( keyEvent.getCode().equals(KeyCode.ENTER) ) {
+            String keyword = itemparamKeyword.getText().trim();
+
+            List<Category> categories = null;
+            if ( keyword!=null && keyword.length()>0  ) {
+                try {
+                    String param = "%" + keyword  +"%";
+                    categories = SQLExecutor.executeQueryBeanList("select * from category where CATEGORYCODE like ? or DESCPATH like ?", Category.class, param, param);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    categories = Collections.EMPTY_LIST;
+                }
+            } else {
+                try {
+                    categories = SQLExecutor.executeQueryBeanList("select * from category", Category.class);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    categories = Collections.EMPTY_LIST;
+                }
+
+            }
+            cateParams.setItems(FXCollections.observableArrayList(categories));
+        }
+    }
+
+    public void handleBrandKeyReleasedAction(KeyEvent keyEvent) {
+
+
+        if ( keyEvent.getCode().equals(KeyCode.ENTER) ) {
+            String keyword = brandKeyword.getText().trim();
+
+            List<BrandMapping> brandMappings = null;
+            if ( keyword!=null && keyword.length()>0  ) {
+                try {
+                    String param = "%" + keyword  +"%";
+                    brandMappings = SQLExecutor.executeQueryBeanList("select * from BRANDMAPPING where TASKID = ? and ( graingercode like ? or name1 like ? or name2 like ? ) ", BrandMapping.class, "0", param, param, param);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    brandMappings = Collections.EMPTY_LIST;
+                }
+            } else {
+                try {
+                    brandMappings = SQLExecutor.executeQueryBeanList("select * from BRANDMAPPING where TASKID = ? ", BrandMapping.class, "0");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    brandMappings = Collections.EMPTY_LIST;
+                }
+            }
+
+            brandMapping.setItems(FXCollections.observableArrayList(brandMappings));
         }
     }
 }

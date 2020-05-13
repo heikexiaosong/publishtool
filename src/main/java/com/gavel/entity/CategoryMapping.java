@@ -2,9 +2,21 @@ package com.gavel.entity;
 
 import com.gavel.annotation.FieldMeta;
 import com.gavel.annotation.TableMeta;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
 @TableMeta(name = "CATEGORYMAPPING", title = "类目映射")
 public class CategoryMapping {
+
+    private final BooleanProperty selected = new SimpleBooleanProperty(false);
+
+    public boolean isSelected() {
+        return selected.get();
+    }
+
+    public BooleanProperty selectedProperty() {
+        return selected;
+    }
 
     @FieldMeta(name = "CODE", title = "固安捷类目编码", length = 32, primary = true)
     private String code;
