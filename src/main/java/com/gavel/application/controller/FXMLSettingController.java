@@ -26,6 +26,8 @@ import javafx.util.StringConverter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class FXMLSettingController {
@@ -102,6 +104,9 @@ public class FXMLSettingController {
     @FXML
     private TextField brandKeyword;
 
+    private Map<String, SimpleStringProperty> paramers = new ConcurrentHashMap<>();
+    private String paramsCategoryCode = "";
+
 
     @FXML
     private void initialize() {
@@ -124,7 +129,7 @@ public class FXMLSettingController {
 
 
 
-        // 类目 ----------
+        // 类目属性 ----------
 
         // Initialize the person table with the two columns.
         select.setCellFactory(column -> new CheckBoxTableCell<>());
@@ -202,15 +207,18 @@ public class FXMLSettingController {
      */
     private void showCategoryDetails(Category newValue) {
 
+        paramsCategoryCode = null;
         if ( newValue==null ) {
             return;
         }
 
+        paramsCategoryCode = newValue.getCategoryCode();
+        paramers.clear();
         params.getChildren().clear();
 
         itemparameters = null;
         try {
-            itemparameters = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where categoryCode = ? order by isMust desc ", Itemparameter.class, newValue.getCategoryCode());
+            itemparameters = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where categoryCode = ? order by isMust desc ", Itemparameter.class, paramsCategoryCode);
         } catch (Exception e) {
             e.printStackTrace();
             itemparameters = Collections.EMPTY_LIST;
@@ -219,11 +227,12 @@ public class FXMLSettingController {
 
         int i1 = 0;
         for (Itemparameter itemparameter : itemparameters) {
-            System.out.println(itemparameter.getParCode() + ": " + itemparameter.getParName());
             if ( "cmModel".equalsIgnoreCase(itemparameter.getParCode()) ) {
                 continue;
             }
 
+            final SimpleStringProperty property = new SimpleStringProperty(itemparameter.getParam());
+            paramers.put(itemparameter.getParCode(), property);
 
 
             Label label = new Label(itemparameter.getParName() + ": ");
@@ -247,9 +256,14 @@ public class FXMLSettingController {
                     parOptionComboBox.getItems().addAll( itemparameter.getParOption());
 
                     parOptionComboBox.setOnAction((ActionEvent ev) -> {
-                        Itemparameter.ParOption option =
-                                parOptionComboBox.getSelectionModel().getSelectedItem();
+                        Itemparameter.ParOption option = parOptionComboBox.getSelectionModel().getSelectedItem();
                         System.out.println(option.getParOptionCode() + ": " + option.getParOptionDesc());
+
+                        if ( option.getParOptionCode() !=null && option.getParOptionCode().trim().length() > 0 ) {
+                            property.setValue(option.getParOptionCode());
+                        } else {
+                            property.setValue(option.getParOptionDesc());
+                        }
                     });
 
                     parOptionComboBox.setConverter(new StringConverter<Itemparameter.ParOption>() {
@@ -271,7 +285,7 @@ public class FXMLSettingController {
                         String defaultValue = itemparameter.getParam();
                         Itemparameter.ParOption value = itemparameter.getParOption().get(0);
                         for (Itemparameter.ParOption option : itemparameter.getParOption()) {
-                            if ( defaultValue.equalsIgnoreCase(option.getParOptionCode()) ) {
+                            if (  defaultValue.equalsIgnoreCase(option.getParOptionCode()) ) {
                                 value = option;
                                 break;
                             }
@@ -291,7 +305,7 @@ public class FXMLSettingController {
                     break;
                 case "3":
                     final TextField field = new TextField();
-                    field.setText(itemparameter.getParam());
+                    field.textProperty().bindBidirectional(property);
                     field.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent event) {
@@ -362,10 +376,10 @@ public class FXMLSettingController {
         if (okClicked) {
             //mainApp.getPersonData().add(tempPerson);
             try {
-                SQLExecutor.update(categoryMapping);
                 categoryMapping.setCategoryCode(mappingCate.getCategoryCode());
                 categoryMapping.setCategoryName(mappingCate.getCategoryName());
                 categoryMapping.setDescPath(mappingCate.getDescPath());
+                SQLExecutor.update(categoryMapping);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -409,19 +423,23 @@ public class FXMLSettingController {
      */
     public void handleCateParamsUpdateAction(ActionEvent actionEvent) {
 
-        if ( itemparameters==null || itemparameters.size()==0 ) {
+        if ( paramsCategoryCode==null ) {
             return;
         }
 
-        for (Itemparameter itemparameter : itemparameters) {
-            try {
-                SQLExecutor.update(itemparameter);
-            } catch (Exception e) {
-                e.printStackTrace();
+        try {
+            List<Itemparameter> cateParams = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where CATEGORYCODE = ? ", Itemparameter.class,  paramsCategoryCode);
+
+            for (Itemparameter cateParam : cateParams) {
+                if (paramers.containsKey(cateParam.getParCode()) ) {
+                    SimpleStringProperty property = paramers.remove(cateParam.getParCode());
+                    cateParam.setParam(property.getValue());
+                    SQLExecutor.update(cateParam);
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-
     }
 
     /**
@@ -485,9 +503,9 @@ public class FXMLSettingController {
         if (okClicked) {
             //mainApp.getPersonData().add(tempPerson);
             try {
-                SQLExecutor.update(_brandMapping);
                 _brandMapping.setBrand(mappingBrand.getCode());
                 _brandMapping.setBrandname(mappingBrand.getName());
+                SQLExecutor.update(_brandMapping);
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {

@@ -340,6 +340,7 @@ public class FXMLShelvesController {
                     try {
                         shelvesService.shelves(shelvesItem);
                         shelvesItem.setStatus("上架成功");
+                        shelvesItem.setMsg("");
                     } catch (Exception e){
                         shelvesItem.setStatus("上架失败");
                         shelvesItem.setMsg(e.getMessage());

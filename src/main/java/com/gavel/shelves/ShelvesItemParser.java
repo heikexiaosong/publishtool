@@ -294,106 +294,6 @@ public class ShelvesItemParser {
 
         }
 
-
-        // 产品描述
-        Element proDetailTit = doc.selectFirst("div.proDetailTit").nextElementSibling().child(0);
-
-
-        List<String> detailUrls = new ArrayList<>();
-        Map<String, String> detailImageMap = new HashMap<>();
-        Elements detailImgs = doc.selectFirst("div.proDetailTit").nextElementSibling().select("img");
-        if ( detailImgs!=null && detailImgs.size()>0 ) {
-
-            for (Element img : detailImgs) {
-                String  src = img.attr("src");
-                if ( src!=null && src.startsWith("//") ) {
-                    src = "https:" + src;
-                }
-
-                if ( src!=null && src.trim().length() > 0 ) {
-                    detailUrls.add(src);
-                }
-                System.out.println(src);
-            }
-
-            for (String picUrl : detailUrls) {
-                String picSuningUrl = uploadImage(picUrl);
-                detailImageMap.put(picUrl, picSuningUrl);
-            }
-        }
-
-
-        System.out.println(proDetailTit.outerHtml());
-
-
-        StringBuilder detail = new StringBuilder();
-
-        detail.append("<div class=\"box\">");
-
-
-        detail.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品规格</div>");
-
-
-        detail.append("•").append("制造商型号： ").append(model).append("<br>");
-        for (String key : columnName) {
-            detail.append("•").append(key).append(": ").append(columnValues.get(key));
-            detail.append("<br>");
-        }
-
-        detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品描述</div>");
-        detail.append(proDetailTit.html());
-
-        if ( detailUrls.size() > 0 ) {
-            detail.append("<br>");
-            for (String picUrl : detailUrls) {
-                String picSuningUrl = detailImageMap.get(picUrl);
-                detail.append("<img alt=\"\" src=\"" + picSuningUrl + "\">");
-                detail.append("<br>");
-            }
-        }
-
-        detail.append("</div>");
-
-
-        // 小图片
-        List<String> picUrls = new ArrayList<>();
-        Elements imgs = doc.select("div.xiaotu > div.xtu > dl > dd > img");
-        for (Element img : imgs) {
-            String  src = img.attr("src");
-            if ( src!=null && src.startsWith("//") ) {
-                src = "https:" + src;
-            }
-
-
-            src = src.replace("product_images_new/350/", "product_images_new/800/");
-
-            if ( src!=null && src.trim().length() > 0 ) {
-                picUrls.add(src);
-            }
-            System.out.println(src);
-        }
-
-        Map<String, String> imageMap = new HashMap<>();
-        for (String picUrl : picUrls) {
-            String picSuningUrl = uploadImageWithoutDownload(picUrl);
-            imageMap.put(picUrl, picSuningUrl);
-        }
-
-
-
-        detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品图片</div>");
-        for (String picUrl : picUrls) {
-            if ( imageMap.containsKey(picUrl) && imageMap.get(picUrl)!=null ) {
-                detail.append("<p><img alt=\"\" src=\"" +  imageMap.get(picUrl).trim() + "\" class=\"product\"></p>");
-            }
-        }
-        detail.append("</div>");
-
-        String introduction = Base64.encodeBase64String(detail.toString().getBytes());
-        shelvesItem.setIntroduction(introduction);
-
-
-
         return shelvesItem;
     }
 
@@ -460,8 +360,15 @@ public class ShelvesItemParser {
         }
 
         String picUrl = null;
+        String localFilePath = ImageLoader.PICS_COMPLETE_DIR + File.separator + image.getFilepath();
+        if ( !new File(localFilePath).exists() ) {
+            System.out.println("[" +  localFilePath + "]文件不存在.");
+            return picUrl;
+        }
+
+
         {
-            String localFilePath = ImageLoader.PICS_COMPLETE_DIR + File.separator + image.getFilepath();
+
             NPicAddRequest request = new NPicAddRequest();
             request.setPicFileData(localFilePath);
             try {
@@ -541,6 +448,10 @@ public class ShelvesItemParser {
                 if ( picSuningUrl!=null ) {
                     images.add(picSuningUrl);
                 }
+            }
+
+            if ( images==null || images.size()==0) {
+                return images;
             }
 
             while ( images.size() < 5 ) {

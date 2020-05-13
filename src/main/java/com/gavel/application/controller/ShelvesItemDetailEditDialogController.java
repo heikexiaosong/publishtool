@@ -180,15 +180,15 @@ public class ShelvesItemDetailEditDialogController {
 
                     System.out.println(itemparameter.getParCode() + ": " + itemparameter.getParName());
 
-                    Label label = new Label("(" + itemparameter.getParCode() + ")" + itemparameter.getParName() + ": ");
+                    Label label = new Label(itemparameter.getParName() + ": ");
                     if ( "X".equalsIgnoreCase(itemparameter.getIsMust()) ) {
                         label.setStyle("-fx-text-fill: red;");
                     }
 
                     params.add(label, 0, i1);
                     params.add( new Label(itemparameter.getParUnit()), 2, i1);
-                    params.add( new Label(itemparameter.getParaTemplateCode()), 3, i1);
-                    params.add( new Label(itemparameter.getParaTemplateDesc()), 4, i1);
+                    params.add( new Label(itemparameter.getParaTemplateDesc()), 3, i1);
+                    params.add( new Label(itemparameter.getParCode() ), 4, i1);
                     params.add( new Label(itemparameter.getDataType()), 5, i1);
 
                     switch (itemparameter.getParType()) {
