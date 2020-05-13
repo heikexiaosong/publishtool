@@ -81,7 +81,9 @@ public class SuningShelvesService implements ShelvesService {
         String introduction = item.getIntroduction();
 
         try {
-            introduction = ShelvesItemParser.buildIntroduction(item, moq);
+            if ( introduction==null || introduction.length()==0 || moq > 0 ) {
+                introduction = ShelvesItemParser.buildIntroduction(item, moq);
+            }
         } catch (Exception e) {
             System.out.println("[" + item.getItemCode() + "]生成商品详情异常: " + e.getMessage());
         }
@@ -131,7 +133,11 @@ public class SuningShelvesService implements ShelvesService {
         ApplyAddRequest.SupplierImgUrl supplierImgUrl = new ApplyAddRequest.SupplierImgUrl();
         supplierImgUrls.add(supplierImgUrl);
 
+
+        System.out.println(".........................");
+
         List<String> images = ShelvesItemParser.getImages(item.getSkuCode());
+        System.out.println("images.........................");
         if ( images.size() >= 1 ) {
             supplierImgUrl.setUrlA(images.get(0));
         }

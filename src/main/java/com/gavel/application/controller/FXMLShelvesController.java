@@ -325,7 +325,7 @@ public class FXMLShelvesController {
 
                 for (ShelvesItem shelvesItem : itemList.getItems()) {
 
-                    if ("上架成功".equalsIgnoreCase(shelvesItem.getStatus())) {
+                    if ( !shelvesItem.isSelected() || "上架成功".equalsIgnoreCase(shelvesItem.getStatus())) {
                         continue;
                     }
 
@@ -576,7 +576,7 @@ public class FXMLShelvesController {
 
         boolean okClicked = shelvesItemDetailEditDialog(selectedItem);
         if (okClicked) {
-
+            itemList.refresh();
         }
     }
 

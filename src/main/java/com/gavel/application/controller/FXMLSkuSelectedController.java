@@ -49,7 +49,7 @@ public class FXMLSkuSelectedController {
     private Stage dialogStage;
     private boolean okClicked = false;
 
-    private List<ShelvesItem> items;
+    private List<ShelvesItem> items = new ArrayList<>();
 
 
     @FXML
@@ -67,8 +67,14 @@ public class FXMLSkuSelectedController {
         // 品牌列表
         initBrandbox();
 
+        DataPagination dataPagination = new DataPagination(items, 30);
 
-        pagination.setPageCount(0);
+        pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
+
+        pagination.setPageFactory(pageIndex -> {
+            skuList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
+            return skuList;
+        });
     }
 
     // 初始化品牌列表

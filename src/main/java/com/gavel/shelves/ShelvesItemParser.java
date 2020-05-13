@@ -328,25 +328,6 @@ public class ShelvesItemParser {
 
         StringBuilder detail = new StringBuilder();
 
-        if ( _price < 100 ) {
-            detail.append("<div class=\"box\">");
-
-
-            detail.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\">" +
-                    "<span>商品起定量</span><span style=\"color:red;\">(请按起订量拍，否则无法发货)</span></div>");
-
-
-            detail.append(" <span style=\"color:red;\">起订量： ").append( (int)Math.ceil(100/_price)).append(unit1).append("</span><br>");
-
-            if ( number.contains(unit1) ) {
-                detail.append(" 包装数量： ").append(number).append("<br>");
-            } else {
-                detail.append(" 包装数量： ").append(number).append("/").append(unit1).append("<br>");
-            }
-
-            detail.append("</div>");
-        }
-
         detail.append("<div class=\"box\">");
 
 
@@ -547,7 +528,11 @@ public class ShelvesItemParser {
                 System.out.println(src);
             }
 
-            if ( picUrls==null || picUrls.size() ==0 ) {
+            if ( picUrls==null ||picUrls.size() ==0 ) {
+                return images;
+            }
+
+            if ( picUrls.size()==1 &&  "/Content/images/hp_np.png".equalsIgnoreCase(picUrls.get(0)) ) {
                 return images;
             }
 
@@ -609,9 +594,10 @@ public class ShelvesItemParser {
     }
 
     public static void main(String[] args) throws Exception {
-        Item item = SQLExecutor.executeQueryBean("select * from ITEM where CODE = ?", Item.class, "10D2389");
-        ShelvesItem shelvesItem = parse(item);
-        System.out.println(shelvesItem);
+        List<String> images = getImages("10B6658");
+        for (String image : images) {
+            System.out.println(image);
+        }
     }
 
 
