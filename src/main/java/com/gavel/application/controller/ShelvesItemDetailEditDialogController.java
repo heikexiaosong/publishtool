@@ -6,6 +6,7 @@ import com.gavel.entity.Brand;
 import com.gavel.entity.Category;
 import com.gavel.entity.Itemparameter;
 import com.gavel.entity.ShelvesItem;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -22,6 +23,8 @@ import javafx.util.StringConverter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ShelvesItemDetailEditDialogController {
 
@@ -85,11 +88,34 @@ public class ShelvesItemDetailEditDialogController {
         return okClicked;
     }
 
+    private Map<String, SimpleStringProperty> paramers = new ConcurrentHashMap<>();
+
     @FXML
     private void handleOk() {
 
         // TODO
-        if ( selectedItem!=null  ) {
+        if ( selectedItem!=null  && paramers.size() > 0 ) {
+            String cate = selectedItem.getMappingcategorycode();
+
+            try {
+                List<Itemparameter> cateParams = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where CATEGORYCODE = ? ", Itemparameter.class, cate);
+
+                for (Itemparameter cateParam : cateParams) {
+                    if (paramers.containsKey(cateParam.getParCode()) ) {
+                        SimpleStringProperty property = paramers.remove(cateParam.getParCode());
+                        cateParam.setParam(property.getValue());
+                        SQLExecutor.update(cateParam);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            for (String s : paramers.keySet()) {
+
+            }
+
+
 
         }
 
@@ -130,16 +156,27 @@ public class ShelvesItemDetailEditDialogController {
     }
 
     private void loadIetmparamers(String categorycode){
+        paramers.clear();
         params.getChildren().clear();
         if ( categorycode==null || categorycode.trim().length()==0 ) {
             return;
         }
         try {
-            List<Itemparameter> itemparameters = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where categoryCode = ? ", Itemparameter.class, categorycode);
+            List<Itemparameter> itemparameters = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where categoryCode = ? order by isMust desc", Itemparameter.class, categorycode);
             if ( itemparameters!=null ) {
 
-                for (int i1 = 0; i1 < itemparameters.size(); i1++) {
-                    Itemparameter itemparameter = itemparameters.get(i1);
+                int i1 = 0;
+                for (Itemparameter itemparameter : itemparameters) {
+
+                    if ( "cmModel".equalsIgnoreCase(itemparameter.getParCode()) ) {
+                        continue;
+                    }
+
+
+
+
+                    final SimpleStringProperty property = new SimpleStringProperty(itemparameter.getParam());
+                    paramers.put(itemparameter.getParCode(), property);
 
                     System.out.println(itemparameter.getParCode() + ": " + itemparameter.getParName());
 
@@ -154,7 +191,6 @@ public class ShelvesItemDetailEditDialogController {
                     params.add( new Label(itemparameter.getParaTemplateDesc()), 4, i1);
                     params.add( new Label(itemparameter.getDataType()), 5, i1);
 
-
                     switch (itemparameter.getParType()) {
                         case "1":
                         case "2":
@@ -162,13 +198,16 @@ public class ShelvesItemDetailEditDialogController {
                             ComboBox<Itemparameter.ParOption> parOptionComboBox = new ComboBox<Itemparameter.ParOption>();
 
                             parOptionComboBox.getItems().addAll( itemparameter.getParOption());
-                            parOptionComboBox.getSelectionModel().select(1);
-
 
                             parOptionComboBox.setOnAction((ActionEvent ev) -> {
-                                Itemparameter.ParOption option =
-                                        parOptionComboBox.getSelectionModel().getSelectedItem();
+                                Itemparameter.ParOption option = parOptionComboBox.getSelectionModel().getSelectedItem();
                                 System.out.println(option.getParOptionCode() + ": " + option.getParOptionDesc());
+
+                                if ( option.getParOptionCode() !=null && option.getParOptionCode().trim().length() > 0 ) {
+                                    property.setValue(option.getParOptionCode());
+                                } else {
+                                    property.setValue(option.getParOptionDesc());
+                                }
                             });
 
                             parOptionComboBox.setConverter(new StringConverter<Itemparameter.ParOption>() {
@@ -190,7 +229,7 @@ public class ShelvesItemDetailEditDialogController {
                                 String defaultValue = itemparameter.getParam();
                                 Itemparameter.ParOption value = itemparameter.getParOption().get(0);
                                 for (Itemparameter.ParOption option : itemparameter.getParOption()) {
-                                    if ( defaultValue.equalsIgnoreCase(option.getParOptionCode()) ) {
+                                    if (  defaultValue.equalsIgnoreCase(option.getParOptionCode()) ) {
                                         value = option;
                                         break;
                                     }
@@ -210,7 +249,7 @@ public class ShelvesItemDetailEditDialogController {
                             break;
                         case "3":
                             final TextField field = new TextField();
-                            field.setText(itemparameter.getParam());
+                            field.textProperty().bindBidirectional(property);
                             field.setOnAction(new EventHandler<ActionEvent>() {
                                 @Override
                                 public void handle(ActionEvent event) {
@@ -220,6 +259,8 @@ public class ShelvesItemDetailEditDialogController {
                             params.add(field, 1, i1);
                             break;
                     }
+
+                    i1++;
                 }
 
             }

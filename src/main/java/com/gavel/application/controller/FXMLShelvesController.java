@@ -532,6 +532,16 @@ public class FXMLShelvesController {
 
         ShelvesItem selectedItem = itemList.getSelectionModel().getSelectedItem();
 
+        if ( selectedItem==null ) {
+            Alert _alert = new Alert(Alert.AlertType.INFORMATION);
+            _alert.setTitle("信息");
+            _alert.setHeaderText("请先选择需要编辑的商品");
+            _alert.initOwner(stage());
+            _alert.show();
+            return;
+        }
+
+
         boolean okClicked = shelvesItemDetailEditDialog(selectedItem);
         if (okClicked) {
 

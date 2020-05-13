@@ -43,16 +43,16 @@
 
 
 
-                               <TextField fx:id="skuCode" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                               <TextField fx:id="skuCode" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
                                <TextField fx:id="itemCode" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                                <TextField fx:id="model" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                               <TextField fx:id="productName" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                               <TextField fx:id="productName" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                                <TextArea fx:id="cmTitle" prefHeight="200.0" prefWidth="200.0" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                                <TextField fx:id="sellingPoints" GridPane.columnIndex="1" GridPane.rowIndex="5" />
-                               <TextField fx:id="categoryCode" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="6" />
-                               <TextField fx:id="brandCode" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="7" />
-                               <TextField fx:id="mappingcategorycode" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="8" />
-                               <TextField fx:id="mappingbrandcode" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+                               <TextField fx:id="categoryCode" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="6" />
+                               <TextField fx:id="brandCode" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                               <TextField fx:id="mappingcategorycode" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="8" />
+                               <TextField fx:id="mappingbrandcode" disable="true" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="9" />
                               <Button mnemonicParsing="false" onAction="#handleCategorySelect" text="选择类目" GridPane.columnIndex="2" GridPane.rowIndex="8">
                                  <GridPane.margin>
                                     <Insets left="20.0" />
