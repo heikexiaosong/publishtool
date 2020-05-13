@@ -99,7 +99,7 @@ public class SuningShelvesService implements ShelvesService {
         for (ParameterLoader.Parameter parameter : parameters) {
             ApplyAddRequest.Pars pars= new ApplyAddRequest.Pars();
             pars.setParCode(parameter.code());
-            if ( "cmModel".equalsIgnoreCase(parameter.code())) {
+            if ( "cmModel".equalsIgnoreCase(parameter.code()) || "001360".equalsIgnoreCase(parameter.code()) ) {
                 pars.setParValue(item.getModel());
             } else {
                 pars.setParValue(parameter.value());
@@ -181,6 +181,7 @@ public class SuningShelvesService implements ShelvesService {
             logger.info("ApplyAddResponse: " + response.getBody());
             SuningResponse.SnError error = response.getSnerror();
             if ( error!=null ) {
+                System.out.println(request.getResParamsMap());
                 System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
                 throw buildException(error.getErrorCode(), error.getErrorMsg());
             } else {
@@ -196,7 +197,7 @@ public class SuningShelvesService implements ShelvesService {
 
         ShelvesService shelvesService = new SuningShelvesService(100);
 
-        String code = "11H3346";
+        String code = "10K5157";
 
         ShelvesItem item = SQLExecutor.executeQueryBean("select * from SHELVESITEM where ITEMCODE = ?", ShelvesItem.class, code);
         shelvesService.shelves(item);
@@ -204,6 +205,11 @@ public class SuningShelvesService implements ShelvesService {
     }
 
     private static Exception buildException(String errorCode, String errorMsg){
+
+
+        if ( errorCode.contains("biz.custom.item.invalid-biz:supplierImgUrlRepeate") ) {
+            return new Exception("供应商商品图片重复");
+        }
 
         if ( errorCode.contains("biz.selfmarket.addapply.length-overlong:") ) {
             String text = errorCode.split("	")[0];
@@ -391,9 +397,7 @@ public class SuningShelvesService implements ShelvesService {
         if ( errorCode.contains("biz.selfmarket.addapply.invalid-biz:156") ) {
             return new Exception("亮点词首位不能为空");
         }
-
-
-        return new Exception();
+        return new Exception(errorCode);
     }
 
 

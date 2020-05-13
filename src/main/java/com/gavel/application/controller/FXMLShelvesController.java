@@ -29,7 +29,6 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
@@ -107,14 +106,14 @@ public class FXMLShelvesController {
             return property;
         });
 
-        cmTitleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCmTitle()));
-        codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getItemCode()));
-        graingerbrandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandname()));
-        graingercategorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryname()));
-        brandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMappingbrandname()));
-        categorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMappingcategoryname()));
-        statusCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStatus()));
-        msgCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getMsg()));
+        cmTitleCol.setCellValueFactory(cellData -> cellData.getValue().cmTitleProperty());
+        codeCol.setCellValueFactory(cellData -> cellData.getValue().itemCodeProperty());
+        graingerbrandnameCol.setCellValueFactory(cellData -> cellData.getValue().brandnameProperty());
+        graingercategorynameCol.setCellValueFactory(cellData -> cellData.getValue().categorynameProperty());
+        brandnameCol.setCellValueFactory(cellData -> cellData.getValue().mappingbrandnameProperty());
+        categorynameCol.setCellValueFactory(cellData -> cellData.getValue().mappingcategorynameProperty());
+        statusCol.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
+        msgCol.setCellValueFactory(cellData -> cellData.getValue().messageProperty());
         updatetimeCol.setCellValueFactory(cellData -> new SimpleStringProperty(DateUtil.format(cellData.getValue().getUpdatetime())));
 
 
@@ -302,6 +301,10 @@ public class FXMLShelvesController {
         return false;
     }
 
+    /**
+     * 上架
+     * @param actionEvent
+     */
     public void handleShelvesAction(ActionEvent actionEvent) {
         // TODO 上架
 
@@ -333,33 +336,24 @@ public class FXMLShelvesController {
                         @Override
                         public void run() {
                             itemList.getSelectionModel().select(shelvesItem);
-                            shelvesItem.setStatus("正在上架...");
                         }
                     });
 
+                    shelvesItem.setStatus("正在上架...");
+                    shelvesItem.setMessage("");
                     try {
                         shelvesService.shelves(shelvesItem);
                         shelvesItem.setStatus("上架成功");
-                        shelvesItem.setMsg("");
                     } catch (Exception e){
                         shelvesItem.setStatus("上架失败");
-                        shelvesItem.setMsg(e.getMessage());
+                        shelvesItem.setMessage(e.getMessage());
                     }
 
-                    shelvesItem.setUpdatetime(Calendar.getInstance().getTime());
                     try {
                         SQLExecutor.update(shelvesItem);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            itemList.getSelectionModel().select(shelvesItem);
-                            itemList.refresh();
-                        }
-                    });
                 }
             }
         }).start();

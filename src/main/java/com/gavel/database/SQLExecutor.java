@@ -9,7 +9,11 @@ import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.apache.commons.dbutils.handlers.MapHandler;
 
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -64,18 +68,17 @@ public class SQLExecutor {
         List<Object> paramObjs = new ArrayList<>();
 
         StringBuilder params = new StringBuilder();
-        Field[] fs = clz.getDeclaredFields();
-        for (Field f : fs) {
+        Field[] fields = record.getClass().getDeclaredFields();
+        for (Field f : fields) {
 
             FieldMeta fieldMeta =  f.getAnnotation(FieldMeta.class);
             if ( fieldMeta!=null ){
                 //System.out.println( fieldMeta.name() + ", " + fieldMeta.length() + ", " + f.getType().getName());
                 builder.append(fieldMeta.name()).append(",");
                 params.append("?,");
-                boolean access =  f.isAccessible();
-                f.setAccessible(true);
-                paramObjs.add(f.get(record));
-                f.setAccessible(access);
+                PropertyDescriptor descriptor = new PropertyDescriptor(f.getName(), record.getClass());
+                Method readMethod = descriptor.getReadMethod();
+                paramObjs.add(readMethod.invoke(record));
             }
         }
         builder.deleteCharAt(builder.length()-1);
@@ -185,31 +188,34 @@ public class SQLExecutor {
         StringBuilder builder = new StringBuilder("UPDATE ").append(table).append(" SET ");
 
         List<Object> paramObjs = new ArrayList<>();
-        Field[] fs = clz.getDeclaredFields();
-        for (Field f : fs) {
-            FieldMeta fieldMeta =  f.getAnnotation(FieldMeta.class);
+        //
+        Field[] fields = record.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            FieldMeta fieldMeta =  field.getAnnotation(FieldMeta.class);
             if ( fieldMeta!=null && !fieldMeta.primary() ){
-                //System.out.println( fieldMeta.name() + ", " + fieldMeta.length() + ", " + f.getType().getName());
-                builder.append(" ").append(fieldMeta.name()).append(" = ?,");
-                boolean access =  f.isAccessible();
-                f.setAccessible(true);
-                paramObjs.add(f.get(record));
-                f.setAccessible(access);
+                try {
+                    builder.append(" ").append(fieldMeta.name()).append(" = ?,");
+                    PropertyDescriptor descriptor = new PropertyDescriptor(field.getName(), record.getClass());
+                    Method readMethod = descriptor.getReadMethod();
+                    Object o = readMethod.invoke(record);
+                    paramObjs.add(o);
+                } catch (IntrospectionException | IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
             }
         }
         builder.deleteCharAt(builder.length()-1);
 
         builder.append(" where ");
 
-        for (Field f : fs) {
-            FieldMeta fieldMeta =  f.getAnnotation(FieldMeta.class);
+        for (Field field : fields) {
+            FieldMeta fieldMeta =  field.getAnnotation(FieldMeta.class);
             if ( fieldMeta!=null && fieldMeta.primary() ){
                 //System.out.println( fieldMeta.name() + ", " + fieldMeta.length() + ", " + f.getType().getName());
                 builder.append(" ").append(fieldMeta.name()).append(" = ? and");
-                boolean access =  f.isAccessible();
-                f.setAccessible(true);
-                paramObjs.add(f.get(record));
-                f.setAccessible(access);
+                PropertyDescriptor descriptor = new PropertyDescriptor(field.getName(), record.getClass());
+                Method readMethod = descriptor.getReadMethod();
+                paramObjs.add(readMethod.invoke(record));
             }
         }
 
@@ -243,16 +249,15 @@ public class SQLExecutor {
         boolean hasPrimary = false;
 
         List<Object> paramObjs = new ArrayList<>();
-        Field[] fs = clz.getDeclaredFields();
-        for (Field f : fs) {
+        Field[] fields = record.getClass().getDeclaredFields();
+        for (Field f : fields) {
             FieldMeta fieldMeta =  f.getAnnotation(FieldMeta.class);
             if ( fieldMeta!=null && fieldMeta.primary() ){
                 hasPrimary = true;
                 builder.append(" ").append(fieldMeta.name()).append(" = ? and");
-                boolean access =  f.isAccessible();
-                f.setAccessible(true);
-                paramObjs.add(f.get(record));
-                f.setAccessible(access);
+                PropertyDescriptor descriptor = new PropertyDescriptor(f.getName(), record.getClass());
+                Method readMethod = descriptor.getReadMethod();
+                paramObjs.add(readMethod.invoke(record));
             }
         }
 

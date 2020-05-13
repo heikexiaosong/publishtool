@@ -6,6 +6,7 @@ import com.gavel.entity.Brand;
 import com.gavel.entity.Category;
 import com.gavel.entity.Itemparameter;
 import com.gavel.entity.ShelvesItem;
+import com.gavel.utils.StringUtils;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -111,6 +112,9 @@ public class ShelvesItemDetailEditDialogController {
                     if (paramers.containsKey(cateParam.getParCode()) ) {
                         SimpleStringProperty property = paramers.remove(cateParam.getParCode());
                         cateParam.setParam(property.getValue());
+
+                        System.out.println(cateParam.getParCode() + " -> " + property.getValue() );
+
                         SQLExecutor.update(cateParam);
                     }
                 }
@@ -166,14 +170,15 @@ public class ShelvesItemDetailEditDialogController {
             if ( itemparameters!=null ) {
 
                 int i1 = 0;
-                for (Itemparameter itemparameter : itemparameters) {
+                for (final Itemparameter itemparameter : itemparameters) {
 
                     if ( "cmModel".equalsIgnoreCase(itemparameter.getParCode()) ) {
                         continue;
                     }
 
-
-
+                    if ( "001360".equalsIgnoreCase(itemparameter.getParCode()) ) {
+                        continue;
+                    }
 
                     final SimpleStringProperty property = new SimpleStringProperty(itemparameter.getParam());
                     paramers.put(itemparameter.getParCode(), property);
@@ -201,9 +206,9 @@ public class ShelvesItemDetailEditDialogController {
 
                             parOptionComboBox.setOnAction((ActionEvent ev) -> {
                                 Itemparameter.ParOption option = parOptionComboBox.getSelectionModel().getSelectedItem();
-                                System.out.println(option.getParOptionCode() + ": " + option.getParOptionDesc());
+                                System.out.println( itemparameter.getParCode() + " ==> " + option.getParOptionCode() + ": " + option.getParOptionDesc());
 
-                                if ( option.getParOptionCode() !=null && option.getParOptionCode().trim().length() > 0 ) {
+                                if (!StringUtils.isBlank(option.getParOptionCode())) {
                                     property.setValue(option.getParOptionCode());
                                 } else {
                                     property.setValue(option.getParOptionDesc());
@@ -229,7 +234,13 @@ public class ShelvesItemDetailEditDialogController {
                                 String defaultValue = itemparameter.getParam();
                                 Itemparameter.ParOption value = itemparameter.getParOption().get(0);
                                 for (Itemparameter.ParOption option : itemparameter.getParOption()) {
-                                    if (  defaultValue.equalsIgnoreCase(option.getParOptionCode()) ) {
+
+                                    String _value = option.getParOptionCode();
+                                    if ( StringUtils.isBlank(_value)) {
+                                        _value = option.getParOptionDesc();
+                                    }
+
+                                    if (  defaultValue.equalsIgnoreCase(_value) ) {
                                         value = option;
                                         break;
                                     }

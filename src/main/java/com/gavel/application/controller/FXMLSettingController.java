@@ -3,6 +3,7 @@ package com.gavel.application.controller;
 import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.*;
+import com.gavel.utils.StringUtils;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
@@ -231,6 +232,10 @@ public class FXMLSettingController {
                 continue;
             }
 
+            if ( "001360".equalsIgnoreCase(itemparameter.getParCode()) ) {
+                continue;
+            }
+
             final SimpleStringProperty property = new SimpleStringProperty(itemparameter.getParam());
             paramers.put(itemparameter.getParCode(), property);
 
@@ -259,11 +264,12 @@ public class FXMLSettingController {
                         Itemparameter.ParOption option = parOptionComboBox.getSelectionModel().getSelectedItem();
                         System.out.println(option.getParOptionCode() + ": " + option.getParOptionDesc());
 
-                        if ( option.getParOptionCode() !=null && option.getParOptionCode().trim().length() > 0 ) {
+                        if (!StringUtils.isBlank(option.getParOptionCode())) {
                             property.setValue(option.getParOptionCode());
                         } else {
                             property.setValue(option.getParOptionDesc());
                         }
+
                     });
 
                     parOptionComboBox.setConverter(new StringConverter<Itemparameter.ParOption>() {
@@ -285,7 +291,12 @@ public class FXMLSettingController {
                         String defaultValue = itemparameter.getParam();
                         Itemparameter.ParOption value = itemparameter.getParOption().get(0);
                         for (Itemparameter.ParOption option : itemparameter.getParOption()) {
-                            if (  defaultValue.equalsIgnoreCase(option.getParOptionCode()) ) {
+                            String _value = option.getParOptionCode();
+                            if ( StringUtils.isBlank(_value)) {
+                                _value = option.getParOptionDesc();
+                            }
+
+                            if (  defaultValue.equalsIgnoreCase(_value) ) {
                                 value = option;
                                 break;
                             }

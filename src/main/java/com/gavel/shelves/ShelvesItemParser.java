@@ -455,14 +455,23 @@ public class ShelvesItemParser {
             }
 
             while ( images.size() < 5 ) {
-                String id = MD5Utils.md5Hex(picUrls.get(0).trim());
-                ImageCache image =  SQLExecutor.executeQueryBean("select * from image  where id = ? ", ImageCache.class, id);
-
-                if ( image==null || image.getFilepath()==null || image.getFilepath().trim().length()==0 ) {
-                    continue;
+                String localFilePath = null;
+                ImageCache image = null;
+                for (String picUrl : picUrls) {
+                    image =  SQLExecutor.executeQueryBean("select * from image  where id = ? ", ImageCache.class, MD5Utils.md5Hex(picUrl));
+                    if ( image==null || image.getFilepath()==null || image.getFilepath().trim().length()==0 ) {
+                        continue;
+                    }
+                    localFilePath = ImageLoader.PICS_COMPLETE_DIR + File.separator + image.getFilepath();
+                    if ( new File(localFilePath).exists() ) {
+                        break;
+                    }
+                    localFilePath = null;
                 }
 
-                String localFilePath = ImageLoader.PICS_COMPLETE_DIR + File.separator + image.getFilepath();
+                if ( localFilePath==null || localFilePath.trim().length() ==0 ) {
+                    break;
+                }
 
                 System.out.println(localFilePath);
                 Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
