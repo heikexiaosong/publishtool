@@ -93,6 +93,13 @@ public class ShelvesItemDetailEditDialogController {
     @FXML
     private void handleOk() {
 
+        if ( selectedItem !=null  ) {
+            selectedItem.setItemCode(itemCode.getText().trim());
+            selectedItem.setProductName(productName.getText().trim());
+            selectedItem.setCmTitle(cmTitle.getText().trim());
+            selectedItem.setSellingPoints(sellingPoints.getText().trim());
+        }
+
         // TODO
         if ( selectedItem!=null  && paramers.size() > 0 ) {
             String cate = selectedItem.getMappingcategorycode();
@@ -110,13 +117,6 @@ public class ShelvesItemDetailEditDialogController {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
-            for (String s : paramers.keySet()) {
-
-            }
-
-
-
         }
 
         okClicked = true;

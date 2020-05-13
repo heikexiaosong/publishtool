@@ -575,6 +575,11 @@ public class FXMLShelvesController {
 
         boolean okClicked = shelvesItemDetailEditDialog(selectedItem);
         if (okClicked) {
+            try {
+                SQLExecutor.update(selectedItem);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             itemList.refresh();
         }
     }
