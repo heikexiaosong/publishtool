@@ -1,6 +1,7 @@
 package com.gavel.database;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.gavel.config.APPConfig;
 
 import javax.sql.DataSource;
 
@@ -13,13 +14,15 @@ public class DataSourceHolder {
 
     public DataSourceHolder() {
 
+        APPConfig appConfig = APPConfig.getInstance();
+
         DruidDataSource druidDataSource = new DruidDataSource();
 
         druidDataSource = new DruidDataSource();
-        druidDataSource.setDriverClassName("com.mysql.jdbc.Driver");
-        druidDataSource.setUsername("root");
-        druidDataSource.setPassword("root");
-        druidDataSource.setUrl("jdbc:mysql://192.168.1.102:3306/jingsu?useUnicode=true&characterEncoding=utf-8&useSSL=false");
+        druidDataSource.setDriverClassName(appConfig.getProperty("jdbc.driverClassName", "com.mysql.jdbc.Driver"));
+        druidDataSource.setUsername(appConfig.getProperty("jdbc.username","root"));
+        druidDataSource.setPassword(appConfig.getProperty("jdbc.password","root"));
+        druidDataSource.setUrl(appConfig.getProperty("jdbc.url", "jdbc:mysql://127.0.0.1:3306/jingsu?useUnicode=true&characterEncoding=utf-8&useSSL=false"));
         druidDataSource.setInitialSize(5);
         druidDataSource.setMinIdle(1);
         druidDataSource.setMaxActive(10);
