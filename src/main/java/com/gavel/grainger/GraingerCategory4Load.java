@@ -3,19 +3,15 @@ package com.gavel.grainger;
 import com.gavel.HttpUtils;
 import com.gavel.database.DataSourceHolder;
 import com.gavel.entity.GraingerCategory;
-import com.gavel.suning.SuningClient;
-import com.google.gson.Gson;
-import com.suning.api.DefaultSuningClient;
-import com.suning.api.SelectSuningResponse;
-import com.suning.api.entity.item.BrandQueryRequest;
-import com.suning.api.entity.item.BrandQueryResponse;
-import com.suning.api.exception.SuningApiException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -1,5 +1,6 @@
 package com.gavel;
 
+import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.ImageCache;
@@ -9,10 +10,8 @@ import com.gavel.grainger.StringUtils;
 import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.CatetoryBrandSelector;
 import com.gavel.shelves.suning.SuningCatetoryBrandSelector;
-import com.gavel.suning.SuningClient;
 import com.gavel.utils.ImageLoader;
 import com.google.gson.Gson;
-import com.suning.api.DefaultSuningClient;
 import com.suning.api.SuningResponse;
 import com.suning.api.entity.item.NPicAddRequest;
 import com.suning.api.entity.item.NPicAddResponse;
@@ -33,9 +32,6 @@ import java.util.*;
 import java.util.List;
 
 public class ProductShelves {
-
-
-    private  static  final DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET, "json");
 
     /**
      *
@@ -181,7 +177,7 @@ public class ProductShelves {
             NPicAddRequest request = new NPicAddRequest();
             request.setPicFileData(localFilePath);
             try {
-                NPicAddResponse response = client.excuteMultiPart(request);
+                NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
                 System.out.println("ApplyAddRequest :" + response.getBody());
                 SuningResponse.SnError error = response.getSnerror();
                 if ( error!=null ) {
@@ -392,7 +388,7 @@ public class ProductShelves {
                     NPicAddRequest request = new NPicAddRequest();
                     request.setPicFileData(localFilePath);
                     try {
-                        NPicAddResponse response = client.excuteMultiPart(request);
+                        NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
                         System.out.println("ApplyAddRequest :" + response.getBody());
                         SuningResponse.SnError error = response.getSnerror();
                         if ( error!=null ) {
@@ -734,7 +730,7 @@ public class ProductShelves {
         try {
 
 
-            ApplyAddResponse response = client.excute(request);
+            ApplyAddResponse response = APPConfig.getInstance().client().excute(request);
             System.out.println("ApplyAddRequest :" + response.getBody());
 
             SuningResponse.SnError error = response.getSnerror();

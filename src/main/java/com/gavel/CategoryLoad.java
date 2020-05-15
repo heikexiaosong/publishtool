@@ -1,14 +1,16 @@
 package com.gavel;
 
+import com.gavel.config.APPConfig;
 import com.gavel.database.DataSourceHolder;
-import com.gavel.suning.SuningClient;
 import com.google.gson.Gson;
-import com.suning.api.DefaultSuningClient;
 import com.suning.api.entity.item.CategoryQueryRequest;
 import com.suning.api.entity.item.CategoryQueryResponse;
 import com.suning.api.exception.SuningApiException;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 public class CategoryLoad {
 
@@ -27,9 +29,8 @@ public class CategoryLoad {
         //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
         request.setCheckParam(true);
 
-        DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET, "json");
         try {
-            CategoryQueryResponse response = client.excute(request);
+            CategoryQueryResponse response = APPConfig.getInstance().client().excute(request);
             System.out.println("CategoryQueryRequest :" + response.getBody());
 
             PreparedStatement stmt = conn.prepareStatement("INSERT INTO CATEGORY VALUES(?, ?, ?, ?, ?)");
@@ -53,7 +54,7 @@ public class CategoryLoad {
 
                 pageNo += 1;
                 request.setPageNo(pageNo);
-                response = client.excute(request);
+                response = APPConfig.getInstance().client().excute(request);
             }
 
             if ( response.getSnbody()!=null && response.getSnbody().getCategoryQueries()!=null && response.getSnbody().getCategoryQueries().size() > 0 ) {

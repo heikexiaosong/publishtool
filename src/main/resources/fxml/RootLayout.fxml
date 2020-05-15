@@ -2,12 +2,11 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
 <?import java.net.URL?>
-<BorderPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.gavel.application.controller.FXMLMainAppController">
+<BorderPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLMainAppController">
 
   <stylesheets>
     <URL value="@../css/app.css" />
@@ -16,24 +15,29 @@
   <top>
     <AnchorPane styleClass="app_title" BorderPane.alignment="CENTER">
       <children>
-        <ImageView fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="15.0" AnchorPane.leftAnchor="20.0" AnchorPane.topAnchor="15.0" HBox.hgrow="ALWAYS">
-          <image>
-            <Image url="@../image/logo.png" />
-          </image>
-          <HBox.margin>
-            <Insets left="30.0" top="15.0" />
-          </HBox.margin>
-        </ImageView>
-            <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="490.0" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="100.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+          <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="490.0" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+              <children>
+                  <Hyperlink fx:id="shopinfo" onAction="#handleShopChangeAction" text="京苏易购电子商务（江苏）有限公司" textFill="WHITE">
+                      <font>
+                          <Font name="SansSerif Bold" size="24.0" />
+                      </font></Hyperlink>
+              </children>
+               <padding>
+                  <Insets left="20.0" />
+               </padding>
+          </HBox>
+            <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="490.0" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                <children>
-                   <Button mnemonicParsing="false" styleClass="titleButton" onAction="#handlShelvesAction" text="上架" />
-                  <Button mnemonicParsing="false" styleClass="titleButton" onAction="#handlCollectionAction" text="采集" />
-                   <Button mnemonicParsing="false" styleClass="titleButton" onAction="#handlSettingAction" text="设置" />
+                   <Button mnemonicParsing="false" onAction="#handlShelvesAction" styleClass="titleButton" text="上架" />
+                  <Button mnemonicParsing="false" onAction="#handlCollectionAction" styleClass="titleButton" text="采集" />
+                   <Button mnemonicParsing="false" onAction="#handlSettingAction" styleClass="titleButton" text="设置" />
                </children>
                <padding>
                   <Insets right="50.0" />
                </padding>
             </HBox>
+
+
       </children>
       <BorderPane.margin>
         <Insets />

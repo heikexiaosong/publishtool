@@ -1,10 +1,8 @@
 package com.gavel;
 
-import com.gavel.suning.SuningClient;
+import com.gavel.config.APPConfig;
 import com.google.gson.Gson;
-import com.suning.api.DefaultSuningClient;
 import com.suning.api.SuningResponse;
-import com.suning.api.entity.item.NPicAddResponse;
 import com.suning.api.entity.selfmarket.ItemQueryRequest;
 import com.suning.api.entity.selfmarket.ItemQueryResponse;
 import com.suning.api.entity.selfmarket.ItemdetailQueryRequest;
@@ -12,8 +10,6 @@ import com.suning.api.entity.selfmarket.ItemdetailQueryResponse;
 import com.suning.api.exception.SuningApiException;
 
 public class Detail {
-
-    private  static  final DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET, "json");
 
 
     public static void main(String[] args) {
@@ -24,7 +20,7 @@ public class Detail {
             request1.setPageSize(50);
             request1.setCategoryCode("R1309004");
             try {
-                ItemQueryResponse response = client.excute(request1);
+                ItemQueryResponse response = APPConfig.getInstance().client().excute(request1);
                 System.out.println("ApplyAddRequest :" + response.getBody());
                 SuningResponse.SnError error = response.getSnerror();
                 if ( error!=null ) {
@@ -44,7 +40,7 @@ public class Detail {
             ItemdetailQueryRequest request1 = new ItemdetailQueryRequest();
             request1.setApplyCode("7043e079-ce8f-4692-b141-33ec066572eb");
             try {
-                ItemdetailQueryResponse response = client.excute(request1);
+                ItemdetailQueryResponse response = APPConfig.getInstance().client().excute(request1);
                 System.out.println("ApplyAddRequest :" + response.getBody());
                 SuningResponse.SnError error = response.getSnerror();
                 if ( error!=null ) {

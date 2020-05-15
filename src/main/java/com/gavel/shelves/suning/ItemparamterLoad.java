@@ -1,12 +1,11 @@
-package com.gavel.grainger;
+package com.gavel.shelves.suning;
 
+import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Category;
 import com.gavel.entity.Itemparameter;
-import com.gavel.suning.SuningClient;
 import com.gavel.utils.StringUtils;
 import com.google.gson.Gson;
-import com.suning.api.DefaultSuningClient;
 import com.suning.api.SuningResponse;
 import com.suning.api.entity.item.ItemparametersQueryRequest;
 import com.suning.api.entity.item.ItemparametersQueryResponse;
@@ -16,8 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ItemparamterLoad {
-
-    private  static  final DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET, "json");
 
     public static void main(String[] args) throws Exception {
 
@@ -51,7 +48,7 @@ public class ItemparamterLoad {
             request.setCheckParam(true);
 
             try {
-                ItemparametersQueryResponse response = client.excute(request);
+                ItemparametersQueryResponse response = APPConfig.getInstance().client().excute(request);
                 System.out.println("NationQueryRequest :" + response.getBody());
 
                 SuningResponse.SnError error = response.getSnerror();

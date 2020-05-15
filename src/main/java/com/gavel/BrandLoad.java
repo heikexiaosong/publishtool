@@ -1,17 +1,17 @@
 package com.gavel;
 
+import com.gavel.config.APPConfig;
 import com.gavel.database.DataSourceHolder;
-import com.gavel.suning.SuningClient;
 import com.google.gson.Gson;
-import com.suning.api.DefaultSuningClient;
 import com.suning.api.SelectSuningResponse;
 import com.suning.api.entity.item.BrandQueryRequest;
 import com.suning.api.entity.item.BrandQueryResponse;
-import com.suning.api.entity.item.CategoryQueryRequest;
-import com.suning.api.entity.item.CategoryQueryResponse;
 import com.suning.api.exception.SuningApiException;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 public class BrandLoad {
 
@@ -55,9 +55,8 @@ public class BrandLoad {
         //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
         request.setCheckParam(true);
 
-        DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET, "json");
         try {
-            BrandQueryResponse response = client.excute(request);
+            BrandQueryResponse response = APPConfig.getInstance().client().excute(request);
             System.out.println("CategoryQueryRequest :" + response.getBody());
 
             SelectSuningResponse.SnHead head = response.getSnhead();
@@ -80,7 +79,7 @@ public class BrandLoad {
 
                 pageNo += 1;
                 request.setPageNo(pageNo);
-                response = client.excute(request);
+                response = APPConfig.getInstance().client().excute(request);
             }
 
             if (response.getSnbody()!=null && response.getSnbody().getBrandQueries()!=null && response.getSnbody().getBrandQueries().size() > 0 ) {

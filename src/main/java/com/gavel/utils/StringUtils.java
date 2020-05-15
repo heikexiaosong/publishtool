@@ -15,4 +15,11 @@ public class StringUtils {
         }
         return value.trim().length()==0;
     }
+
+    public static boolean isNotBlank(String value) {
+        if ( value==null ) {
+            return false;
+        }
+        return value.trim().length()>0;
+    }
 }

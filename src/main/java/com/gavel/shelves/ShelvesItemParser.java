@@ -1,5 +1,6 @@
 package com.gavel.shelves;
 
+import com.gavel.config.APPConfig;
 import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
@@ -7,11 +8,9 @@ import com.gavel.entity.ImageCache;
 import com.gavel.entity.Item;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.grainger.StringUtils;
-import com.gavel.suning.SuningClient;
 import com.gavel.utils.ImageLoader;
 import com.gavel.utils.MD5Utils;
 import com.google.gson.Gson;
-import com.suning.api.DefaultSuningClient;
 import com.suning.api.SuningResponse;
 import com.suning.api.entity.item.NPicAddRequest;
 import com.suning.api.entity.item.NPicAddResponse;
@@ -35,8 +34,6 @@ import java.util.List;
 import java.util.Map;
 
 public class ShelvesItemParser {
-
-    private  static  final DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET, "json");
 
     /**
      *
@@ -320,7 +317,7 @@ public class ShelvesItemParser {
             NPicAddRequest request = new NPicAddRequest();
             request.setPicFileData(localFilePath);
             try {
-                NPicAddResponse response = client.excuteMultiPart(request);
+                NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
                 System.out.println("ApplyAddRequest :" + response.getBody());
                 SuningResponse.SnError error = response.getSnerror();
                 if ( error!=null ) {
@@ -372,7 +369,7 @@ public class ShelvesItemParser {
             NPicAddRequest request = new NPicAddRequest();
             request.setPicFileData(localFilePath);
             try {
-                NPicAddResponse response = client.excuteMultiPart(request);
+                NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
                 System.out.println("ApplyAddRequest :" + response.getBody());
                 SuningResponse.SnError error = response.getSnerror();
                 if ( error!=null ) {
@@ -475,16 +472,17 @@ public class ShelvesItemParser {
 
                 System.out.println(localFilePath);
                 Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
-                Imgproc.putText(src,String.valueOf(images.size()), new Point(60,60),Imgproc.FONT_HERSHEY_SCRIPT_SIMPLEX, 1.0, new Scalar(255, 255, 255),1,Imgproc.LINE_AA,false);
 
+                Imgproc.putText(src, String.valueOf(images.size()), new Point(720,750),Imgproc.FONT_HERSHEY_PLAIN, 2.0, new Scalar(238, 238, 238),4, Imgproc.LINE_AA,false);
 
-                String target = ImageLoader.PICS_TEMP_DIR + File.separator + image.getFilepath();
+                String target = ImageLoader.PICS_TEMP_DIR + File.separator  + images.size() + File.separator + image.getFilepath();
 
                 File tempfile = new File(target);
                 if ( !tempfile.getParentFile().exists() ) {
                     tempfile.getParentFile().mkdirs();
                 }
 
+                System.out.println(target);
                 Imgcodecs.imwrite(target, src);
 
                 String picUrl = null;
@@ -492,7 +490,7 @@ public class ShelvesItemParser {
                     NPicAddRequest request = new NPicAddRequest();
                     request.setPicFileData(target);
                     try {
-                        NPicAddResponse response = client.excuteMultiPart(request);
+                        NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
                         System.out.println("ApplyAddRequest :" + response.getBody());
                         SuningResponse.SnError error = response.getSnerror();
                         if ( error!=null ) {

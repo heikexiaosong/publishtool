@@ -1,35 +1,46 @@
 package com.gavel.shelves.suning;
 
+import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
+import com.gavel.entity.Category;
+import com.gavel.entity.CategoryMapping;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.ParameterLoader;
 import com.gavel.shelves.ShelvesItemParser;
 import com.gavel.shelves.ShelvesService;
-import com.gavel.suning.SuningClient;
+import com.gavel.suning.CategoryredictService;
 import com.gavel.utils.StringUtils;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
-import com.suning.api.DefaultSuningClient;
 import com.suning.api.SuningResponse;
 import com.suning.api.entity.selfmarket.ApplyAddRequest;
 import com.suning.api.entity.selfmarket.ApplyAddResponse;
 import com.suning.api.exception.SuningApiException;
+import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SuningShelvesService implements ShelvesService {
 
-    private  static  final DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET, "json");
+
+    static {
+        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
+    }
 
     private Logger logger = LoggerFactory.getLogger(SuningShelvesService.class);
 
     private final int moq;
 
+    private final CategoryredictService categoryredictService;
+
     public SuningShelvesService(int moq) {
         this.moq = moq;
+        this.categoryredictService = null; //CategoryredictService.buildService(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET);
     }
 
     @Override
@@ -58,11 +69,35 @@ public class SuningShelvesService implements ShelvesService {
 
         }
 
-        if ( category==null || category.length()==0 ) {
+        if ( StringUtils.isBlank(item.getMappingcategorycode()) ) {
+           String categoryRedict = categoryredictService.redict(item.getCmTitle(), "R9002887");
+            System.out.println("categoryRedict: " + categoryRedict);
+           if ( StringUtils.isNotBlank(categoryRedict) ) {
+               Category category1 =  SQLExecutor.executeQueryBean("select * from CATEGORY where CATEGORYCODE = ? ", Category.class, categoryRedict);
+               if ( category1!=null ) {
+                   item.setMappingcategorycode(category1.getCategoryCode());
+                   item.setMappingcategoryname(category1.getCategoryName());
+
+                   CategoryMapping categoryMapping =  SQLExecutor.executeQueryBean("select * from CATEGORYMAPPING where CODE = ? ", CategoryMapping.class, item.getCategoryCode());
+                   if ( categoryMapping!=null ) {
+                       categoryMapping.setCategoryCode(category1.getCategoryCode());
+                       categoryMapping.setCategoryName(category1.getCategoryName());
+                       categoryMapping.setDescPath(category1.getDescPath());
+                       try {
+                           SQLExecutor.update(categoryMapping);
+                       }catch (Exception e) {
+
+                       }
+                   }
+               }
+           }
+        }
+
+        if ( StringUtils.isBlank(item.getMappingcategorycode()) ) {
             throw new Exception("[Item: " + item.getItemCode() + "]上架类目没有设置");
         }
 
-        if ( brand==null || brand.length()==0 ) {
+        if ( StringUtils.isBlank(item.getMappingbrandcode()) ) {
             throw new Exception("[Item: " + item.getItemCode() + "]上架品牌没有设置");
         }
 
@@ -134,6 +169,15 @@ public class SuningShelvesService implements ShelvesService {
 
         List<String> images = ShelvesItemParser.getImages(item.getSkuCode());
         System.out.println("images.........................");
+//        supplierImgUrl.setUrlA("http://uimgproxy.suning.cn/uimg1/sop/commodity/a4R3FjyndOKfNmCfcXYrew.png");
+        if ( images==null || images.size() ==0) {
+            throw  new Exception("商品缺少图片");
+        }
+
+        for (String image : images) {
+            System.out.println(image);
+        }
+
         if ( images.size() >= 1 ) {
             supplierImgUrl.setUrlA(images.get(0));
         }
@@ -174,15 +218,19 @@ public class SuningShelvesService implements ShelvesService {
         //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
         request.setCheckParam(true);
 
-        logger.info("ResParams: " + request.getResParams());
-
-        try {
-            ApplyAddResponse response = client.excute(request);
+            try {
+            ApplyAddResponse response = APPConfig.getInstance().client().excute(request);
             logger.info("ApplyAddResponse: " + response.getBody());
             SuningResponse.SnError error = response.getSnerror();
             if ( error!=null ) {
-                System.out.println(request.getResParamsMap());
-                System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+
+                Files.write(request.getResParams().getBytes(), new File(item.getItemCode() + ".request"));
+
+                System.out.println(request.getResParams());
+                System.out.println(new Gson().toJson(response));
+
+                Files.write(new Gson().toJson(response).getBytes(), new File(item.getItemCode() + ".response"));
+
                 throw buildException(error.getErrorCode(), error.getErrorMsg());
             } else {
                 System.out.println(new Gson().toJson(response.getSnbody().getAddApply()));
@@ -197,9 +245,9 @@ public class SuningShelvesService implements ShelvesService {
 
         ShelvesService shelvesService = new SuningShelvesService(100);
 
-        String code = "10K5157";
+        String code = "1S2309";
 
-        ShelvesItem item = SQLExecutor.executeQueryBean("select * from SHELVESITEM where ITEMCODE = ?", ShelvesItem.class, code);
+        ShelvesItem item = SQLExecutor.executeQueryBean("select * from SHELVESITEM where ITEMCODE = ? and TASKID = ?", ShelvesItem.class, code, "1588575997187");
         shelvesService.shelves(item);
 
     }
