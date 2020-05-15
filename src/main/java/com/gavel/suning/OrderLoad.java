@@ -1,8 +1,8 @@
 package com.gavel.suning;
 
+import com.gavel.config.APPConfig;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
-import com.suning.api.DefaultSuningClient;
 import com.suning.api.SelectSuningResponse;
 import com.suning.api.entity.selfmarket.OrdercodeQueryRequest;
 import com.suning.api.entity.selfmarket.SaleOrderQueryRequest;
@@ -24,15 +24,13 @@ import java.util.Set;
 
 public class OrderLoad {
 
-    private  static  final DefaultSuningClient client = new DefaultSuningClient(SuningClient.SERVER_URL, "7e8ab1a1444856e80c7a79650c3022cb", "48b64e40dcef582abfc4555b10ace5df", "json");
-
     public static void main(String[] args) throws Exception {
 
         {
             ShopInfoGetRequest shopInfo = new ShopInfoGetRequest();
 
             try {
-                ShopInfoGetResponse response = client.excute(shopInfo);
+                ShopInfoGetResponse response = APPConfig.getInstance().client().excute(shopInfo);
                 System.out.println("返回json/xml格式数据 :" + response.getBody());
 
                 if ( response.getSnerror()!=null ) {
@@ -133,7 +131,7 @@ public class OrderLoad {
                 request.setCheckParam(true);
 
                 try {
-                    SaleOrderQueryResponse response = client.excute(request);
+                    SaleOrderQueryResponse response = APPConfig.getInstance().client().excute(request);
                     System.out.println("返回json/xml格式数据 :" + response.getBody());
 
                     if ( response.getSnerror()!=null ) {
@@ -190,7 +188,7 @@ public class OrderLoad {
             request.setCheckParam(true);
 
             try {
-                SaleOrderQueryResponse response = client.excute(request);
+                SaleOrderQueryResponse response = APPConfig.getInstance().client().excute(request);
                 System.out.println("返回json/xml格式数据 :" + response.getBody());
 
                 if ( response.getSnerror()!=null ) {

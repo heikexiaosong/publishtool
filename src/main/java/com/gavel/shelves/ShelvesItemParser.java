@@ -341,7 +341,7 @@ public class ShelvesItemParser {
      *
      * @throws Exception
      */
-    public static String uploadImageWithoutDownload(String url) throws Exception {
+    public static String uploadImageWithoutDownload(String url, int size) throws Exception {
 
 
         String id = MD5Utils.md5Hex(url.trim());
@@ -362,6 +362,21 @@ public class ShelvesItemParser {
             System.out.println("[" +  localFilePath + "]文件不存在.");
             return picUrl;
         }
+
+
+        Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
+
+        Imgproc.circle(src, new Point(src.width()-size, src.height()-size),  1, new Scalar(238, 238, 238));
+
+        localFilePath = ImageLoader.PICS_TEMP_DIR + File.separator  + size + File.separator + image.getFilepath();
+
+        File tempfile = new File(localFilePath);
+        if ( !tempfile.getParentFile().exists() ) {
+            tempfile.getParentFile().mkdirs();
+        }
+
+        System.out.println(localFilePath);
+        Imgcodecs.imwrite(localFilePath, src);
 
 
         {
@@ -441,7 +456,7 @@ public class ShelvesItemParser {
             }
 
             for (String picUrl : picUrls) {
-                String picSuningUrl = uploadImageWithoutDownload(picUrl);
+                String picSuningUrl = uploadImageWithoutDownload(picUrl, images.size());
                 if ( picSuningUrl!=null ) {
                     images.add(picSuningUrl);
                 }
@@ -788,7 +803,7 @@ public class ShelvesItemParser {
 
         Map<String, String> imageMap = new HashMap<>();
         for (String picUrl : picUrls) {
-            String picSuningUrl = uploadImageWithoutDownload(picUrl);
+            String picSuningUrl = uploadImageWithoutDownload(picUrl, 0);
             imageMap.put(picUrl, picSuningUrl);
         }
 
