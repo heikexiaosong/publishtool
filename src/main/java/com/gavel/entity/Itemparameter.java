@@ -14,6 +14,9 @@ public class Itemparameter {
     @FieldMeta(name = "CATEGORYCODE", title = "类目编码", length = 32, primary = true)
     private String categoryCode;
 
+    @FieldMeta(name = "SUPPLIERCODE", title = "供应商编码", length = 32)
+    private String supplierCode;
+
     @FieldMeta(name = "PARATEMPLATECODE", title = "参数模板代码", length = 32)
     private String paraTemplateCode;
 
@@ -71,6 +74,13 @@ public class Itemparameter {
         }
     }
 
+    public String getSupplierCode() {
+        return supplierCode;
+    }
+
+    public void setSupplierCode(String supplierCode) {
+        this.supplierCode = supplierCode;
+    }
 
     public String getCategoryCode() {
         return categoryCode;

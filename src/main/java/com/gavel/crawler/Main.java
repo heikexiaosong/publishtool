@@ -23,20 +23,11 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        //loadSearchItems("1588407103792");
+        //loadSearchItems("1589548611873");
 
-        // loadSkus("1588409885438");
-
-
+        loadSkus("1589548611873");
 
 
-        Document doc = Jsoup.parse("<html><body><div class=\"price\">\n" +
-                "                            价格:\n" +
-                "                            <b id=\"bSalePrice\" class=\"bSalePrice\">\n" +
-                "¥6.30                            </b>\n" +
-                "                            元/包\n" +
-                "                           \n" +
-                "                        </div></body></html>");
 
 
     }
@@ -60,7 +51,7 @@ public class Main {
 
         while ( true) {
 
-            List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? and STATUS <> ? order by skunum ", SearchItem.class, task.getId(), SearchItem.Status.SUCCESS);
+            List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? and ( STATUS <> ? or STATUS is null ) order by skunum ", SearchItem.class, task.getId(), SearchItem.Status.SUCCESS);
 
             System.out.println("Product: " + searchItemList.size());
 

@@ -1,7 +1,6 @@
 package com.gavel.shelves.suning;
 
 import com.gavel.config.APPConfig;
-import com.gavel.database.SQLExecutor;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.ParameterLoader;
@@ -227,12 +226,7 @@ public class SuningShelvesService implements ShelvesService {
 
     public static void main(String[] args) throws Exception {
 
-        ShelvesService shelvesService = new SuningShelvesService(100, null);
-
-        String code = "1S2309";
-
-        ShelvesItem item = SQLExecutor.executeQueryBean("select * from SHELVESITEM where ITEMCODE = ? and TASKID = ?", ShelvesItem.class, code, "1588575997187");
-        shelvesService.shelves(item);
+        ShelvesItemParser.getImages("10G1477", null);
 
     }
 

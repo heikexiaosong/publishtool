@@ -172,7 +172,7 @@ public class FXMLShelvesController {
             }
         }
 
-        DataPagination dataPagination = new DataPagination(items, 100);
+        DataPagination dataPagination = new DataPagination(items, 10000);
         pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
         pagination.setPageFactory(pageIndex -> {
             itemList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));

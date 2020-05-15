@@ -1,29 +1,27 @@
 package com.gavel;
 
 import com.gavel.config.APPConfig;
-import com.gavel.database.DataSourceHolder;
+import com.gavel.database.SQLExecutor;
+import com.gavel.entity.Category;
+import com.gavel.entity.Shopinfo;
 import com.google.gson.Gson;
 import com.suning.api.entity.item.CategoryQueryRequest;
 import com.suning.api.entity.item.CategoryQueryResponse;
 import com.suning.api.exception.SuningApiException;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
-
 public class CategoryLoad {
 
     public static void main(String[] args) throws Exception {
 
+        Shopinfo shopinfo = APPConfig.getInstance().getShopinfo();
 
-        Connection conn = DataSourceHolder.dataSource().getConnection();
+        System.out.println(shopinfo.getName());
 
-        final int PAGE_SIZE = 50;
+
         int pageNo = 1;
 
         CategoryQueryRequest request = new CategoryQueryRequest();
-        request.setPageSize(PAGE_SIZE);
+        request.setPageSize(50);
         request.setPageNo(pageNo);
 //        request.setCategoryName("家装建材及五金");
         //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
@@ -33,24 +31,27 @@ public class CategoryLoad {
             CategoryQueryResponse response = APPConfig.getInstance().client().excute(request);
             System.out.println("CategoryQueryRequest :" + response.getBody());
 
-            PreparedStatement stmt = conn.prepareStatement("INSERT INTO CATEGORY VALUES(?, ?, ?, ?, ?)");
-
             while ( response.getSnbody()!=null && response.getSnbody().getCategoryQueries()!=null && response.getSnbody().getCategoryQueries().size() == 50 ) {
                 for (CategoryQueryResponse.CategoryQuery categoryQuery : response.getSnbody().getCategoryQueries()) {
                     System.out.println(new Gson().toJson(categoryQuery));
 
-                    //新增
+                    Category category = new Category();
 
-                    stmt.setObject(1, categoryQuery.getCategoryCode());
-                    stmt.setObject(2, categoryQuery.getCategoryName());
-                    stmt.setObject(3, categoryQuery.getGrade());
-                    stmt.setObject(4, categoryQuery.getIsBottom());
-                    stmt.setObject(5, categoryQuery.getDescPath());
+                    category.setSupplierCode(shopinfo.getCode());
+                    category.setCategoryCode(categoryQuery.getCategoryCode());
+                    category.setCategoryName(categoryQuery.getCategoryName());
+                    category.setIsBottom(categoryQuery.getIsBottom());
+                    category.setDescPath(categoryQuery.getDescPath());
+                    category.setGrade(categoryQuery.getGrade());
 
-                    stmt.addBatch();
+                    try {
+                        SQLExecutor.insert(category);
+                    } catch (Exception e) {
+                        System.out.println(categoryQuery.getCategoryCode() + "： " + e.getMessage());
+                    }
+
                 }
 
-                stmt.executeBatch();
 
                 pageNo += 1;
                 request.setPageNo(pageNo);
@@ -63,37 +64,29 @@ public class CategoryLoad {
 
                     //新增
 
-                    stmt.setObject(1, categoryQuery.getCategoryCode());
-                    stmt.setObject(2, categoryQuery.getCategoryName());
-                    stmt.setObject(3, categoryQuery.getGrade());
-                    stmt.setObject(4, categoryQuery.getIsBottom());
-                    stmt.setObject(5, categoryQuery.getDescPath());
+                    Category category = new Category();
 
-                    stmt.addBatch();
+                    category.setSupplierCode(shopinfo.getCode());
+                    category.setCategoryCode(categoryQuery.getCategoryCode());
+                    category.setCategoryName(categoryQuery.getCategoryName());
+                    category.setIsBottom(categoryQuery.getIsBottom());
+                    category.setDescPath(categoryQuery.getDescPath());
+                    category.setGrade(categoryQuery.getGrade());
+
+                    try {
+                        SQLExecutor.insert(category);
+                    } catch (Exception e) {
+                        System.out.println(categoryQuery.getCategoryCode() + "： " + e.getMessage());
+                    }
                 }
-
-                stmt.executeBatch();
             }
 
-            stmt.close();
 
 
 
         } catch (SuningApiException e) {
             e.printStackTrace();
         }
-
-
-        Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM CATEGORY");
-        //遍历结果集
-        while (rs.next()) {
-            System.out.println(rs.getString("categoryCode") + "," + rs.getString("categoryName")+ "," + rs.getString("grade"));
-        }
-        //释放资源
-        stmt.close();
-        //关闭连接
-        conn.close();
 
     }
 }

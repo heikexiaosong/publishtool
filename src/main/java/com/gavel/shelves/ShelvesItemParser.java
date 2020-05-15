@@ -30,10 +30,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ShelvesItemParser {
 
@@ -361,8 +358,21 @@ public class ShelvesItemParser {
 
         ImageCache image =  SQLExecutor.executeQueryBean("select * from image  where id = ? ", ImageCache.class, id);
 
-        if ( image==null || image.getFilepath()==null || image.getFilepath().trim().length()==0 ) {
-            return null;
+        if ( image==null ) {
+            String _image = url.replace("https://static.grainger.cn/", "").replace("/", File.separator).trim();
+            if ( url.equalsIgnoreCase("https://www.grainger.cn/Content/images/hp_np.png") ) {
+                _image = url.replace("https://www.grainger.cn/", "").replace("/", File.separator).trim();
+            }
+            image = new ImageCache();
+            image.setId(id);
+            image.setUrl(url.trim());
+            image.setFilepath(_image);
+            image.setUpdatetime(Calendar.getInstance().getTime());
+            try {
+                SQLExecutor.insert(image);
+            } catch (Exception e) {
+
+            }
         }
 
         if ( image.getPicurl()!=null && image.getPicurl().trim().length() > 0 ) {
@@ -392,8 +402,6 @@ public class ShelvesItemParser {
 
         localFilePath = localFilePath.replace(".jpg", ".png");
         Imgcodecs.imwrite(localFilePath, src);
-
-
         {
 
             NPicAddRequest request = new NPicAddRequest();

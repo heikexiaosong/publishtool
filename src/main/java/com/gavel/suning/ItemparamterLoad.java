@@ -1,9 +1,10 @@
-package com.gavel.shelves.suning;
+package com.gavel.suning;
 
 import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Category;
 import com.gavel.entity.Itemparameter;
+import com.gavel.entity.Shopinfo;
 import com.gavel.utils.StringUtils;
 import com.google.gson.Gson;
 import com.suning.api.SuningResponse;
@@ -18,16 +19,22 @@ public class ItemparamterLoad {
 
     public static void main(String[] args) throws Exception {
 
-        List<Category>  categories =  SQLExecutor.executeQueryBeanList("select * from CATEGORY", Category.class);
+        Shopinfo shopinfo = APPConfig.getInstance().getShopinfo();
+
+        System.out.println(shopinfo.getName());
+
+
+        List<Category> categories = SQLExecutor.executeQueryBeanList("select * from  CATEGORY where SUPPLIERCODE = ? and  CATEGORYCODE = ? ", Category.class, shopinfo.getCode(), "R9008752");
+        System.out.println("Cate: " + categories.size());
 
         for (Category category : categories) {
 
-            loadItemparameters(category.getCategoryCode());
+            loadItemparameters(category.getCategoryCode(), shopinfo.getCode());
         }
 
     }
 
-    private static List<Itemparameter> loadItemparameters(String categoryCode) {
+    private static List<Itemparameter> loadItemparameters(String categoryCode, String shopid) {
 
         List<Itemparameter> itemparameters = new ArrayList<>();
         if ( categoryCode==null || categoryCode.trim().length()<=0 ) {
@@ -64,6 +71,7 @@ public class ItemparamterLoad {
                         Itemparameter itemparameter = new Itemparameter();
 
                         itemparameter.setCategoryCode(categoryCode.trim());
+                        itemparameter.setSupplierCode(shopid);
                         itemparameter.setParaTemplateCode(item.getParaTemplateCode());
                         itemparameter.setParaTemplateDesc(item.getParaTemplateDesc());
                         itemparameter.setParCode(item.getParCode());

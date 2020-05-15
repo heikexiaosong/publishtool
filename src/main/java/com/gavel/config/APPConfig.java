@@ -42,7 +42,7 @@ public class APPConfig {
     public Shopinfo getShopinfo(){
         if (StringUtils.isBlank(shopinfo.getId())) {
             try {
-                Shopinfo temp =  SQLExecutor.executeQueryBean("select * from SHOPINFO where CODE = ?  ", Shopinfo.class, "10214063");
+                Shopinfo temp =  SQLExecutor.executeQueryBean("select * from SHOPINFO where CODE = ?  ", Shopinfo.class, "10148425");
                 if ( temp !=null ) {
                     shopinfo.setId(temp.getId());
                     shopinfo.setCode(temp.getCode());

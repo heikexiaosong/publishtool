@@ -6,6 +6,9 @@ import com.gavel.annotation.TableMeta;
 @TableMeta(name = "CATEGORY", title = "苏宁类目")
 public class Category {
 
+    @FieldMeta(name = "SUPPLIERCODE", title = "供应商编码", length = 32)
+    private String supplierCode;
+
     @FieldMeta(name = "CATEGORYCODE", title = "类目编码", length = 32)
     private String categoryCode;
 
@@ -20,6 +23,14 @@ public class Category {
 
     @FieldMeta(name = "DESCPATH", title = "采购目录层级描述", length = 128)
     private String descPath;
+
+    public String getSupplierCode() {
+        return supplierCode;
+    }
+
+    public void setSupplierCode(String supplierCode) {
+        this.supplierCode = supplierCode;
+    }
 
     public String getCategoryName() {
         return categoryName;

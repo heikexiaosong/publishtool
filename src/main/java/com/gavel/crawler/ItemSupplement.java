@@ -164,7 +164,12 @@ public class ItemSupplement {
         int pageTotal = task.getPagenum();
 
         while ( pageCur <= pageTotal ) {
+
             String pageUrl = task.getUrl() + "?page=" + pageCur;
+            if ( task.getUrl().contains("?") ) {
+                pageUrl = task.getUrl() + "&page=" + pageCur;
+            }
+
             HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(pageUrl, false);
 
             if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {

@@ -52,6 +52,9 @@ public class FXMLSkuSelectedController {
     private List<ShelvesItem> items = new ArrayList<>();
 
 
+    private  List<Item> _items = null;
+
+
     @FXML
     private void initialize() {
 
@@ -163,7 +166,7 @@ public class FXMLSkuSelectedController {
 
     @FXML
     private void handleOk() {
-        for (Item item : skuList.getItems()) {
+        for (Item item : _items) {
             try {
                 ShelvesItem shelvesItem = ShelvesItemParser.parse(item);
                 items.add(shelvesItem);
@@ -202,8 +205,6 @@ public class FXMLSkuSelectedController {
 
 
         skuList.getItems().clear();
-
-        List<Item> items = null;
         try {
 
             List<Object> params = new ArrayList<>();
@@ -224,14 +225,13 @@ public class FXMLSkuSelectedController {
                 params.add("%" +  _skucode.trim() + "%");
             }
 
-            GraingerCategory cate = category.getSelectionModel().getSelectedItem();
-            items = SQLExecutor.executeQueryBeanList(sql.toString(), Item.class, params.toArray(new Object[params.size()]));
+            _items = SQLExecutor.executeQueryBeanList(sql.toString(), Item.class, params.toArray(new Object[params.size()]));
         } catch (Exception e) {
             e.printStackTrace();
-            items = Collections.EMPTY_LIST;
+            _items = Collections.EMPTY_LIST;
         }
 
-        DataPagination dataPagination = new DataPagination(items, 30);
+        DataPagination dataPagination = new DataPagination(_items, 30);
 
         pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
 

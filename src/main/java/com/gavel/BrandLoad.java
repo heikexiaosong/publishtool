@@ -1,54 +1,47 @@
 package com.gavel;
 
 import com.gavel.config.APPConfig;
-import com.gavel.database.DataSourceHolder;
+import com.gavel.database.SQLExecutor;
+import com.gavel.entity.Brand;
+import com.gavel.entity.Category;
+import com.gavel.entity.Shopinfo;
 import com.google.gson.Gson;
 import com.suning.api.SelectSuningResponse;
 import com.suning.api.entity.item.BrandQueryRequest;
 import com.suning.api.entity.item.BrandQueryResponse;
 import com.suning.api.exception.SuningApiException;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.util.List;
 
 public class BrandLoad {
 
     public static void main(String[] args) throws Exception {
 
-        Connection conn = DataSourceHolder.dataSource().getConnection();
+        Shopinfo shopinfo = APPConfig.getInstance().getShopinfo();
 
-        Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM CATEGORY");
-        //遍历结果集
+        System.out.println(shopinfo.getName());
+
+
+        List<Category> cates = SQLExecutor.executeQueryBeanList("select * from  CATEGORY where SUPPLIERCODE = ? and  CATEGORYCODE = ? ", Category.class, shopinfo.getCode(), "R9008752");
+        System.out.println("Cate: " +cates.size());
 
         int i = 0;
-        while (rs.next()) {
-            System.out.println(rs.getString("categoryCode") + "," + rs.getString("categoryName")+ "," + rs.getString("grade"));
-
-            queryBrand(conn, rs.getString("categoryCode"));
-
-            i += 1;
-            System.out.println("Handle: " + i + "\n");
-
+        for (Category cate : cates) {
+            System.out.println("[" +(i++) + "/" + cates.size()  + "] " + cate.getCategoryCode() + " - " + cate.getCategoryName());
+            queryBrand(cate.getCategoryCode(), shopinfo.getCode());
         }
-        //释放资源
-        stmt.close();
-        //关闭连接
-        conn.close();
+
+
+
 
     }
 
-    private static void queryBrand(Connection conn, String categoryCode) throws Exception {
+    private static void queryBrand(String categoryCode, String shopid) throws Exception {
 
-
-
-        final int PAGE_SIZE = 50;
         int pageNo = 1;
 
         BrandQueryRequest request = new BrandQueryRequest();
-        request.setPageSize(PAGE_SIZE);
+        request.setPageSize(50);
         request.setPageNo(pageNo);
         request.setCategoryCode(categoryCode);
 //        request.setCategoryName("家装建材及五金");
@@ -61,21 +54,25 @@ public class BrandLoad {
 
             SelectSuningResponse.SnHead head = response.getSnhead();
 
-            PreparedStatement stmt = conn.prepareStatement("INSERT INTO BRAND VALUES(?, ?, ?)");
-
             while ( response.getSnbody()!=null && response.getSnbody().getBrandQueries()!=null && response.getSnbody().getBrandQueries().size() == 50 ) {
                 for (BrandQueryResponse.BrandQuery brandQuery : response.getSnbody().getBrandQueries()) {
                     System.out.println(new Gson().toJson(brandQuery));
 
                     //新增
-                    stmt.setObject(1, brandQuery.getBrandCode());
-                    stmt.setObject(2, brandQuery.getBrandName());
-                    stmt.setObject(3, categoryCode);
 
-                    stmt.addBatch();
+                    Brand brand = new Brand();
+
+                    brand.setSupplierCode(shopid);
+                    brand.setCategoryCode(categoryCode);
+                    brand.setCode(brandQuery.getBrandCode());
+                    brand.setName(brandQuery.getBrandName());
+                    try {
+                        SQLExecutor.insert(brand);
+                    } catch (Exception e) {
+                        System.out.println(categoryCode + "-" + brandQuery.getBrandCode() + "： " + e.getMessage());
+                    }
+
                 }
-
-                stmt.executeBatch();
 
                 pageNo += 1;
                 request.setPageNo(pageNo);
@@ -85,19 +82,20 @@ public class BrandLoad {
             if (response.getSnbody()!=null && response.getSnbody().getBrandQueries()!=null && response.getSnbody().getBrandQueries().size() > 0 ) {
                 for (BrandQueryResponse.BrandQuery brandQuery : response.getSnbody().getBrandQueries()) {
                     System.out.println(new Gson().toJson(brandQuery));
+                    Brand brand = new Brand();
 
-                    //新增
-                    stmt.setObject(1, brandQuery.getBrandCode());
-                    stmt.setObject(2, brandQuery.getBrandName());
-                    stmt.setObject(3, categoryCode);
-
-                    stmt.addBatch();
+                    brand.setSupplierCode(shopid);
+                    brand.setCategoryCode(categoryCode);
+                    brand.setCode(brandQuery.getBrandCode());
+                    brand.setName(brandQuery.getBrandName());
+                    try {
+                        SQLExecutor.insert(brand);
+                    } catch (Exception e) {
+                        System.out.println(categoryCode + "-" + brandQuery.getBrandCode() + "： " + e.getMessage());
+                    }
                 }
 
-                stmt.executeBatch();
             }
-
-            stmt.close();
 
 
 
