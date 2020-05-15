@@ -884,6 +884,6 @@ public class ShelvesItemParser {
         }
         detail.append("</div>");
 
-        return Base64.encodeBase64String(detail.toString().getBytes());
+        return Base64.encodeBase64String(detail.toString().getBytes("UTF8"));
     }
 }
