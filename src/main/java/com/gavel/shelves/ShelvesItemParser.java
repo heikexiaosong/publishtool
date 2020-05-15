@@ -1,5 +1,6 @@
 package com.gavel.shelves;
 
+import com.gavel.HttpUtils;
 import com.gavel.config.APPConfig;
 import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.database.SQLExecutor;
@@ -24,6 +25,7 @@ import org.jsoup.select.Elements;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
@@ -299,7 +301,7 @@ public class ShelvesItemParser {
      *
      * @throws Exception
      */
-    public static String uploadImage(String url) throws Exception {
+    public static String uploadImage(String url, int size) throws Exception {
 
 
         ImageCache image = ImageLoader.loadIamge(url);
@@ -314,6 +316,15 @@ public class ShelvesItemParser {
         String picUrl = null;
         {
             String localFilePath = ImageLoader.PICS_DIR + File.separator + image.getFilepath();
+
+
+            Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
+            if ( src.width()!=800 || src.height()!=800 ) {
+                Imgproc.resize(src, src, new Size(800, 800));
+            }
+            Imgproc.circle(src, new Point(src.width()-size, src.height()-size),  1, new Scalar(238, 238, 238));
+            Imgcodecs.imwrite(localFilePath, src);
+
             NPicAddRequest request = new NPicAddRequest();
             request.setPicFileData(localFilePath);
             try {
@@ -468,7 +479,7 @@ public class ShelvesItemParser {
                 if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
                     images.add(picSuningUrl);
                 } else {
-                    picSuningUrl = uploadImage(picUrl);
+                    picSuningUrl = uploadImage(picUrl, images.size());
                     if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
                         images.add(picSuningUrl);
                     }
@@ -483,44 +494,28 @@ public class ShelvesItemParser {
                 return images;
             }
 
+            String pic1 = images.get(0);
             while ( images.size() < 5 ) {
-                String localFilePath = null;
-                ImageCache image = null;
-                for (String picUrl : picUrls) {
-                    image =  SQLExecutor.executeQueryBean("select * from image  where id = ? ", ImageCache.class, MD5Utils.md5Hex(picUrl));
-                    if ( image==null || image.getFilepath()==null || image.getFilepath().trim().length()==0 ) {
-                        continue;
-                    }
-                    localFilePath = ImageLoader.PICS_COMPLETE_DIR + File.separator + image.getFilepath();
-                    if ( new File(localFilePath).exists() ) {
-                        break;
-                    }
-                    localFilePath = null;
+
+                String localFilePath =  skuCode + "_" + images.size() + ".jpg";
+                File imageFile = new File("images_tmp", localFilePath);
+                if ( !imageFile.getParentFile().exists() ) {
+                    imageFile.getParentFile().mkdirs();
                 }
 
-                if ( localFilePath==null || localFilePath.trim().length() ==0 ) {
-                    break;
+                if ( !imageFile.exists() ) {
+                    HttpUtils.download(pic1, imageFile.getAbsolutePath());
                 }
 
                 System.out.println(localFilePath);
-                Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
-
+                Mat src = Imgcodecs.imread(imageFile.getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED);
                 Imgproc.putText(src, String.valueOf(images.size()), new Point(720,750),Imgproc.FONT_HERSHEY_PLAIN, 2.0, new Scalar(238, 238, 238),4, Imgproc.LINE_AA,false);
-
-                String target = ImageLoader.PICS_TEMP_DIR + File.separator  + images.size() + File.separator + image.getFilepath();
-
-                File tempfile = new File(target);
-                if ( !tempfile.getParentFile().exists() ) {
-                    tempfile.getParentFile().mkdirs();
-                }
-
-                System.out.println(target);
-                Imgcodecs.imwrite(target, src);
+                Imgcodecs.imwrite(imageFile.getAbsolutePath(), src);
 
                 String picUrl = null;
                 {
                     NPicAddRequest request = new NPicAddRequest();
-                    request.setPicFileData(target);
+                    request.setPicFileData(imageFile.getAbsolutePath());
                     try {
                         NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
                         System.out.println("ApplyAddRequest :" + response.getBody());
@@ -798,7 +793,7 @@ public class ShelvesItemParser {
             }
 
             for (String picUrl : detailUrls) {
-                String picSuningUrl = uploadImage(picUrl);
+                String picSuningUrl = uploadImage(picUrl, 0);
                 detailImageMap.put(picUrl, picSuningUrl);
             }
         }
