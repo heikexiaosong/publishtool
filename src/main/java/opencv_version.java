@@ -1,6 +1,9 @@
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 class opencv_version {
 
@@ -22,10 +25,13 @@ class opencv_version {
     }
 
 
-      Mat src = Imgcodecs.imread("D:\\pics\\1-2.jpg", Imgcodecs.IMREAD_UNCHANGED);
+      Mat src = Imgcodecs.imread("E:\\images_complete\\product_images_new\\800\\5T4\\2017070515.jpg", Imgcodecs.IMREAD_UNCHANGED);
 
 
-    Imgcodecs.imwrite("D:\\pics\\js_1.png", src);
+      Imgproc.putText(src, String.valueOf(1), new Point(720,750),Imgproc.FONT_HERSHEY_PLAIN, 2.0, new Scalar(238, 238, 238),4, Imgproc.LINE_AA,false);
+
+
+      Imgcodecs.imwrite("D:\\pics\\js_1.png", src);
 
 
   }

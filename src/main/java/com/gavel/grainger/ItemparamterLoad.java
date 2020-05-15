@@ -1,8 +1,10 @@
 package com.gavel.grainger;
 
 import com.gavel.database.SQLExecutor;
+import com.gavel.entity.Category;
 import com.gavel.entity.Itemparameter;
 import com.gavel.suning.SuningClient;
+import com.gavel.utils.StringUtils;
 import com.google.gson.Gson;
 import com.suning.api.DefaultSuningClient;
 import com.suning.api.SuningResponse;
@@ -19,22 +21,12 @@ public class ItemparamterLoad {
 
     public static void main(String[] args) throws Exception {
 
-        List<Itemparameter>  itemparameters =  SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER", Itemparameter.class);
+        List<Category>  categories =  SQLExecutor.executeQueryBeanList("select * from CATEGORY", Category.class);
 
-        for (Itemparameter itemparameter : itemparameters) {
+        for (Category category : categories) {
 
-            if ( itemparameter.getParOption()!=null && itemparameter.getParOption().size()==1 ) {
-
-                Itemparameter.ParOption option = itemparameter.getParOption().get(0);
-                itemparameter.setParam(option.getParOptionCode());
-                if ( option.getParOptionCode()==null || option.getParOptionCode().trim().length()==0 ) {
-                    itemparameter.setParam(option.getParOptionDesc());
-                }
-            }
-            SQLExecutor.update(itemparameter);
+            loadItemparameters(category.getCategoryCode());
         }
-
-        System.out.println("Total: " + itemparameters.size());
 
     }
 
@@ -87,7 +79,20 @@ public class ItemparamterLoad {
 
                         System.out.println(new Gson().toJson(item));
 
-                        itemparameters.add(itemparameter);
+                        if ( item.getParOption()!=null &&  item.getParOption().size() == 1 ) {
+                            ItemparametersQueryResponse.ParOption option = item.getParOption().get(0);
+                            itemparameter.setParam(option.getParOptionCode());
+                            if (StringUtils.isBlank(option.getParOptionCode())) {
+                                itemparameter.setParam(option.getParOptionDesc());
+                            }
+                        }
+
+
+                        try {
+                            SQLExecutor.insert(itemparameter);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
 
