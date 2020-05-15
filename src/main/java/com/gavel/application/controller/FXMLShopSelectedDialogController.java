@@ -86,13 +86,12 @@ public class FXMLShopSelectedDialogController {
                     shopinfo.setEndpoint(selected.getEndpoint());
                     shopinfo.setAppkey(selected.getAppkey());
                     shopinfo.setAppsecret(selected.getAppsecret());
+                    okClicked = true;
                 } else {
                     return;
                 }
             }
         }
-
-        okClicked = true;
         dialogStage.close();
     }
 

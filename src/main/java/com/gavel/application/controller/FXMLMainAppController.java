@@ -94,6 +94,25 @@ public class FXMLMainAppController {
     }
 
     public void handleShopChangeAction(ActionEvent actionEvent) {
+
+        boolean okClicked = showShopSelectedDialog();
+        if (okClicked) {
+            try {
+                // Load person overview.
+                FXMLLoader loader = new FXMLLoader();
+                loader.setLocation(MainApp.class.getResource("/fxml/shelves.fxml"));
+
+                // Set person overview into the center of root layout.
+                root.setCenter(loader.load());
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private  boolean showShopSelectedDialog() {
         try {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(MainApp.class.getResource("/fxml/ShopSelectedDialog.fxml"));
@@ -115,9 +134,11 @@ public class FXMLMainAppController {
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
 
+            return controller.isOkClicked();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        return false;
     }
 }

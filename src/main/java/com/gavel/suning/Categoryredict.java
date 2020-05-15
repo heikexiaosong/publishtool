@@ -16,7 +16,7 @@ public class Categoryredict {
         }
 
 
-        CategoryredictService categoryredictService = CategoryredictService.buildService(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET);
+        CategoryredictService categoryredictService = null; // CategoryredictService.buildService(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET);
 
         System.out.println(categoryredictService.redict("爱柯部落 ECOBOOTHS 122CM×1000CM×12MM 舒柯防震地垫", "R9002887"));
 

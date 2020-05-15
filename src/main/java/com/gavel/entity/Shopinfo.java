@@ -136,7 +136,7 @@ public class Shopinfo {
     }
 
     public static void main(String[] args) throws Exception {
-        //SQLExecutor.createTable(Shopinfo.class);
+        SQLExecutor.createTable(Shopinfo.class);
 
         Shopinfo shopinfo = new Shopinfo();
         shopinfo.setCode("10214063");

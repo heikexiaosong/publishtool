@@ -169,10 +169,10 @@ public class SuningShelvesService implements ShelvesService {
 
         List<String> images = ShelvesItemParser.getImages(item.getSkuCode());
         System.out.println("images.........................");
-//        supplierImgUrl.setUrlA("http://uimgproxy.suning.cn/uimg1/sop/commodity/a4R3FjyndOKfNmCfcXYrew.png");
-        if ( images==null || images.size() ==0) {
-            throw  new Exception("商品缺少图片");
-        }
+        supplierImgUrl.setUrlA("http://uimgproxy.suning.cn/uimg1/sop/commodity/hGNS4YLJwso9wdGwpT1JSg.jpg");
+//        if ( images==null || images.size() ==0) {
+//            throw  new Exception("商品缺少图片");
+//        }
 
         for (String image : images) {
             System.out.println(image);
