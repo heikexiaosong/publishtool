@@ -7,7 +7,6 @@ import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.ParameterLoader;
 import com.gavel.shelves.ShelvesItemParser;
 import com.gavel.shelves.ShelvesService;
-import com.gavel.suning.CategoryredictService;
 import com.gavel.utils.StringUtils;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -34,11 +33,12 @@ public class SuningShelvesService implements ShelvesService {
 
     private final int moq;
 
-    private final CategoryredictService categoryredictService;
+    private final String defaultImage;
 
-    public SuningShelvesService(int moq) {
+
+    public SuningShelvesService(int moq, String _defaultImage) {
+        this.defaultImage = _defaultImage;
         this.moq = moq;
-        this.categoryredictService = null; //CategoryredictService.buildService(SuningClient.SERVER_URL, SuningClient.APPKEY, SuningClient.APPSECRET);
     }
 
     @Override
@@ -66,30 +66,6 @@ public class SuningShelvesService implements ShelvesService {
             }
 
         }
-
-//        if ( StringUtils.isBlank(item.getMappingcategorycode()) ) {
-//           String categoryRedict = categoryredictService.redict(item.getCmTitle(), "R9002887");
-//            System.out.println("categoryRedict: " + categoryRedict);
-//           if ( StringUtils.isNotBlank(categoryRedict) ) {
-//               Category category1 =  SQLExecutor.executeQueryBean("select * from CATEGORY where CATEGORYCODE = ? ", Category.class, categoryRedict);
-//               if ( category1!=null ) {
-//                   item.setMappingcategorycode(category1.getCategoryCode());
-//                   item.setMappingcategoryname(category1.getCategoryName());
-//
-//                   CategoryMapping categoryMapping =  SQLExecutor.executeQueryBean("select * from CATEGORYMAPPING where CODE = ? ", CategoryMapping.class, item.getCategoryCode());
-//                   if ( categoryMapping!=null ) {
-//                       categoryMapping.setCategoryCode(category1.getCategoryCode());
-//                       categoryMapping.setCategoryName(category1.getCategoryName());
-//                       categoryMapping.setDescPath(category1.getDescPath());
-//                       try {
-//                           SQLExecutor.update(categoryMapping);
-//                       }catch (Exception e) {
-//
-//                       }
-//                   }
-//               }
-//           }
-//        }
 
         if ( StringUtils.isBlank(item.getMappingcategorycode()) ) {
             throw new Exception("[Item: " + item.getItemCode() + "]上架类目没有设置");
@@ -165,7 +141,7 @@ public class SuningShelvesService implements ShelvesService {
 
         System.out.println(".........................");
 
-        List<String> images = ShelvesItemParser.getImages(item.getSkuCode());
+        List<String> images = ShelvesItemParser.getImages(item.getSkuCode(), defaultImage);
         //supplierImgUrl.setUrlA("http://uimgproxy.suning.cn/uimg1/sop/commodity/hGNS4YLJwso9wdGwpT1JSg.jpg");
 //        if ( images==null || images.size() ==0) {
 //            throw  new Exception("商品缺少图片");
@@ -196,16 +172,21 @@ public class SuningShelvesService implements ShelvesService {
         // 含有通子码 需要添加子型号
         if ( commonParameters!=null && commonParameters.size() > 0 ) {
 
-             if ( images==null || images.size() ==0) {
-                throw  new Exception("商品缺少图片");
-            }
-
             List<ApplyAddRequest.ChildItem> childItems = new ArrayList<>();
             request.setChildItem(childItems);
 
             ApplyAddRequest.ChildItem childItem = new ApplyAddRequest.ChildItem();
             childItems.add(childItem);
-            //childItem.setSupplierImgAUrl(images.get(0));
+
+
+            if ( images==null || images.size() ==0) {
+                throw  new Exception("[通子码商品]缺少商品图片");
+            }
+            //
+
+            if ( images.size() > 0 ) {
+                childItem.setSupplierImgAUrl(images.get(0));
+            }
 
             List<ApplyAddRequest.ParsX> parsX = new ArrayList<>();
             childItem.setParsX(parsX);
@@ -246,7 +227,7 @@ public class SuningShelvesService implements ShelvesService {
 
     public static void main(String[] args) throws Exception {
 
-        ShelvesService shelvesService = new SuningShelvesService(100);
+        ShelvesService shelvesService = new SuningShelvesService(100, null);
 
         String code = "1S2309";
 

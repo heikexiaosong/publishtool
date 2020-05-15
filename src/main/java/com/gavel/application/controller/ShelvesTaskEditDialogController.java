@@ -1,12 +1,15 @@
 package com.gavel.application.controller;
 
 import com.gavel.entity.ShelvesTask;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TextField;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.util.Calendar;
 
 /**
@@ -22,6 +25,10 @@ public class ShelvesTaskEditDialogController {
     private TextField title;
     @FXML
     private TextField moq;
+
+    @FXML
+    private TextField pic;
+
     @FXML
     private TextField reamark;
 
@@ -54,10 +61,15 @@ public class ShelvesTaskEditDialogController {
     public void setPerson(ShelvesTask _task) {
         this.task = _task;
 
-        id.setText(task.getId());
-        title.setText(task.getTitle());
-        moq.setText(String.valueOf(task.getMoq()));
-        reamark.setText(task.getRemark());
+        if ( task!=null ) {
+            id.setText(task.getId());
+            title.setText(task.getTitle());
+            moq.setText(String.valueOf(task.getMoq()));
+            pic.setText(task.getPic());
+            reamark.setText(task.getRemark());
+        }
+
+
     }
 
     /**
@@ -78,6 +90,7 @@ public class ShelvesTaskEditDialogController {
             task.setTitle(title.getText());
             task.setRemark(reamark.getText());
             task.setUpdatetime(Calendar.getInstance().getTime());
+            task.setPic(pic.getText());
             try {
                 task.setMoq(Integer.parseInt(moq.getText()));
             } catch (Exception e) {
@@ -159,5 +172,16 @@ public class ShelvesTaskEditDialogController {
             
             return false;
         }
+    }
+
+    public void handleFileSelectAction(ActionEvent actionEvent) {
+        FileChooser fileChooser = new FileChooser();//构建一个文件选择器实例
+        fileChooser.setTitle("选择默认图片");
+        File selectedFile = fileChooser.showOpenDialog(dialogStage);
+
+        String path = selectedFile.getPath();
+
+        task.setPic(path);
+        pic.setText(path);
     }
 }

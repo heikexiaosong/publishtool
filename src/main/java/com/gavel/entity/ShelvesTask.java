@@ -43,6 +43,9 @@ public class ShelvesTask {
     @FieldMeta(name = "UPDATETIME", title = "创建时间")
     private Date updatetime;
 
+    @FieldMeta(name = "PIC", title ="默认图片", length = 20)
+    private String pic;
+
     public ShelvesTask() {
         id = String.valueOf(System.currentTimeMillis());
     }
@@ -118,5 +121,13 @@ public class ShelvesTask {
 
     public void setUpdatetime(Date updatetime) {
         this.updatetime = updatetime;
+    }
+
+    public String getPic() {
+        return pic;
+    }
+
+    public void setPic(String pic) {
+        this.pic = pic;
     }
 }

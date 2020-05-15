@@ -403,7 +403,7 @@ public class ShelvesItemParser {
         return picUrl;
     }
 
-    public static List<String> getImages(String skuCode){
+    public static List<String> getImages(String skuCode, String defaultImage){
         List<String> images = new ArrayList<>();
 
         try {
@@ -448,21 +448,38 @@ public class ShelvesItemParser {
             }
 
             if ( picUrls==null ||picUrls.size() ==0 ) {
+                String picSuningUrl =  uploadLocalImage(defaultImage);
+                if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
+                    images.add(picSuningUrl);
+                }
                 return images;
             }
 
             if ( picUrls.size()==1 &&  "/Content/images/hp_np.png".equalsIgnoreCase(picUrls.get(0)) ) {
+                String picSuningUrl =  uploadLocalImage(defaultImage);
+                if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
+                    images.add(picSuningUrl);
+                }
                 return images;
             }
 
             for (String picUrl : picUrls) {
                 String picSuningUrl = uploadImageWithoutDownload(picUrl, images.size());
-                if ( picSuningUrl!=null ) {
+                if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
                     images.add(picSuningUrl);
+                } else {
+                    picSuningUrl = uploadImage(picUrl);
+                    if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
+                        images.add(picSuningUrl);
+                    }
                 }
             }
 
             if ( images==null || images.size()==0) {
+                String picSuningUrl =  uploadLocalImage(defaultImage);
+                if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
+                    images.add(picSuningUrl);
+                }
                 return images;
             }
 
@@ -526,8 +543,63 @@ public class ShelvesItemParser {
         return images;
     }
 
+    // 上传本地图片
+    private static String uploadLocalImage(String url) throws Exception {
+        if ( url==null || url.trim().length()==0 ) {
+            return null;
+        }
+
+        String id = MD5Utils.md5Hex(url.trim());
+        ImageCache image =  SQLExecutor.executeQueryBean("select * from image  where id = ? ", ImageCache.class, id);
+        if ( image==null ) {
+            image = new ImageCache();
+            image.setId(MD5Utils.md5Hex(url.trim()));
+            image.setUrl(url.trim());
+            image.setFilepath(url.trim());
+            try {
+                SQLExecutor.insert(image);
+            } catch (Exception e){
+
+            }
+        }
+
+        if ( image.getPicurl()!=null && image.getPicurl().trim().length() > 0 ) {
+            return image.getPicurl();
+        }
+
+        String picUrl = null;
+        String localFilePath = url;
+        if ( !new File(localFilePath).exists() ) {
+            System.out.println("[" +  localFilePath + "]文件不存在.");
+            return picUrl;
+        }
+
+        {
+
+            NPicAddRequest request = new NPicAddRequest();
+            request.setPicFileData(localFilePath);
+            try {
+                NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
+                System.out.println("ApplyAddRequest :" + response.getBody());
+                SuningResponse.SnError error = response.getSnerror();
+                if ( error!=null ) {
+                    System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                } else {
+                    picUrl = response.getSnbody().getAddNPic().getPicUrl();
+                    System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
+                    image.setPicurl(picUrl);
+                    SQLExecutor.update(image);
+                }
+            } catch (SuningApiException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return picUrl;
+    }
+
     public static void main(String[] args) throws Exception {
-        List<String> images = getImages("10B6658");
+        List<String> images = getImages("10B6658", null);
         for (String image : images) {
             System.out.println(image);
         }

@@ -11,6 +11,7 @@ import com.gavel.shelves.ShelvesService;
 import com.gavel.shelves.suning.SuningCatetoryBrandSelector;
 import com.gavel.shelves.suning.SuningShelvesService;
 import com.gavel.utils.MD5Utils;
+import com.gavel.utils.StringUtils;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -27,6 +28,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,6 +55,12 @@ public class FXMLShelvesController {
     private Label titleField;
     @FXML
     private Label remarkField;
+
+    @FXML
+    private Label pic;
+
+    @FXML
+    private Label msg;
 
     // 产品SKU列表
     @FXML
@@ -143,6 +151,16 @@ public class FXMLShelvesController {
             idField.setText(newValue.getId());
             titleField.setText(newValue.getTitle());
             remarkField.setText(newValue.getRemark());
+            pic.setText(newValue.getPic());
+
+
+            msg.setText("");
+            if (StringUtils.isNotBlank(newValue.getPic())) {
+                File picFile = new File(newValue.getPic());
+                if (!picFile.exists()) {
+                    msg.setText("文件不存在,请检查");
+                }
+            }
 
             try {
                 List<ShelvesItem> temp = SQLExecutor.executeQueryBeanList("select * from SHELVESITEM where TASKID = ? ", ShelvesItem.class, newValue.getId());
@@ -313,15 +331,14 @@ public class FXMLShelvesController {
             return;
         }
 
-        ShelvesTask shelvesTask = null;
+        ShelvesTask shelvesTask = taskTable.getSelectionModel().getSelectedItem();
         try {
             shelvesTask =  SQLExecutor.executeQueryBean("select * from SHELVESTASK where ID = ? ", ShelvesTask.class, items.get(0).getTaskid());
         } catch (Exception e) {
             e.printStackTrace();
-            shelvesTask = taskTable.getSelectionModel().getSelectedItem();
         }
 
-        ShelvesService shelvesService = new SuningShelvesService(shelvesTask.getMoq());
+        ShelvesService shelvesService = new SuningShelvesService(shelvesTask.getMoq(), shelvesTask.getPic());
         new Thread(new Runnable() {
             @Override
             public void run() {

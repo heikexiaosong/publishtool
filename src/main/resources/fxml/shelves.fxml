@@ -42,6 +42,7 @@
                                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="300.0" minWidth="10.0" prefWidth="300.0" />
                                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="300.0" minWidth="10.0" prefWidth="300.0" />
                                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="300.0" minWidth="10.0" prefWidth="600.0" />
+                              <ColumnConstraints />
                                     </columnConstraints>
                                     <rowConstraints>
                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -63,6 +64,14 @@
                                         </HBox>
 
                                         <HBox alignment="CENTER_LEFT" GridPane.columnIndex="2">
+                                            <children>
+                                                <Label styleClass="title" text="默认图片: " />
+                                                <Label fx:id="pic" />
+                                                <Label fx:id="msg" textFill="RED" />
+                                            </children>
+                                        </HBox>
+
+                                        <HBox alignment="CENTER_LEFT" GridPane.columnIndex="3">
                                             <children>
                                                 <Label styleClass="title" text="说明: " />
                                                 <Label fx:id="remarkField" />
