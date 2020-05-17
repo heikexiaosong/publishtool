@@ -321,7 +321,6 @@ public class ShelvesItemParser {
             request.setPicFileData(localFilePath);
             try {
                 NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
-                System.out.println("ApplyAddRequest :" + response.getBody());
                 SuningResponse.SnError error = response.getSnerror();
                 if ( error!=null ) {
                     System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
@@ -781,7 +780,6 @@ public class ShelvesItemParser {
         // 产品描述
         Element proDetailTit = doc.selectFirst("div.proDetailTit").nextElementSibling().child(0);
 
-
         List<String> detailUrls = new ArrayList<>();
         Map<String, String> detailImageMap = new HashMap<>();
         Elements detailImgs = doc.selectFirst("div.proDetailTit").nextElementSibling().select("img");
@@ -795,21 +793,18 @@ public class ShelvesItemParser {
                 if ( src!=null && src.trim().length() > 0 ) {
                     detailUrls.add(src);
                 }
-                System.out.println(src);
             }
 
             for (String picUrl : detailUrls) {
                 String picSuningUrl = uploadDetailImage(picUrl);
-                detailImageMap.put(picUrl, picSuningUrl);
+                if (com.gavel.utils.StringUtils.isNotBlank(picSuningUrl)) {
+                    detailImageMap.put(picUrl, picSuningUrl);
+                }
             }
         }
 
 
-        System.out.println(proDetailTit.outerHtml());
-
-
         StringBuilder detail = new StringBuilder();
-
         if ( _price < moq ) {
             detail.append("<div class=\"box\">");
             detail.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\">" +
@@ -842,26 +837,26 @@ public class ShelvesItemParser {
         detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品描述</div>");
         detail.append(proDetailTit.html());
 
+        System.out.println("详情图片: " + detailImageMap.size());
         if ( detailUrls.size() > 0 ) {
             detail.append("<br>");
             for (String picUrl : detailUrls) {
                 String picSuningUrl = detailImageMap.get(picUrl);
-                detail.append("<img alt=\"\" src=\"" + picSuningUrl + "\">");
-                detail.append("<br>");
+                if (com.gavel.utils.StringUtils.isNotBlank(picSuningUrl)) {
+                    detail.append("<img alt=\"\" src=\"" + picSuningUrl + "\">");
+                    detail.append("<br>");
+                }
             }
         }
-
         detail.append("</div>");
 
 
-        System.out.println("详情图片: ");
 
         // 小图片
         List<String> picUrls = new ArrayList<>();
         Elements imgs = doc.select("div.xiaotu > div.xtu > dl > dd > img");
         for (Element img : imgs) {
             String  src = img.attr("src");
-
             if ( "/Content/images/hp_np.png".equalsIgnoreCase(src) ) {
                 continue;
             }
@@ -869,13 +864,10 @@ public class ShelvesItemParser {
             if ( src!=null && src.startsWith("//") ) {
                 src = "https:" + src;
             }
-
             src = src.replace("product_images_new/350/", "product_images_new/800/");
-
-            if ( src!=null && src.trim().length() > 0 ) {
+            if ( com.gavel.utils.StringUtils.isBlank(src) ) {
                 picUrls.add(src);
             }
-            System.out.println(src);
         }
 
         Map<String, String> imageMap = new HashMap<>();
@@ -897,13 +889,13 @@ public class ShelvesItemParser {
 
         detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品图片</div>");
         for (String picUrl : picUrls) {
-            if ( imageMap.containsKey(picUrl) && imageMap.get(picUrl)!=null ) {
+            if ( imageMap.containsKey(picUrl) && com.gavel.utils.StringUtils.isNotBlank(imageMap.get(picUrl))) {
                 detail.append("<p><img alt=\"\" src=\"" +  imageMap.get(picUrl).trim() + "\" class=\"product\"></p>");
             }
         }
         detail.append("</div>");
 
-        System.out.println(detail.toString());
+        System.out.println("Detail: " + detail.toString());
 
         return Base64.encodeBase64String(detail.toString().getBytes("UTF8"));
     }

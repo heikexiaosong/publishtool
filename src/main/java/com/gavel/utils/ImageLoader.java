@@ -108,6 +108,7 @@ public class ImageLoader {
                 return cache;
             }
         }
+        cache.setFilepath(null);
 
         String image = url.replace("https://static.grainger.cn/", "").replace("/", File.separator).trim();
         if ( url.equalsIgnoreCase("https://www.grainger.cn/Content/images/hp_np.png") ) {
