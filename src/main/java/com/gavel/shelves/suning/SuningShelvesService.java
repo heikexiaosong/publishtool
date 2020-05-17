@@ -83,22 +83,6 @@ public class SuningShelvesService implements ShelvesService {
         request.setCmTitle(item.getCmTitle());         // 商品标题
         request.setSellingPoints(item.getSellingPoints()); // 商品卖点
 
-        /**
-         * 商家商品介绍，UTF-8格式。将html内容的txt文本文件读取为字节数组,然后base64加密，去除空格回车后作为字段，传输时所涉及的图片不得使用外部url。允许写入CSS（禁止引用外部CSS）不支持JS。
-         */
-
-        String introduction = item.getIntroduction();
-
-        try {
-            if ( StringUtils.isBlank(introduction)) {
-                introduction = ShelvesItemParser.buildIntroduction(item, moq);
-                item.setIntroduction(introduction);
-            }
-        } catch (Exception e) {
-            System.out.println("[" + item.getItemCode() + "]生成商品详情异常: " + e.getMessage());
-        }
-        request.setIntroduction(introduction); // 商品介绍
-
         // 商品属性设置
         ParameterLoader parameterLoader = new SuningParameterLoader();
         List<ParameterLoader.Parameter> parameters = parameterLoader.loadParameters(category);
@@ -197,6 +181,22 @@ public class SuningShelvesService implements ShelvesService {
                 parsX.add(parx);
             }
         }
+
+
+        /**
+         * 商家商品介绍，UTF-8格式。将html内容的txt文本文件读取为字节数组,然后base64加密，去除空格回车后作为字段，传输时所涉及的图片不得使用外部url。允许写入CSS（禁止引用外部CSS）不支持JS。
+         */
+
+        String introduction = item.getIntroduction();
+        try {
+            if ( StringUtils.isBlank(introduction)) {
+                introduction = ShelvesItemParser.buildIntroduction(item, moq);
+                item.setIntroduction(introduction);
+            }
+        } catch (Exception e) {
+            System.out.println("[" + item.getItemCode() + "]生成商品详情异常: " + e.getMessage());
+        }
+        request.setIntroduction(introduction); // 商品介绍
 
         //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
         request.setCheckParam(true);

@@ -98,8 +98,9 @@
                                                 <Label fx:id="selectedNum" prefHeight="28.0" prefWidth="45.0" />
                                             </children>
                                         </HBox>
-                                          <ButtonBar prefHeight="30.0" prefWidth="175.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                          <ButtonBar prefHeight="30.0" prefWidth="450.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                               <buttons>
+                                                  <ComboBox fx:id="status" prefWidth="100.0" />
                                                   <Button mnemonicParsing="false" onAction="#handleEditSkuPerson" text="批量处理" />
                                                   <Button mnemonicParsing="false" onAction="#handleDetailEditAction" text="编 辑" />
                                                   <Button mnemonicParsing="false" onAction="#handleShelvesAction" text="上 架" />
@@ -118,6 +119,7 @@
                                         <TableView fx:id="itemList" editable="true" prefHeight="217.0" prefWidth="389.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <columns>
                                                 <TableColumn fx:id="select" prefWidth="60.0" text="选择" visible="true"> </TableColumn>
+                                                <TableColumn fx:id="noCol" prefWidth="60.0" text="序号" />
                                                 <TableColumn fx:id="codeCol" prefWidth="120.0" text="供应商编码" />
                                                 <TableColumn fx:id="cmTitleCol" prefWidth="400.0" text="商品标题" />
                                                 <TableColumn fx:id="graingercategorynameCol" prefWidth="100.0" text="固安捷类目" />
@@ -125,7 +127,6 @@
                                                 <TableColumn fx:id="brandnameCol" prefWidth="100.0" text="上架品牌" />
                                                 <TableColumn fx:id="categorynameCol" prefWidth="100.0" text="上架类目" />
                                                 <TableColumn fx:id="statusCol" prefWidth="75.0" text="状态" />
-                                                <TableColumn fx:id="updatetimeCol" prefWidth="160.0" text="更新时间" />
                                                 <TableColumn fx:id="msgCol" prefWidth="400.0" text="提示" />
                                             </columns>
                                         </TableView>

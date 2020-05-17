@@ -1,7 +1,7 @@
 package com.gavel.application.controller;
 
 import com.gavel.application.DataPagination;
-import com.gavel.application.DateUtil;
+import com.gavel.application.IDCell;
 import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.ShelvesItem;
@@ -66,6 +66,8 @@ public class FXMLShelvesController {
     @FXML
     private TableView<ShelvesItem> itemList;
     @FXML
+    private TableColumn<ShelvesItem, String> noCol;
+    @FXML
     private TableColumn<ShelvesItem, Boolean> select;
     @FXML
     private TableColumn<ShelvesItem, String> codeCol;
@@ -83,8 +85,6 @@ public class FXMLShelvesController {
     private TableColumn<ShelvesItem, String> statusCol;
     @FXML
     private TableColumn<ShelvesItem, String> msgCol;
-    @FXML
-    private TableColumn<ShelvesItem, String> updatetimeCol;
 
     @FXML
     private CheckBox curPage;
@@ -98,10 +98,19 @@ public class FXMLShelvesController {
     @FXML
     private Pagination pagination;
 
+    @FXML
+    private ComboBox<String> status;
+
     private List<ShelvesItem> items = new ArrayList<>();
 
     @FXML
     private void initialize() {
+
+
+        // 状态选择
+        status.setItems(FXCollections.observableArrayList("上架状态", "上架失败", "上架成功"));
+        status.getSelectionModel().select(0);
+        status.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> showShelvesStatusDetails(newValue));
 
         select.setCellFactory(column -> new CheckBoxTableCell<>());
         select.setCellValueFactory(cellData -> {
@@ -114,6 +123,8 @@ public class FXMLShelvesController {
             return property;
         });
 
+        noCol.setCellFactory(new IDCell<>());
+
         cmTitleCol.setCellValueFactory(cellData -> cellData.getValue().cmTitleProperty());
         codeCol.setCellValueFactory(cellData -> cellData.getValue().itemCodeProperty());
         graingerbrandnameCol.setCellValueFactory(cellData -> cellData.getValue().brandnameProperty());
@@ -122,7 +133,6 @@ public class FXMLShelvesController {
         categorynameCol.setCellValueFactory(cellData -> cellData.getValue().mappingcategorynameProperty());
         statusCol.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
         msgCol.setCellValueFactory(cellData -> cellData.getValue().messageProperty());
-        updatetimeCol.setCellValueFactory(cellData -> new SimpleStringProperty(DateUtil.format(cellData.getValue().getUpdatetime())));
 
 
         title.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
@@ -137,6 +147,40 @@ public class FXMLShelvesController {
         taskTable.getItems().addAll(loadData());
 
         showShelvesDetails(null);
+    }
+
+    private void showShelvesStatusDetails(String newValue) {
+
+        itemList.setItems(FXCollections.observableArrayList());
+
+        final List<ShelvesItem> filterItems = new ArrayList<>();
+
+        //"上架状态", "上架失败", "上架成功"
+
+        boolean filter = true;
+        switch ( newValue.trim() ) {
+            case "上架状态":
+                filter = false;
+                break;
+            case "上架失败":
+            case "上架成功":
+                break;
+        }
+
+
+        for (ShelvesItem item : items) {
+            if ( !filter || (newValue!=null && newValue.equalsIgnoreCase(item.getStatus())) ) {
+                filterItems.add(item);
+            }
+        }
+
+        DataPagination dataPagination = new DataPagination(filterItems, 10000);
+        pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
+        pagination.setPageFactory(pageIndex -> {
+            itemList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
+            return itemList;
+        });
+
     }
 
     private void showShelvesDetails(ShelvesTask newValue) {

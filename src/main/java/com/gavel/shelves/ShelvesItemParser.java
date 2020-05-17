@@ -293,6 +293,48 @@ public class ShelvesItemParser {
         return shelvesItem;
     }
 
+
+    /**
+     * 图片下载并上传
+     *
+     * @throws Exception
+     */
+    public static String uploadDetailImage(String url) throws Exception {
+
+        ImageCache image = ImageLoader.loadIamge(url);
+        if ( image==null || image.getFilepath()==null || image.getFilepath().trim().length()==0 ) {
+            return null;
+        }
+
+        if ( image.getPicurl()!=null && image.getPicurl().trim().length() > 0 ) {
+            return image.getPicurl();
+        }
+
+        String picUrl = null;
+        {
+            String localFilePath = ImageLoader.PICS_DIR + File.separator + image.getFilepath();
+            NPicAddRequest request = new NPicAddRequest();
+            request.setPicFileData(localFilePath);
+            try {
+                NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
+                System.out.println("ApplyAddRequest :" + response.getBody());
+                SuningResponse.SnError error = response.getSnerror();
+                if ( error!=null ) {
+                    System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                } else {
+                    picUrl = response.getSnbody().getAddNPic().getPicUrl();
+                    System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
+                    image.setPicurl(picUrl);
+                    SQLExecutor.update(image);
+                }
+            } catch (SuningApiException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return picUrl;
+    }
+
     /**
      * 图片下载并上传
      *
@@ -605,19 +647,17 @@ public class ShelvesItemParser {
         return picUrl;
     }
 
-    public static void main(String[] args) throws Exception {
-        List<String> images = getImages("10B6658", null);
-        for (String image : images) {
-            System.out.println(image);
-        }
+    public static String buildIntroduction(ShelvesItem _item, int moq) throws Exception {
+
+        return buildIntroduction(_item.getSkuCode(), moq);
     }
 
 
-    public static String buildIntroduction(ShelvesItem _item, int moq) throws Exception {
+    public static String buildIntroduction(String skuCode, int moq) throws Exception {
 
-        Item item = SQLExecutor.executeQueryBean("select * from ITEM where code = ? ", Item.class, _item.getSkuCode());
+        Item item = SQLExecutor.executeQueryBean("select * from ITEM where code = ? ", Item.class, skuCode);
         if ( item==null ) {
-            throw new Exception("[" + _item.getSkuCode() +"]找不到Item信息");
+            throw new Exception("[" + skuCode +"]找不到Item信息");
         }
 
         if ( item==null || item.getUrl()==null || item.getUrl().trim().length()==0 ) {
@@ -636,12 +676,6 @@ public class ShelvesItemParser {
             throw new Exception("[URL: " + item.getUrl() + "]" + doc.title());
         }
 
-        // 4级类目 + 产品组ID + ID
-        Elements elements = doc.select("div.crumbs  a");
-        Element c4 = elements.get(4);
-        Element c5 = elements.get(5);
-
-        System.out.println(StringUtils.getCode(c4.attr("href")) + ": " + c4.text());
 
         Element proDetailCon = doc.selectFirst("div.proDetailCon");
 
@@ -650,34 +684,30 @@ public class ShelvesItemParser {
 
         Element brandCn = h3.selectFirst(" > span a");
         brandCn.remove();
-        System.out.println("中文品牌: " + brandCn.text() + ": " + StringUtils.getCode(brandCn.attr("href")));
+        //System.out.println("中文品牌: " + brandCn.text() + ": " + StringUtils.getCode(brandCn.attr("href")));
 
         Element title = h3.selectFirst(" > a");
         title.remove();
-        System.out.println("标题: " + title.text());
+        //System.out.println("标题: " + title.text());
 
-
-        Element sellPoint = proDetailCon.select(" > h4 span").last();
-        sellPoint.remove();
 
         Element price = proDetailCon.selectFirst(" > div.price");
         price.remove();
-        System.out.println("价格: " + price.text());
+        //System.out.println("价格: " + price.text());
 
         Element priceEle =  (Element)price.childNodes().get(1);
-        TextNode unitEle =  (TextNode)price.childNodes().get(2);
-
         float _price = Float.parseFloat(priceEle.text().replace(",", "").replace("¥", ""));
+
+
+        TextNode unitEle =  (TextNode)price.childNodes().get(2);
         String unit = unitEle.text().trim();
-        String unit1 = unit ;
         if ( unit.contains("/") ) {
-            unit1 = unit.split("/")[1];
+            unit = unit.split("/")[1];
         }
 
-        System.out.println("Price: " + _price + "[" + unit + "]" + "[" + unit1 + "]");
+        System.out.println("Price: " + _price + "[" + unit + "]");
 
-        Elements attrs = proDetailCon.select(" > div font");
-        attrs.remove();
+
         /**
          * 订 货 号：5W8061
          * 品   牌：霍尼韦尔 Honeywell
@@ -685,39 +715,16 @@ public class ShelvesItemParser {
          * 包装内件数：1双
          * 预计发货日： 停止销售
          */
-
-        System.out.println("\n属性: \n" + attrs.html());
-
-        Element brandEle = attrs.get(1).selectFirst("a");
-
+        Elements attrs = proDetailCon.select(" > div font");
+        attrs.remove();
         String model = attrs.get(2).text();
         String number = attrs.get(3).text();
-        String fahuori = attrs.get(4).text();
-
-        System.out.println("制造商型号： " + model);
-        System.out.println("包装内件数： " + number);
-        System.out.println("预计发货日： " + fahuori);
-
-
-        String _title = title(title.text(), brandCn.text(), brandEle.text(), model, number);
 
 
         // 规格数据表格
         Element tableDiv = doc.selectFirst("div.tableDiv");
-        Element leftTable2 = tableDiv.selectFirst("div.leftTable2");
-        for (Element trsku2 : leftTable2.select("tr.trsku2")) {
-
-            Element selected = trsku2.selectFirst("td[name='tdItemNo'] > span.dweight");
-            System.out.println("selected: " +selected);
-            if ( selected != null ) {
-                System.out.println("订货号： " +  trsku2.child(0).attr("title"));
-                System.out.println("制造商型号： " +  trsku2.child(1).attr("title"));
-                break;
-            }
-        }
 
         Element rightTable1 = tableDiv.selectFirst("div#rightTable1");
-
         List<String> columnName = new ArrayList<>();
         Element pxTR = rightTable1.selectFirst("tr.pxTR");
         for (Element element : pxTR.children()) {
@@ -726,18 +733,14 @@ public class ShelvesItemParser {
                 tname = element.text();
             }
             columnName.add(tname);
-            System.out.println("属性: " + tname);
-
         }
 
         Element rightTable2 = tableDiv.selectFirst("div#rightTable2");
         Elements trskus = rightTable2.select("tr.trsku2");
 
         Map<String, String> columnValues = new HashMap<>();
-
         if ( trskus.size() > 1 ) {
             for (Element trsku : trskus) {
-                System.out.println(trsku);
                 Element selected = trsku.selectFirst("td  span.dweight");
                 if ( selected!=null ) {
 
@@ -749,11 +752,8 @@ public class ShelvesItemParser {
                         if ( tvalue==null || tvalue.trim().length()==0 ) {
                             tvalue = td.text();
                         }
-
-                        System.out.println(columnName.get(i) + ": " + tvalue);
                         columnValues.put(columnName.get(i), tvalue);
                     }
-                    System.out.println("================");
                     break;
                 }
             }
@@ -791,7 +791,6 @@ public class ShelvesItemParser {
         Map<String, String> detailImageMap = new HashMap<>();
         Elements detailImgs = doc.selectFirst("div.proDetailTit").nextElementSibling().select("img");
         if ( detailImgs!=null && detailImgs.size()>0 ) {
-
             for (Element img : detailImgs) {
                 String  src = img.attr("src");
                 if ( src!=null && src.startsWith("//") ) {
@@ -805,7 +804,7 @@ public class ShelvesItemParser {
             }
 
             for (String picUrl : detailUrls) {
-                String picSuningUrl = uploadImage(picUrl, 0);
+                String picSuningUrl = uploadDetailImage(picUrl);
                 detailImageMap.put(picUrl, picSuningUrl);
             }
         }
@@ -818,18 +817,16 @@ public class ShelvesItemParser {
 
         if ( _price < moq ) {
             detail.append("<div class=\"box\">");
-
-
             detail.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\">" +
                     "<span>商品起定量</span><span style=\"color:red;\">(请按起订量拍，否则无法发货)</span></div>");
 
 
-            detail.append(" <span style=\"color:red;\">起订量： ").append( (int)Math.ceil(100/_price)).append(unit1).append("</span><br>");
+            detail.append(" <span style=\"color:red;\">起订量： ").append( (int)Math.ceil(100/_price)).append(unit).append("</span><br>");
 
-            if ( number.contains(unit1) ) {
+            if ( number.contains(unit) ) {
                 detail.append(" 包装数量： ").append(number).append("<br>");
             } else {
-                detail.append(" 包装数量： ").append(number).append("/").append(unit1).append("<br>");
+                detail.append(" 包装数量： ").append(number).append("/").append(unit).append("<br>");
             }
 
             detail.append("</div>");
@@ -911,6 +908,18 @@ public class ShelvesItemParser {
         }
         detail.append("</div>");
 
+        System.out.println(detail.toString());
+
         return Base64.encodeBase64String(detail.toString().getBytes("UTF8"));
     }
+
+
+
+    public static void main(String[] args) throws Exception {
+
+        APPConfig.getInstance().getShopinfo();
+
+        buildIntroduction("4H4659", 100);
+    }
+
 }
