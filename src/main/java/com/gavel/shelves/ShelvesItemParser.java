@@ -301,7 +301,7 @@ public class ShelvesItemParser {
      */
     public static String uploadDetailImage(String url) throws Exception {
 
-        ImageCache image = ImageLoader.loadIamge(url);
+        ImageCache image = ImageLoader.loadOrginialIamge(url);
         if ( image==null || image.getFilepath()==null || image.getFilepath().trim().length()==0 ) {
             return null;
         }
@@ -310,9 +310,13 @@ public class ShelvesItemParser {
             return image.getPicurl();
         }
 
+        String localFilePath = ImageLoader.PICS_DIR + File.separator + image.getFilepath();
+        if ( !new File(localFilePath).exists() ) {
+            return null;
+        }
+
         String picUrl = null;
         {
-            String localFilePath = ImageLoader.PICS_DIR + File.separator + image.getFilepath();
             NPicAddRequest request = new NPicAddRequest();
             request.setPicFileData(localFilePath);
             try {
@@ -655,25 +659,16 @@ public class ShelvesItemParser {
 
     public static String buildIntroduction(String skuCode, int moq) throws Exception {
 
-        Item item = SQLExecutor.executeQueryBean("select * from ITEM where code = ? ", Item.class, skuCode);
-        if ( item==null ) {
-            throw new Exception("[" + skuCode +"]找不到Item信息");
-        }
-
-        if ( item==null || item.getUrl()==null || item.getUrl().trim().length()==0 ) {
-            throw new Exception("item 或者 产品URL 不能为空");
-        }
-
-        HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(item.getUrl(), true);
+        HtmlCache htmlCache = HtmlPageLoader.getInstance().loadGraingerPage(skuCode, true);
         if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
-            throw new Exception("[Item: " + item.getUrl() +"]html获取失败.");
+            throw new Exception("[Item: " + skuCode +"]html获取失败.");
         }
 
         Document doc = Jsoup.parse(htmlCache.getHtml());
 
         Element err = doc.selectFirst("div.err-notice");
         if ( err!=null ) {
-            throw new Exception("[URL: " + item.getUrl() + "]" + doc.title());
+            throw new Exception("[Sku: " + skuCode + "]" + doc.title());
         }
 
 
@@ -919,7 +914,7 @@ public class ShelvesItemParser {
 
         APPConfig.getInstance().getShopinfo();
 
-        buildIntroduction("4H4659", 100);
+        buildIntroduction("1M0412", 100);
     }
 
 }

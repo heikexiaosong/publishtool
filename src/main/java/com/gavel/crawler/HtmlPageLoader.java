@@ -2,6 +2,7 @@ package com.gavel.crawler;
 
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
+import com.gavel.utils.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -32,6 +33,16 @@ public class HtmlPageLoader {
         return cache;
     }
 
+    public HtmlCache loadGraingerPage(String skuCode, boolean useCache) throws Exception {
+
+        if (StringUtils.isBlank(skuCode)) {
+            return null;
+        }
+
+        String url = "https://www.grainger.cn/u-" + skuCode.trim() + ".html";
+        return loadHtmlPage(url, useCache, false);
+    }
+
     public HtmlCache loadHtmlPage(String url, boolean useCache) throws Exception {
 
         return loadHtmlPage(url, useCache, false);
@@ -39,6 +50,7 @@ public class HtmlPageLoader {
 
     public HtmlCache loadHtmlPage(String url, boolean useCache, boolean loadMore) {
 
+        System.out.println("URL: " + url);
         HtmlCache cache = null;
         if ( useCache ) {
             try {

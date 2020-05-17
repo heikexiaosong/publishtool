@@ -234,13 +234,8 @@ public class HttpUtils {
 
 		Response response = call.execute();
 		if ( response.isSuccessful() ) {
-
 			Files.write(response.body().bytes(), new File("test.jpg"));
-
 		}
-
-
-
 	}
 
 
@@ -254,16 +249,15 @@ public class HttpUtils {
 		//3.异步请求newCall（Callback）
 		Call call = client.newCall(request);
 
-
 		Response response = call.execute();
 		if ( response.isSuccessful() ) {
-
 			try {
 				Files.write(response.body().bytes(), new File(localFilePath));
 			} finally {
 				response.close();
 			}
-
+		} else {
+			throw new RuntimeException("[" + response.code() + "]" + response.message()) ;
 		}
 
 	}

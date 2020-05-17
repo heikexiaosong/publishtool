@@ -78,4 +78,65 @@ public class ImageLoader {
         return cache;
     }
 
+
+    /**
+     *  获取原始图片
+     */
+    public static ImageCache loadOrginialIamge(String url) throws Exception {
+
+        if ( StringUtils.isBlank(url.trim()) ) {
+            return null;
+        }
+
+        String id = MD5Utils.md5Hex(url.trim());
+        ImageCache cache =  SQLExecutor.executeQueryBean("select * from image  where id = ? ", ImageCache.class, id);
+        if ( cache==null ) {
+            cache = new ImageCache();
+            cache.setId(id);
+            cache.setUrl(url.trim());
+            try {
+                SQLExecutor.insert(cache);
+            } catch (Exception e) {
+                System.out.println("[Image Cache]新增失败: " + e.getMessage());
+            }
+        }
+
+        if ( StringUtils.isNotBlank(cache.getFilepath()) ){
+            File image = new File(PICS_DIR, cache.getFilepath());
+            if ( image.exists() ) {
+                System.out.println("[" + url + "]Load: " + image.getAbsolutePath());
+                return cache;
+            }
+        }
+
+        String image = url.replace("https://static.grainger.cn/", "").replace("/", File.separator).trim();
+        if ( url.equalsIgnoreCase("https://www.grainger.cn/Content/images/hp_np.png") ) {
+            image = url.replace("https://www.grainger.cn/", "").replace("/", File.separator).trim();
+        }
+
+        File imageFile = new File(PICS_DIR + File.separator + image);
+        if ( !imageFile.getParentFile().exists() ) {
+            imageFile.getParentFile().mkdirs();
+        }
+
+        try {
+            HttpUtils.download(url, imageFile.getAbsolutePath());
+            cache.setFilepath(image);
+        } catch (Exception e) {
+            System.out.println("[" + url + "]" + e.getMessage());
+        }
+        cache.setUpdatetime(Calendar.getInstance().getTime());
+        try {
+            SQLExecutor.update(cache);
+        } catch (Exception e) {
+            System.out.println("[Image Cache]Update失败: " + e.getMessage());
+        }
+
+        return cache;
+    }
+
+    public static void main(String[] args) throws Exception {
+        loadOrginialIamge("https://static.grainger.cn/pis/CPG/%E9%85%8D%E7%BA%BF%E7%9B%92%E6%96%B9%E5%90%91.jpg");
+    }
+
 }

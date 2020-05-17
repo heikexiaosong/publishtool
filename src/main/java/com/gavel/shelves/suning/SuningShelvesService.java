@@ -207,12 +207,12 @@ public class SuningShelvesService implements ShelvesService {
             SuningResponse.SnError error = response.getSnerror();
             if ( error!=null ) {
 
-                Files.write(request.getResParams().getBytes(), new File(item.getItemCode() + ".request"));
+                Files.write(request.getResParams().getBytes(), new File("report" + File.separator + item.getItemCode() + ".request"));
 
                 System.out.println(request.getResParams());
                 System.out.println(new Gson().toJson(response));
 
-                Files.write(new Gson().toJson(response).getBytes(), new File(item.getItemCode() + ".response"));
+                Files.write(new Gson().toJson(response).getBytes(), new File("report" + File.separator + item.getItemCode() + ".response"));
 
                 throw buildException(error.getErrorCode(), error.getErrorMsg());
             } else {
