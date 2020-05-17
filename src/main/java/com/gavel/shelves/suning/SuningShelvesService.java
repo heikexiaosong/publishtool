@@ -1,6 +1,7 @@
 package com.gavel.shelves.suning;
 
 import com.gavel.config.APPConfig;
+import com.gavel.database.SQLExecutor;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.ParameterLoader;
@@ -121,15 +122,7 @@ public class SuningShelvesService implements ShelvesService {
         ApplyAddRequest.SupplierImgUrl supplierImgUrl = new ApplyAddRequest.SupplierImgUrl();
         supplierImgUrls.add(supplierImgUrl);
 
-
-        System.out.println(".........................");
-
         List<String> images = ShelvesItemParser.getImages(item.getSkuCode(), defaultImage);
-        //supplierImgUrl.setUrlA("http://uimgproxy.suning.cn/uimg1/sop/commodity/hGNS4YLJwso9wdGwpT1JSg.jpg");
-//        if ( images==null || images.size() ==0) {
-//            throw  new Exception("商品缺少图片");
-//        }
-
         for (String image : images) {
             System.out.println("Image: " + image);
         }
@@ -220,12 +213,6 @@ public class SuningShelvesService implements ShelvesService {
            logger.error("[Item: " + item.getItemCode() + "]Exception: " + e.getMessage());
            throw e;
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-
-        ShelvesItemParser.getImages("10G1477", null);
-
     }
 
     private static Exception buildException(String errorCode, String errorMsg){
@@ -425,104 +412,25 @@ public class SuningShelvesService implements ShelvesService {
     }
 
 
-    public static void main1(String[] args) {
+
+    public static void main(String[] args) throws Exception {
+
+        APPConfig.getInstance().getShopinfo();
+
+        SuningShelvesService suningShelvesService = new SuningShelvesService(100, null);
 
 
-        List<String> err = new ArrayList<>();
+        ShelvesItem shelvesItem = null;
 
-
-     err.add("biz.selfmarket.addapply.length-overlong:*	参数的值超过规定长度	请检查此参数的值,*号表示参数字段名");
-     err.add("biz.selfmarket.addapply.missing-parameter:*	参数必填	请检查此参数的值,*号表示参数字段名");
-     err.add("isp.sys.service.unavailable.mcmp	服务不可用	请联系苏宁技术人员");
-     err.add("biz.selfmarket.addapply.invalid-biz:100	子码条形码重复	子码条形码其他商品重复，请替换");
-     err.add("biz.selfmarket.addapply.invalid-biz:101	商品详情错误	校验introduction字段");
-     err.add("biz.selfmarket.addapply.invalid-biz:102	条形码重复	条形码和其他商品重复，请替换");
-     err.add("biz.selfmarket.addapply.invalid-biz:103	缺少条形码资质图	填写缺少条形码资质图-barpic");
-     err.add("biz.selfmarket.addapply.invalid-biz:104	条形码资质图不合规范	条形码资质图不合规范");
-     err.add("biz.selfmarket.addapply.invalid-biz:105	条形码资质图不属于商家	条形码资质图不属于商家");
-     err.add("biz.selfmarket.addapply.invalid-biz:106	条形码资质图大小过大	条形码资质图大小过大");
-     err.add("biz.selfmarket.addapply.invalid-biz:107	条形码资质图长或宽小于800px	条形码资质图长或宽小于800px");
-     err.add("biz.selfmarket.addapply.invalid-biz:108	子码条形码资质图不属于商家	子码条形码资质图不属于商家");
-     err.add("biz.selfmarket.addapply.invalid-biz:109	子码条形码资质图不属于商家	子码条形码资质图不属于商家");
-     err.add("biz.selfmarket.addapply.invalid-biz:110	子码条形码资质图长宽大于800px	子码条形码资质图长宽大于800px");
-     err.add("biz.selfmarket.addapply.invalid-biz:111	缺少运营模块	缺少运营模块");
-     err.add("biz.selfmarket.addapply.invalid-biz:112	运营模块和自定义模块的名称不能一样	运营模块和自定义模块的名称不能一样");
-     err.add("biz.selfmarket.addapply.invalid-biz:113	既不是运营模块，也不是自定义模块	既不是运营模块，也不是自定义模块");
-     err.add("biz.selfmarket.addapply.invalid-biz:114	自定义 id必为空，名称和内容必填	自定义 id必为空，名称和内容必填");
-     err.add("biz.selfmarket.addapply.invalid-biz:115	自定义模块个数大于10个	自定义模块个数大于10个");
-     err.add("biz.selfmarket.addapply.invalid-biz:116	所填运营模块id不在模板当中	所填运营模块id不在模板当中");
-     err.add("biz.selfmarket.addapply.invalid-biz:117	运营模板中必填的模块未填写值	运营模板中必填的模块未填写值");
-     err.add("biz.selfmarket.addapply.invalid-biz:118	不允许自定义顺序	不允许自定义顺序");
-     err.add("biz.selfmarket.addapply.invalid-biz:119	content必须是base64加密	content必须是base64加密");
-     err.add("biz.selfmarket.addapply.invalid-biz:120	num重复，或者不为数字	num重复，或者不为数字");
-     err.add("biz.selfmarket.addapply.invalid-biz:121	自定义模块名含有敏感词	自定义模块名含有敏感词");
-     err.add("biz.selfmarket.addapply.invalid-biz:122	报文中的特性值与参数模板中的不符	报文中的特性值与参数模板中的不符");
-     err.add("biz.selfmarket.addapply.invalid-biz:123	产地报错	校验country，region，city是否正确");
-     err.add("biz.selfmarket.addapply.invalid-biz:124	基本参数和模板不符合	检查基本参数");
-     err.add("biz.selfmarket.addapply.invalid-biz:125	入的报文与所给的类目的通子码属性不符合	校验类目和childItem");
-     err.add("biz.selfmarket.addapply.invalid-biz:126	子码条形码必填	子码条形码必填");
-     err.add("biz.selfmarket.addapply.invalid-biz:127	子码资质图必填	子码资质图必填");
-     err.add("biz.selfmarket.addapply.invalid-biz:128	子商品无特性节点	子商品无特性节点");
-     err.add("biz.selfmarket.addapply.invalid-biz:129	特性参数值不符合规范	包含，");
-     err.add("biz.selfmarket.addapply.invalid-biz:130	商品主图长或宽小于800px	商品主图长或宽小于800px");
-     err.add("biz.selfmarket.addapply.invalid-biz:131	子商品主图长或宽小于800px	子商品主图长或宽小于800px");
-     err.add("biz.selfmarket.addapply.invalid-biz:132	报错	看错误描述");
-     err.add("biz.selfmarket.addapply.invalid-biz:133	所选充值类型不存在	选择正确的充值类型");
-     err.add("biz.selfmarket.addapply.invalid-biz:134	活动链接内容存在时生效时间、失效时间、电脑端链接和移动端链接必填");
-     err.add("biz.selfmarket.addapply.invalid-biz:135	活动链接失效时间不得小于生效时间");
-     err.add("biz.selfmarket.addapply.invalid-biz:136	输入合法的生效时间和失效时间");
-     err.add("biz.selfmarket.addapply.invalid-biz:137	活动链接时间异常");
-     err.add("biz.selfmarket.addapply.invalid-biz:138	活动关联文案内容超过25");
-     err.add("biz.selfmarket.addapply.invalid-biz:139	商品卖点内容包含手机号");
-     err.add("biz.selfmarket.addapply.invalid-biz:140	商品卖点内容超过45");
-     err.add("biz.selfmarket.addapply.invalid-biz:141	商品卖点包含敏感词");
-     err.add("biz.selfmarket.addapply.invalid-biz:142	活动关联文案内容包含手机号");
-     err.add("biz.selfmarket.addapply.invalid-biz:143	活动关联文案内容包含敏感词");
-     err.add("biz.selfmarket.addapply.invalid-biz:144	电脑端促销链接不允许出现外部链接");
-     err.add("biz.selfmarket.addapply.invalid-biz:145	电脑端促销链接长度不能大于256");
-     err.add("biz.selfmarket.addapply.invalid-biz:146	移动端促销链接不允许出现外部链接");
-     err.add("biz.selfmarket.addapply.invalid-biz:147	移动端促销链接长度不能大于256");
-     err.add("biz.selfmarket.addapply.invalid-biz:148	商品名称最多支持60个字");
-     err.add("biz.selfmarket.addapply.invalid-biz:149	电脑端促销链接无效");
-     err.add("biz.selfmarket.addapply.invalid-biz:150	移动端促销链接无效");
-     err.add("biz.selfmarket.addapply.invalid-biz:151	促销卖点存在时生效时间和失效时间必填");
-     err.add("biz.selfmarket.addapply.invalid-biz:152	促销卖点生效时间和失效时间异常");
-     err.add("biz.selfmarket.addapply.invalid-biz:153	促销卖点超过30");
-     err.add("biz.selfmarket.addapply.invalid-biz:154	促销卖点内容包含手机号");
-     err.add("biz.selfmarket.addapply.invalid-biz:155	促销卖点包含敏感词");
-     err.add("biz.selfmarket.addapply.invalid-biz:156	亮点词首位不能为空");
-
-
-        for (String s : err) {
-//            System.out.println(s);
-
-
-            String en = s.split("	")[0];
-
-            String zh = s.split("	")[1].trim().replace("\t", " ");
-//
-//            System.out.println(en);
-//            System.out.println(zh);
-//
-
-
-
-            StringBuilder builder = new StringBuilder();
-
-            builder.append("if ( errorCode.contains(\"" + en + "\") ) { \n");
-            builder.append("\treturn new Exception(\"" + zh + "\");\n");
-            builder.append("}");
-
-
-
-            System.out.println(builder.toString());
+        try {
+            shelvesItem = SQLExecutor.executeQueryBean("select * from SHELVESITEM where TASKID =? and SKUCODE = ? ", ShelvesItem.class, "1589182362981", "5V9689");
+            suningShelvesService.shelves(shelvesItem);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
 
 
-
     }
-
-
 
 }

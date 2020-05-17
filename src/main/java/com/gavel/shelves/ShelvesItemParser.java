@@ -364,7 +364,7 @@ public class ShelvesItemParser {
             if ( src.width()!=800 || src.height()!=800 ) {
                 Imgproc.resize(src, src, new Size(800, 800));
             }
-            Imgproc.circle(src, new Point(src.width()-size, src.height()-size),  1, new Scalar(238, 238, 238));
+            Imgproc.circle(src, new Point(src.width()-size, src.height()-size),  2, new Scalar(238, 238, 238));
 
             localFilePath = localFilePath.replace(".jpg", ".png");
             Imgcodecs.imwrite(localFilePath, src);
@@ -373,13 +373,11 @@ public class ShelvesItemParser {
             request.setPicFileData(localFilePath);
             try {
                 NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
-                System.out.println("ApplyAddRequest :" + response.getBody());
                 SuningResponse.SnError error = response.getSnerror();
                 if ( error!=null ) {
                     System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
                 } else {
                     picUrl = response.getSnbody().getAddNPic().getPicUrl();
-                    System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
                     image.setPicurl(picUrl);
                     SQLExecutor.update(image);
                 }
@@ -434,7 +432,7 @@ public class ShelvesItemParser {
 
         Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
 
-        Imgproc.circle(src, new Point(src.width()-size, src.height()-size),  1, new Scalar(238, 238, 238));
+        Imgproc.circle(src, new Point(src.width()-size, src.height()-size),  2, new Scalar(238, 238, 238));
 
         localFilePath = ImageLoader.PICS_TEMP_DIR + File.separator  + size + File.separator + image.getFilepath();
 
@@ -453,13 +451,11 @@ public class ShelvesItemParser {
             request.setPicFileData(localFilePath);
             try {
                 NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
-                System.out.println("ApplyAddRequest :" + response.getBody());
                 SuningResponse.SnError error = response.getSnerror();
                 if ( error!=null ) {
                     System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
                 } else {
                     picUrl = response.getSnbody().getAddNPic().getPicUrl();
-                    System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
                     image.setPicurl(picUrl);
                     SQLExecutor.update(image);
                 }
@@ -473,28 +469,17 @@ public class ShelvesItemParser {
 
     public static List<String> getImages(String skuCode, String defaultImage){
         List<String> images = new ArrayList<>();
-
         try {
-            Item item = SQLExecutor.executeQueryBean("select * from ITEM where CODE = ?", Item.class, skuCode);
-            if ( item==null ) {
-                return images;
-            }
-
-
-            if ( item==null || item.getUrl()==null || item.getUrl().trim().length()==0 ) {
-                throw new Exception("item 或者 产品URL 不能为空");
-            }
-
-            HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(item.getUrl(), true);
+            HtmlCache htmlCache = HtmlPageLoader.getInstance().loadGraingerPage(skuCode, true);
             if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
-                throw new Exception("[Item: " + item.getUrl() +"]html获取失败.");
+                throw new Exception("[Sku: " + skuCode +"]Html获取失败.");
             }
 
             Document doc = Jsoup.parse(htmlCache.getHtml());
 
             Element err = doc.selectFirst("div.err-notice");
             if ( err!=null ) {
-                throw new Exception("[URL: " + item.getUrl() + "]" + doc.title());
+                throw new Exception("[URL: " + doc.location() + "]" + doc.title());
             }
 
             // 小图片
@@ -502,28 +487,24 @@ public class ShelvesItemParser {
             Elements imgs = doc.select("div.xiaotu > div.xtu > dl > dd > img");
             for (Element img : imgs) {
                 String  src = img.attr("src");
-                if ( src!=null && src.startsWith("//") ) {
+                if (com.gavel.utils.StringUtils.isBlank(src) || "/Content/images/hp_np.png".equalsIgnoreCase(src) ) {
+                    continue;
+                }
+
+                if ( src.startsWith("//") ) {
                     src = "https:" + src;
                 }
 
-
                 src = src.replace("product_images_new/350/", "product_images_new/800/");
-
-                if ( src!=null && src.trim().length() > 0 ) {
-                    picUrls.add(src);
-                }
-                System.out.println(src);
+                picUrls.add(src);
             }
 
-            if ( picUrls==null ||picUrls.size() ==0 ) {
-                String picSuningUrl =  uploadLocalImage(defaultImage);
-                if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
-                    images.add(picSuningUrl);
-                }
-                return images;
+            System.out.println("产品图片: " + picUrls.size());
+            for (String picUrl : picUrls) {
+                System.out.println(picUrl);
             }
 
-            if ( picUrls.size()==1 &&  "/Content/images/hp_np.png".equalsIgnoreCase(picUrls.get(0)) ) {
+            if ( picUrls.size() ==0 ) {
                 String picSuningUrl =  uploadLocalImage(defaultImage);
                 if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
                     images.add(picSuningUrl);
@@ -566,7 +547,8 @@ public class ShelvesItemParser {
 
                 System.out.println(localFilePath);
                 Mat src = Imgcodecs.imread(imageFile.getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED);
-                Imgproc.putText(src, String.valueOf(images.size()), new Point(720,750),Imgproc.FONT_HERSHEY_PLAIN, 2.0, new Scalar(238, 238, 238),4, Imgproc.LINE_AA,false);
+
+                Imgproc.circle(src, new Point(src.width()-images.size(), src.height()-images.size()),  2, new Scalar(238, 238, 238));
                 Imgcodecs.imwrite(imageFile.getAbsolutePath(), src);
 
                 String picUrl = null;
@@ -575,12 +557,10 @@ public class ShelvesItemParser {
                     request.setPicFileData(imageFile.getAbsolutePath());
                     try {
                         NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
-                        System.out.println("ApplyAddRequest :" + response.getBody());
                         SuningResponse.SnError error = response.getSnerror();
                         if ( error!=null ) {
                             System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
                         } else {
-                            System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
                             picUrl = response.getSnbody().getAddNPic().getPicUrl();
                             images.add(picUrl);
                         }
@@ -597,7 +577,7 @@ public class ShelvesItemParser {
 
     // 上传本地图片
     private static String uploadLocalImage(String url) throws Exception {
-        if ( url==null || url.trim().length()==0 ) {
+        if (com.gavel.utils.StringUtils.isBlank(url)) {
             return null;
         }
 
