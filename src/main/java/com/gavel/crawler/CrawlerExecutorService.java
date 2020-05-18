@@ -1,5 +1,6 @@
 package com.gavel.crawler;
 
+import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Item;
 import com.gavel.entity.SearchItem;
@@ -15,7 +16,16 @@ public class CrawlerExecutorService {
 
     private static final CrawlerExecutorService INSTANCE = new CrawlerExecutorService();
 
+
+    private BlockingQueue<Task> taskQueue = new LinkedBlockingDeque<>();
+
+    private AtomicBoolean running = new AtomicBoolean(true);
+
     public CrawlerExecutorService() {
+        String booleanStr = APPConfig.getInstance().getProperty("crawler.running", "false");
+        running.set(Boolean.parseBoolean(booleanStr));
+
+        System.out.println("Crawler Runing: " + running.get());
         this.executors = Executors.newSingleThreadScheduledExecutor();
     }
 
@@ -23,9 +33,6 @@ public class CrawlerExecutorService {
         return INSTANCE;
     }
 
-    private BlockingQueue<Task> taskQueue = new LinkedBlockingDeque<>();
-
-    private AtomicBoolean running = new AtomicBoolean(true);
 
     public void addTask(Task task) {
         if ( task!=null ) {
