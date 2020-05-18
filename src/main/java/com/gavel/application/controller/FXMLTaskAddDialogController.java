@@ -3,8 +3,10 @@ package com.gavel.application.controller;
 import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Task;
+import com.gavel.utils.StringUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
@@ -19,6 +21,9 @@ public class FXMLTaskAddDialogController {
 
     @FXML
     private AnchorPane root;
+
+    @FXML
+    private TextField address;
 
     @FXML
     private WebView webView;
@@ -110,5 +115,12 @@ public class FXMLTaskAddDialogController {
 
     public void bindTask(Task _task) {
         this.task = _task;
+    }
+
+    public void handleGoAction(ActionEvent actionEvent) {
+        String url = address.getText().trim();
+        if (StringUtils.isNotBlank(url) ) {
+            webView.getEngine().load(url);
+        }
     }
 }
