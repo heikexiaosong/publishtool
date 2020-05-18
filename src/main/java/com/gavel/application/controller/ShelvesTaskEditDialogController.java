@@ -30,6 +30,15 @@ public class ShelvesTaskEditDialogController {
     private TextField pic;
 
     @FXML
+    private TextField logo;
+
+    @FXML
+    private TextField brand_zh;
+
+    @FXML
+    private TextField brand_en;
+
+    @FXML
     private TextField reamark;
 
     private Stage dialogStage;
@@ -67,6 +76,10 @@ public class ShelvesTaskEditDialogController {
             moq.setText(String.valueOf(task.getMoq()));
             pic.setText(task.getPic());
             reamark.setText(task.getRemark());
+
+            logo.setText(task.getLogo());
+            brand_zh.setText(task.getBrand_zh());
+            brand_en.setText(task.getBrand_en());
         }
 
 
@@ -96,6 +109,10 @@ public class ShelvesTaskEditDialogController {
             } catch (Exception e) {
                 task.setMoq(0);
             }
+
+            task.setLogo(logo.getText().trim());
+            task.setBrand_en(brand_en.getText().trim());
+            task.setBrand_zh(brand_zh.getText().trim());
 
 //            task.setFirstName(firstNameField.getText());
 //            task.setLastName(lastNameField.getText());
@@ -183,5 +200,15 @@ public class ShelvesTaskEditDialogController {
 
         task.setPic(path);
         pic.setText(path);
+    }
+
+    public void handleLogoSelectAction(ActionEvent actionEvent) {
+        FileChooser fileChooser = new FileChooser();//构建一个文件选择器实例
+        fileChooser.setTitle("选择水印图片");
+        File selectedFile = fileChooser.showOpenDialog(dialogStage);
+
+        String path = selectedFile.getPath();
+        logo.setText(path);
+        task.setLogo(path);
     }
 }

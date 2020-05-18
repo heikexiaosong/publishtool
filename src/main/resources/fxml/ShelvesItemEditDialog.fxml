@@ -43,10 +43,16 @@
                   <TextField fx:id="dest" prefHeight="78.0" prefWidth="149.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
 
                   <Label alignment="CENTER_RIGHT" prefHeight="69.0" prefWidth="149.0" text="商家编码加前缀: " GridPane.rowIndex="4" />
-                   <Label alignment="CENTER_RIGHT" prefHeight="69.0" prefWidth="149.0" text="商家编码加后缀: " GridPane.columnIndex="2"  GridPane.rowIndex="4" />
+                   <Label alignment="CENTER_RIGHT" prefHeight="69.0" prefWidth="149.0" text="商家编码加后缀: " GridPane.columnIndex="2" GridPane.rowIndex="4" />
 
                    <TextField fx:id="codePrefix" prefHeight="31.0" prefWidth="169.0" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                   <TextField fx:id="codeSuffix" prefHeight="31.0" prefWidth="192.0" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
+                   <TextField fx:id="codeSuffix" prefHeight="31.0" prefWidth="192.0" GridPane.columnIndex="3" GridPane.rowIndex="4" />
+                  <Label alignment="CENTER_RIGHT" prefHeight="83.0" prefWidth="149.0" text="上架类目: " GridPane.rowIndex="7" />
+                  <Label alignment="CENTER_RIGHT" prefHeight="84.0" prefWidth="149.0" text="上架品牌: " GridPane.rowIndex="9" />
+                  <TextField fx:id="categoryName" prefHeight="51.0" prefWidth="149.0" GridPane.columnIndex="1" GridPane.rowIndex="7" />
+                  <TextField fx:id="brandName" prefHeight="56.0" prefWidth="149.0" GridPane.columnIndex="1" GridPane.rowIndex="9" />
+                  <Button mnemonicParsing="false" onAction="#handleCategorySelect" prefHeight="32.0" prefWidth="70.0" text="选择类目" GridPane.columnIndex="2" GridPane.rowIndex="7" />
+                  <Button mnemonicParsing="false" onAction="#handleBrandSelect" prefHeight="32.0" prefWidth="72.0" text="选择品牌" GridPane.columnIndex="2" GridPane.rowIndex="9" />
                </children>
             </GridPane>
          </children>

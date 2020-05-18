@@ -46,6 +46,7 @@
                                     </columnConstraints>
                                     <rowConstraints>
                                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                                     </rowConstraints>
                                     <children>
 
@@ -75,6 +76,29 @@
                                             <children>
                                                 <Label styleClass="title" text="说明: " />
                                                 <Label fx:id="remarkField" />
+                                            </children>
+                                        </HBox>
+
+
+                                        <HBox alignment="CENTER_LEFT" GridPane.RowIndex = "1">
+                                            <children>
+                                                <Label styleClass="title" text="水印图片: "  />
+                                                <Label fx:id="logo" />
+                                                <Label fx:id="logo_msg" textFill="RED" />
+                                            </children>
+                                        </HBox>
+
+                                        <HBox alignment="CENTER_LEFT" GridPane.columnIndex="1"  GridPane.RowIndex = "1">
+                                            <children>
+                                                <Label styleClass="title" text="中文品牌替换" />
+                                                <Label fx:id="brand_zh" />
+                                            </children>
+                                        </HBox>
+
+                                        <HBox alignment="CENTER_LEFT" GridPane.columnIndex="2"  GridPane.RowIndex = "1">
+                                            <children>
+                                                <Label styleClass="title" text="英文品牌替换 " />
+                                                <Label fx:id="brand_en" />
                                             </children>
                                         </HBox>
 

@@ -16,24 +16,39 @@
             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+            <RowConstraints />
         </rowConstraints>
          <children>
             <Label text="任务ID" />
             <Label text="任务名称" GridPane.rowIndex="1" />
-             <Label text="起订量(元)" GridPane.rowIndex="2" />
+            <Label text="起订量(元)" GridPane.rowIndex="2" />
             <Label text="默认图片" GridPane.rowIndex="3" />
-             <Label text="说明" GridPane.rowIndex="4" />
+            <Label text="水印图片" GridPane.rowIndex="4" />
+            <Label text="品牌替换" GridPane.rowIndex="5" />
+            <Label text="说明" GridPane.rowIndex="6" />
 
             <TextField fx:id="id" editable="false" GridPane.columnIndex="1" />
             <TextField fx:id="title" GridPane.columnIndex="1" GridPane.rowIndex="1" />
             <TextField fx:id="moq" GridPane.columnIndex="1" GridPane.rowIndex="2" />
             <HBox GridPane.columnIndex="1" GridPane.rowIndex="3">
                <children>
-                   <TextField fx:id="pic" />
-                   <Button mnemonicParsing="false" onAction="#handleFileSelectAction"  text="选择" />
+                   <TextField fx:id="pic" promptText="默认图片" />
+                   <Button mnemonicParsing="false" onAction="#handleFileSelectAction" text="选择" />
                </children>
             </HBox>
-             <TextField fx:id="reamark" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+             <HBox GridPane.columnIndex="1" GridPane.rowIndex="4">
+                 <children>
+                     <TextField fx:id="logo" promptText="水印图片" />
+                     <Button mnemonicParsing="false" onAction="#handleLogoSelectAction" text="选择" />
+                 </children>
+             </HBox>
+             <HBox GridPane.columnIndex="1" GridPane.rowIndex="5">
+                 <children>
+                     <TextField fx:id="brand_zh" promptText="品牌中文名" />
+                     <TextField fx:id="brand_en" promptText="品牌英文名" />
+                 </children>
+             </HBox>
+             <TextField fx:id="reamark" GridPane.columnIndex="1" GridPane.rowIndex="6" />
          </children>
       </GridPane>
       <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0">

@@ -5,9 +5,7 @@ import com.gavel.application.IDCell;
 import com.gavel.application.MainApp;
 import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.ShelvesItem;
-import com.gavel.entity.ShelvesTask;
-import com.gavel.entity.Shopinfo;
+import com.gavel.entity.*;
 import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.ShelvesItemParser;
 import com.gavel.shelves.ShelvesService;
@@ -64,6 +62,18 @@ public class FXMLShelvesController {
 
     @FXML
     private Label msg;
+
+    @FXML
+    private Label logo;
+
+    @FXML
+    private Label logo_msg;
+
+    @FXML
+    private Label brand_zh;
+
+    @FXML
+    private Label brand_en;
 
     // 产品SKU列表
     @FXML
@@ -221,6 +231,19 @@ public class FXMLShelvesController {
                     msg.setText("文件不存在,请检查");
                 }
             }
+
+
+            logo.setText(newValue.getLogo());
+            logo_msg.setText("");
+            if (StringUtils.isNotBlank(newValue.getLogo())) {
+                File picFile = new File(newValue.getLogo());
+                if (!picFile.exists()) {
+                    logo_msg.setText("文件不存在,请检查");
+                }
+            }
+
+            brand_zh.setText(newValue.getBrand_zh());
+            brand_en.setText(newValue.getBrand_en());
 
             try {
                 List<ShelvesItem> temp = SQLExecutor.executeQueryBeanList("select * from SHELVESITEM where TASKID = ? ", ShelvesItem.class, newValue.getId());
@@ -479,6 +502,16 @@ public class FXMLShelvesController {
                         item.setItemCode(item.getItemCode().trim() + editTask.getCodeSuffix().trim() );
                     }
 
+                    if ( editTask.getCategory()!=null ) {
+                        item.setMappingcategorycode(editTask.getCategory().getCategoryCode());
+                        item.setMappingcategoryname(editTask.getCategory().getCategoryName());
+                    }
+
+                    if ( editTask.getBrand()!=null ) {
+                        item.setMappingbrandcode(editTask.getBrand().getCode());
+                        item.setMappingbrandname(editTask.getBrand().getName());
+                    }
+
                     try {
                         SQLExecutor.update(item);
 
@@ -706,6 +739,7 @@ public class FXMLShelvesController {
             try {
                 SQLExecutor.update(tempShelvesTask);
                 taskTable.refresh();
+                showShelvesDetails(taskTable.getSelectionModel().getSelectedItem());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -828,6 +862,10 @@ public class FXMLShelvesController {
 
         private String codeSuffix;
 
+        private Category category;
+
+        private Brand brand;
+
         public String getPrefix() {
             return prefix;
         }
@@ -874,6 +912,22 @@ public class FXMLShelvesController {
 
         public void setCodeSuffix(String codeSuffix) {
             this.codeSuffix = codeSuffix;
+        }
+
+        public Category getCategory() {
+            return category;
+        }
+
+        public void setCategory(Category category) {
+            this.category = category;
+        }
+
+        public Brand getBrand() {
+            return brand;
+        }
+
+        public void setBrand(Brand brand) {
+            this.brand = brand;
         }
     }
 }

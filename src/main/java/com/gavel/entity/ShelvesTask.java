@@ -50,6 +50,17 @@ public class ShelvesTask {
     @FieldMeta(name = "PIC", title ="默认图片", length = 1024)
     private final StringProperty pic = new SimpleStringProperty();
 
+    @FieldMeta(name = "LOGO", title ="水印图片", length = 1024)
+    private final StringProperty logo = new SimpleStringProperty();
+
+    @FieldMeta(name = "BRAND_ZH", title ="中文品牌名", length = 1024)
+    private final StringProperty brand_zh = new SimpleStringProperty();
+
+    @FieldMeta(name = "BRAND_EN", title ="英文品牌名", length = 1024)
+    private final StringProperty brand_en = new SimpleStringProperty();
+
+
+
     public ShelvesTask() {
         setId(String.valueOf(System.currentTimeMillis()));
     }
@@ -165,5 +176,41 @@ public class ShelvesTask {
 
     public void setPic(String pic) {
         this.pic.set(pic);
+    }
+
+    public String getLogo() {
+        return logo.get();
+    }
+
+    public StringProperty logoProperty() {
+        return logo;
+    }
+
+    public void setLogo(String logo) {
+        this.logo.set(logo);
+    }
+
+    public String getBrand_zh() {
+        return brand_zh.get();
+    }
+
+    public StringProperty brand_zhProperty() {
+        return brand_zh;
+    }
+
+    public void setBrand_zh(String brand_zh) {
+        this.brand_zh.set(brand_zh);
+    }
+
+    public String getBrand_en() {
+        return brand_en.get();
+    }
+
+    public StringProperty brand_enProperty() {
+        return brand_en;
+    }
+
+    public void setBrand_en(String brand_en) {
+        this.brand_en.set(brand_en);
     }
 }
