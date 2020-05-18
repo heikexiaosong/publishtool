@@ -467,6 +467,66 @@ public class ShelvesItemParser {
         return picUrl;
     }
 
+
+    public static List<String> getProductImages(String skuCode){
+        List<String> images = new ArrayList<>();
+        try {
+            HtmlCache htmlCache = HtmlPageLoader.getInstance().loadGraingerPage(skuCode, true);
+            if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
+                throw new Exception("[Sku: " + skuCode +"]Html获取失败.");
+            }
+
+
+            Document doc = Jsoup.parse(htmlCache.getHtml());
+
+            Element err = doc.selectFirst("div.err-notice");
+            if ( err!=null ) {
+                throw new Exception("[URL: " + doc.location() + "]" + doc.title());
+            }
+
+            // 小图片
+            List<String> picUrls = new ArrayList<>();
+            Elements imgs = doc.select("div.xiaotu > div.xtu > dl > dd > img");
+            for (Element img : imgs) {
+                String  src = img.attr("src");
+                if (com.gavel.utils.StringUtils.isBlank(src) || "/Content/images/hp_np.png".equalsIgnoreCase(src) ) {
+                    continue;
+                }
+
+                if ( src.startsWith("//") ) {
+                    src = "https:" + src;
+                }
+
+                src = src.replace("product_images_new/350/", "product_images_new/800/");
+                picUrls.add(src);
+            }
+
+            System.out.println("产品图片: " + picUrls.size());
+            for (String picUrl : picUrls) {
+               System.out.println("\t" + picUrl);
+               try {
+                   ImageCache image = ImageLoader.loadOrginialIamge(picUrl);
+                   if ( image==null || com.gavel.utils.StringUtils.isBlank(image.getFilepath())) {
+                       continue;
+                   }
+
+                   String localFilePath = ImageLoader.PICS_COMPLETE_DIR + File.separator + image.getFilepath();
+                   if ( new File(localFilePath).exists() ) {
+                       System.out.println("[" +  localFilePath + "]文件存在.");
+                       continue;
+                   }
+                   images.add(ImageLoader.PICS_DIR + File.separator + image.getFilepath());
+               } catch (Exception e) {
+
+               }
+            }
+        } catch (Exception e) {
+
+        }
+
+        return images;
+    }
+
     public static List<String> getImages(String skuCode, String defaultImage){
         List<String> images = new ArrayList<>();
         try {

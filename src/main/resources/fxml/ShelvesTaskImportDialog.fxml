@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane prefHeight="768.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLShelvesTaskImportDialogController">
+<children>
+
+    <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
+        <buttons>
+            <Button mnemonicParsing="false" onAction="#handleCancel" text="取 消" />
+            <Button mnemonicParsing="false" onAction="#handleOk" text="确 定" />
+        </buttons>
+    </ButtonBar>
+      <SplitPane dividerPositions="0.25" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+         <items>
+            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
+                <children>
+                    <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <content>
+                            <TableView fx:id="shelvesTaskTable" prefHeight="217.0" prefWidth="389.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                <columns>
+                                    <TableColumn fx:id="shopidCol" prefWidth="90.0" text="店铺ID" />
+                                    <TableColumn fx:id="titleCol" prefWidth="200.0" text="任务名称" />
+                                    <TableColumn fx:id="moqCol" prefWidth="120.0" text="起订量" />
+                                </columns>
+                            </TableView>
+                        </content>
+                    </ScrollPane>
+                </children>
+            </AnchorPane>
+            <AnchorPane prefHeight="666.0" prefWidth="798.0">
+               <children>
+                  <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0">
+                     <content>
+                         <TableView fx:id="itemList" editable="true" prefHeight="217.0" prefWidth="389.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                             <columns>
+                                 <TableColumn fx:id="select" prefWidth="60.0" text="选择" visible="true"> </TableColumn>
+                                 <TableColumn fx:id="noCol" prefWidth="60.0" text="序号" />
+                                 <TableColumn fx:id="codeCol" prefWidth="120.0" text="供应商编码" />
+                                 <TableColumn fx:id="cmTitleCol" prefWidth="400.0" text="商品标题" />
+                                 <TableColumn fx:id="graingercategorynameCol" prefWidth="100.0" text="固安捷类目" />
+                                 <TableColumn fx:id="graingerbrandnameCol" prefWidth="100.0" text="固安捷品牌" />
+                             </columns>
+                         </TableView>
+                     </content>
+                  </ScrollPane>
+                  <AnchorPane prefHeight="50.0" prefWidth="940.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                         <HBox prefHeight="28.0" prefWidth="200.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="260.0" AnchorPane.topAnchor="0.0">
+                             <children>
+                                 <CheckBox fx:id="allPage" mnemonicParsing="false" onAction="#handleALlPageAction" prefHeight="63.0" prefWidth="69.0" text="选择所有" />
+                                 <Label alignment="CENTER_RIGHT" prefHeight="67.0" prefWidth="57.0" text="已选择： " />
+                                 <Label fx:id="selectedNum" prefHeight="50.0" prefWidth="61.0" text="0"/>
+                             </children>
+                           <padding>
+                              <Insets left="17.0" />
+                           </padding>
+                         </HBox>
+                     </children>
+                  </AnchorPane>
+               </children>
+            </AnchorPane>
+         </items>
+      </SplitPane>
+</children>
+</AnchorPane>

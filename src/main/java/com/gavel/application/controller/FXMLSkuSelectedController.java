@@ -7,11 +7,13 @@ import com.gavel.entity.GraingerCategory;
 import com.gavel.entity.Item;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.shelves.ShelvesItemParser;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
@@ -32,8 +34,9 @@ public class FXMLSkuSelectedController {
 
     @FXML
     private TableView<Item> skuList;
+
     @FXML
-    private TableColumn<Item, String> picCol;
+    private TableColumn<Item, Boolean> select;
     @FXML
     private TableColumn<Item, String> codeCol;
     @FXML
@@ -58,7 +61,17 @@ public class FXMLSkuSelectedController {
     @FXML
     private void initialize() {
 
-        picCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getUrl()));
+        select.setCellFactory(column -> new CheckBoxTableCell<>());
+        select.setCellValueFactory(cellData -> {
+            Item cellValue = cellData.getValue();
+            BooleanProperty property = cellValue.selectedProperty();
+
+            // Add listener to handler change
+            property.addListener((observable, oldValue, newValue) -> cellValue.selectedProperty().setValue(newValue));
+
+            return property;
+        });
+
         codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCode()));
         nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
         brandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandname()));
@@ -167,6 +180,7 @@ public class FXMLSkuSelectedController {
     @FXML
     private void handleOk() {
         for (Item item : _items) {
+
             try {
                 ShelvesItem shelvesItem = ShelvesItemParser.parse(item);
                 items.add(shelvesItem);

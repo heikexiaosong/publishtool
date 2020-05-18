@@ -22,6 +22,10 @@ public class ShelvesItem {
         return selected;
     }
 
+    public void setSelected(boolean selected) {
+        this.selected.set(selected);
+    }
+
     @FieldMeta(name = "ID", title = "ID", length = 32, primary = true)
     private final StringProperty id = new SimpleStringProperty();
 
@@ -81,11 +85,6 @@ public class ShelvesItem {
 
     @FieldMeta(name = "UPDATETIME", title = "更新时间")
     private Date updatetime;
-
-
-    public void setSelected(boolean selected) {
-        this.selected.set(selected);
-    }
 
     public String getId() {
         return id.get();

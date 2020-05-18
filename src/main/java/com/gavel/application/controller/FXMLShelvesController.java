@@ -3,18 +3,21 @@ package com.gavel.application.controller;
 import com.gavel.application.DataPagination;
 import com.gavel.application.IDCell;
 import com.gavel.application.MainApp;
+import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.entity.ShelvesTask;
+import com.gavel.entity.Shopinfo;
 import com.gavel.shelves.CatetoryBrand;
+import com.gavel.shelves.ShelvesItemParser;
 import com.gavel.shelves.ShelvesService;
 import com.gavel.shelves.suning.SuningCatetoryBrandSelector;
 import com.gavel.shelves.suning.SuningShelvesService;
 import com.gavel.utils.MD5Utils;
 import com.gavel.utils.StringUtils;
+import com.google.common.io.Files;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -106,7 +109,6 @@ public class FXMLShelvesController {
     @FXML
     private void initialize() {
 
-
         // 状态选择
         status.setItems(FXCollections.observableArrayList("上架状态", "上架失败", "上架成功"));
         status.getSelectionModel().select(0);
@@ -118,7 +120,9 @@ public class FXMLShelvesController {
             BooleanProperty property = cellValue.selectedProperty();
 
             // Add listener to handler change
-            property.addListener((observable, oldValue, newValue) -> cellValue.selectedProperty().setValue(newValue));
+            //property.addListener((observable, oldValue, newValue) ->  cellValue.selectedProperty().setValue(newValue));
+
+            property.addListener((observable, oldValue, newValue) -> updateSelectStatus(cellValue, newValue));
 
             return property;
         });
@@ -134,12 +138,9 @@ public class FXMLShelvesController {
         statusCol.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
         msgCol.setCellValueFactory(cellData -> cellData.getValue().messageProperty());
 
-
-        title.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
+        title.setCellValueFactory(cellData -> cellData.getValue().titleProperty());
         skunum.setCellValueFactory(new PropertyValueFactory<>("skunum"));
         moq.setCellValueFactory(new PropertyValueFactory<>("moq"));
-
-
 
         taskTable.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> showShelvesDetails(newValue));
@@ -147,6 +148,19 @@ public class FXMLShelvesController {
         taskTable.getItems().addAll(loadData());
 
         showShelvesDetails(null);
+    }
+
+    private void updateSelectStatus(ShelvesItem cellValue, Boolean newValue) {
+        cellValue.selectedProperty().setValue(newValue);
+
+        int count = 0;
+
+        for (ShelvesItem item : items) {
+            if ( item.isSelected() ) {
+                count++;
+            }
+        }
+        selectedNum.setText(String.valueOf(count));
     }
 
     private void showShelvesStatusDetails(String newValue) {
@@ -188,6 +202,8 @@ public class FXMLShelvesController {
         items.clear();
         itemList.setItems(FXCollections.observableList(items));
         if ( newValue!=null ) {
+
+            status.getSelectionModel().select(0);
             allPage.setSelected(false);
             curPage.setSelected(false);
             selectedNum.setText("0");
@@ -227,8 +243,11 @@ public class FXMLShelvesController {
 
     private List<ShelvesTask> loadData(){
 
+
+        Shopinfo shopinfo = APPConfig.getInstance().getShopinfo();
+
         try {
-            List<ShelvesTask> tasks = SQLExecutor.executeQueryBeanList("select * from SHELVESTASK", ShelvesTask.class);
+            List<ShelvesTask> tasks = SQLExecutor.executeQueryBeanList("select * from SHELVESTASK where SHOPID = ? ", ShelvesTask.class, (shopinfo==null ? "" : shopinfo.getCode()));
             return tasks;
         } catch (Exception e) {
             e.printStackTrace();
@@ -248,6 +267,7 @@ public class FXMLShelvesController {
         boolean okClicked = showShelvesTaskEditDialog(tempShelvesTask);
         if (okClicked) {
             //mainApp.getPersonData().add(tempPerson);
+            tempShelvesTask.setShopid(APPConfig.getInstance().getShopinfo().getCode());
             try {
                 SQLExecutor.insert(tempShelvesTask);
                 taskTable.getItems().add(tempShelvesTask);
@@ -434,6 +454,9 @@ public class FXMLShelvesController {
             ObservableList<ShelvesItem> items = itemList.getItems();
             if ( items!=null && items.size() > 0 ) {
                 for (ShelvesItem item : items) {
+                    if ( !item.isSelected() ) {
+                        continue;
+                    }
                     if ( editTask.getPrefix()!=null && editTask.getPrefix().trim().length()>0 ) {
                         item.setCmTitle( editTask.getPrefix().trim() + item.getCmTitle().trim() );
                     }
@@ -686,6 +709,108 @@ public class FXMLShelvesController {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public void handleImagesExportAction(ActionEvent actionEvent) {
+        List<String> pendding = new ArrayList<>();
+        for (ShelvesItem item : items) {
+
+           List<String> images = ShelvesItemParser.getProductImages(item.getSkuCode());
+           if ( images==null || images.size() > 0 ) {
+               pendding.addAll(images);
+           }
+        }
+
+        String taskId =  idField.getText();
+
+        for (String s : pendding) {
+            System.out.println( " ==> " + s);
+
+            try {
+                File dest = new File(s.replace("D:\\images", "D:\\images\\" + taskId));
+                if ( !dest.getParentFile().exists() ) {
+                    dest.getParentFile().mkdirs();
+                }
+                Files.copy(new File(s), dest);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.initOwner(stage());
+        alert.setTitle("图片导出完成");
+        alert.setHeaderText("图片导出目录: " + "D:\\images\\" + taskId);
+        alert.showAndWait();
+    }
+
+
+    /**
+     * 导入其他店铺的上架任务
+     * @param actionEvent
+     */
+    public void handleImportShelvesTask(ActionEvent actionEvent) {
+        List<ShelvesItem> items = new ArrayList<>();
+        boolean okClicked = showShelvesTaskImportDialog(items);
+        System.out.println("okClicked: " + okClicked);
+        if (okClicked) {
+            //mainApp.getPersonData().add(tempPerson);
+            //tempShelvesTask.setShopid( APPConfig.getInstance().getShopinfo().getCode());
+
+            ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
+
+            for (ShelvesItem item : items) {
+
+                item.setSelected(false);
+                item.setTaskid(taskSelected.getId());
+                item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getSkuCode()));
+
+
+                item.setMappingcategorycode(null);
+                item.setMappingcategoryname(null);
+                item.setMappingbrandname(null);
+                item.setMappingbrandcode(null);
+                item.setStatus("");
+                try {
+                    SQLExecutor.insert(item);
+                    //taskTable.getItems().add(tempShelvesTask);
+                    itemList.getItems().add(item);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+    }
+
+    private boolean showShelvesTaskImportDialog(List<ShelvesItem> shelvesTasks) {
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/ShelvesTaskImportDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("上架任务导入");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(stage());
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            FXMLShelvesTaskImportDialogController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            controller.bind(shelvesTasks);
+
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

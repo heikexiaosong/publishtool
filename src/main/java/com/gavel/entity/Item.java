@@ -2,10 +2,25 @@ package com.gavel.entity;
 
 import com.gavel.annotation.FieldMeta;
 import com.gavel.annotation.TableMeta;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 
 @TableMeta(name = "ITEM", title = "固安捷SKU")
 public class Item {
 
+    private final BooleanProperty selected = new SimpleBooleanProperty(false);
+
+    public boolean isSelected() {
+        return selected.get();
+    }
+
+    public BooleanProperty selectedProperty() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected.set(selected);
+    }
 
     @FieldMeta(name = "CODE", title = "SKU编码", length = 32, primary = true)
     private String code;

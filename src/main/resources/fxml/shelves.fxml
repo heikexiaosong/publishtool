@@ -82,6 +82,7 @@
                                 </GridPane>
                         <HBox alignment="CENTER_LEFT" prefHeight="40.0" prefWidth="200.0" spacing="20.0" AnchorPane.leftAnchor="13.0" AnchorPane.rightAnchor="13.0" AnchorPane.topAnchor="0.0">
                            <children>
+                                        <Button mnemonicParsing="false" onAction="#handleImportShelvesTask" text="导入其他上架任务的SKU" />
                                         <Button mnemonicParsing="false" onAction="#handleImportSkuPerson" text="导入采集任务中的SKU" />
                                         <Button mnemonicParsing="false" onAction="#handleAddSkuPerson" text="添加SKU" />
                            </children>
@@ -98,9 +99,10 @@
                                                 <Label fx:id="selectedNum" prefHeight="28.0" prefWidth="45.0" />
                                             </children>
                                         </HBox>
-                                          <ButtonBar prefHeight="30.0" prefWidth="450.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                          <ButtonBar prefHeight="30.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                               <buttons>
                                                   <ComboBox fx:id="status" prefWidth="100.0" />
+                                                  <Button mnemonicParsing="false" onAction="#handleImagesExportAction" text="导出图片" />
                                                   <Button mnemonicParsing="false" onAction="#handleEditSkuPerson" text="批量处理" />
                                                   <Button mnemonicParsing="false" onAction="#handleDetailEditAction" text="编 辑" />
                                                   <Button mnemonicParsing="false" onAction="#handleShelvesAction" text="上 架" />

@@ -51,7 +51,14 @@ public class ImageLoader {
                 imageFile.getParentFile().mkdirs();
             }
 
-            HttpUtils.download(url, imageFile.getAbsolutePath());
+
+            try {
+                HttpUtils.download(url, imageFile.getAbsolutePath());
+                cache.setFilepath(image);
+            } catch (Exception e) {
+                System.out.println("[" + url + "]" + e.getMessage());
+            }
+
 
             if ( cache == null ){
                 cache = new ImageCache();
