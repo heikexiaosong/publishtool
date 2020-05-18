@@ -25,7 +25,7 @@ public class Main {
 
         //loadSearchItems("1589548611873");
 
-        loadSkus("1589548611873");
+        loadSkus("1589793587686");
 
 
 
