@@ -13,6 +13,10 @@ public class Thumbnailator {
     public static void main(String[] args) throws Exception {
         // 原图片地址
         String imageUrl = "D:\\pics\\src.jpg";
+
+
+        System.out.println(new File(imageUrl).getName());
+
         // 水印图片 相对于resource目录
         String watermark = "D:\\pics\\jingsu_1.png";
         // 输出到文件

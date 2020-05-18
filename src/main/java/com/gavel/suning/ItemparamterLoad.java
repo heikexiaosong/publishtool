@@ -24,7 +24,7 @@ public class ItemparamterLoad {
         System.out.println(shopinfo.getName());
 
 
-        List<Category> categories = SQLExecutor.executeQueryBeanList("select * from  CATEGORY where SUPPLIERCODE = ? and  CATEGORYCODE = ? ", Category.class, shopinfo.getCode(), "R9008752");
+        List<Category> categories = SQLExecutor.executeQueryBeanList("select * from  CATEGORY where SUPPLIERCODE = ? and  CATEGORYCODE = ? ", Category.class, shopinfo.getCode(), "R9009826");
         System.out.println("Cate: " + categories.size());
 
         for (Category category : categories) {

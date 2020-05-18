@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class FXMLShelvesController {
 
@@ -425,7 +426,23 @@ public class FXMLShelvesController {
             e.printStackTrace();
         }
 
-        ShelvesService shelvesService = new SuningShelvesService(shelvesTask.getMoq(), shelvesTask.getPic());
+        if (StringUtils.isNotBlank(shelvesTask.getLogo())) {
+            File logoFile = new File(shelvesTask.getLogo());
+            if (!logoFile.exists()) {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "", new ButtonType("取消", ButtonBar.ButtonData.NO), new ButtonType("确定", ButtonBar.ButtonData.YES));
+                alert.initOwner(stage());
+                alert.setTitle("信息确认");
+                alert.setHeaderText("设置了水印图片, 但是图片文件不存在, 是否继续上架?");
+
+                Optional<ButtonType> _buttonType = alert.showAndWait();
+
+                if(_buttonType.get().getButtonData().equals(ButtonBar.ButtonData.NO)){
+                   return;
+                }
+            }
+        }
+
+        ShelvesService shelvesService = new SuningShelvesService(shelvesTask.getMoq(), shelvesTask.getPic(), shelvesTask.getLogo());
         new Thread(new Runnable() {
             @Override
             public void run() {

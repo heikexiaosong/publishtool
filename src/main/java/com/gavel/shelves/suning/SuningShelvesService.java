@@ -18,6 +18,8 @@ import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,10 +37,27 @@ public class SuningShelvesService implements ShelvesService {
 
     private final String defaultImage;
 
+    private final String logo;
+
+    private BufferedImage logoImage;
 
     public SuningShelvesService(int moq, String _defaultImage) {
+        this(moq, _defaultImage, null);
+    }
+
+    public SuningShelvesService(int moq, String _defaultImage, String _logo) {
         this.defaultImage = _defaultImage;
         this.moq = moq;
+        this.logo = _logo;
+
+        if ( StringUtils.isNotBlank(logo) ) {
+            try {
+                logoImage = ImageIO.read(new File(logo));
+            } catch (Exception e) {
+                System.out.println("logo 图片加载失败: " + e.getMessage());
+                logoImage = null;
+            }
+        }
     }
 
     @Override
@@ -122,7 +141,7 @@ public class SuningShelvesService implements ShelvesService {
         ApplyAddRequest.SupplierImgUrl supplierImgUrl = new ApplyAddRequest.SupplierImgUrl();
         supplierImgUrls.add(supplierImgUrl);
 
-        List<String> images = ShelvesItemParser.getImages(item.getSkuCode(), defaultImage);
+        List<String> images = ShelvesItemParser.getImages(item.getSkuCode(), defaultImage, logoImage);
         for (String image : images) {
             System.out.println("Image: " + image);
         }

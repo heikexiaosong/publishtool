@@ -16,6 +16,8 @@ import com.suning.api.SuningResponse;
 import com.suning.api.entity.item.NPicAddRequest;
 import com.suning.api.entity.item.NPicAddResponse;
 import com.suning.api.exception.SuningApiException;
+import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.geometry.Positions;
 import org.apache.commons.codec.binary.Base64;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,7 +31,10 @@ import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class ShelvesItemParser {
@@ -343,7 +348,7 @@ public class ShelvesItemParser {
      *
      * @throws Exception
      */
-    public static String uploadImage(String url, int size) throws Exception {
+    public static String uploadImage(String url, int size, BufferedImage logoImage) throws Exception {
 
 
         ImageCache image = ImageLoader.loadIamge(url);
@@ -351,23 +356,62 @@ public class ShelvesItemParser {
             return null;
         }
 
-        if ( image.getPicurl()!=null && image.getPicurl().trim().length() > 0 ) {
+        if (  com.gavel.utils.StringUtils.isNotBlank(image.getPicurl()) && logoImage==null ) {
             return image.getPicurl();
         }
 
+        String localFilePath = ImageLoader.PICS_DIR + File.separator + image.getFilepath();
+
+        Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
+        if ( src.width()!=800 || src.height()!=800 ) {
+            Imgproc.resize(src, src, new Size(800, 800));
+        }
+        Imgproc.circle(src, new Point(src.width()-size, src.height()-size),  2, new Scalar(238, 238, 238));
+
+        localFilePath = localFilePath.replace(".jpg", ".png");
+        Imgcodecs.imwrite(localFilePath, src);
+
+
         String picUrl = null;
-        {
-            String localFilePath = ImageLoader.PICS_DIR + File.separator + image.getFilepath();
+        if ( logoImage!=null ) {
 
+            File picFile = new File(localFilePath);
 
-            Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
-            if ( src.width()!=800 || src.height()!=800 ) {
-                Imgproc.resize(src, src, new Size(800, 800));
+            String outputFile =  picFile.getParent() + File.separator + "mask_" + picFile.getName();
+
+            try {
+                // ImageIO读取图片
+                BufferedImage pic = ImageIO.read( new File(localFilePath));
+                Thumbnails.of(pic)
+                        // 设置图片大小
+                        .size(pic.getWidth(), pic.getHeight())
+                        // 加水印 参数：1.水印位置 2.水印图片 3.不透明度0.0-1.0
+                        .watermark(Positions.TOP_LEFT, logoImage, 0.9f)
+                        // 输出到文件
+                        .toFile(outputFile);
+                localFilePath = outputFile;
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            Imgproc.circle(src, new Point(src.width()-size, src.height()-size),  2, new Scalar(238, 238, 238));
 
-            localFilePath = localFilePath.replace(".jpg", ".png");
-            Imgcodecs.imwrite(localFilePath, src);
+
+
+            NPicAddRequest request = new NPicAddRequest();
+            request.setPicFileData(localFilePath);
+            try {
+                NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
+                SuningResponse.SnError error = response.getSnerror();
+                if ( error!=null ) {
+                    System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                } else {
+                    picUrl = response.getSnbody().getAddNPic().getPicUrl();
+                }
+            } catch (SuningApiException e) {
+                e.printStackTrace();
+            }
+
+
+        } else {
 
             NPicAddRequest request = new NPicAddRequest();
             request.setPicFileData(localFilePath);
@@ -384,8 +428,8 @@ public class ShelvesItemParser {
             } catch (SuningApiException e) {
                 e.printStackTrace();
             }
-
         }
+
         return picUrl;
     }
 
@@ -394,7 +438,7 @@ public class ShelvesItemParser {
      *
      * @throws Exception
      */
-    public static String uploadImageWithoutDownload(String url, int size) throws Exception {
+    public static String uploadImageWithoutDownload(String url, int size, BufferedImage logoImage) throws Exception {
 
 
         String id = MD5Utils.md5Hex(url.trim());
@@ -418,7 +462,7 @@ public class ShelvesItemParser {
             }
         }
 
-        if ( image.getPicurl()!=null && image.getPicurl().trim().length() > 0 ) {
+        if (  com.gavel.utils.StringUtils.isNotBlank(image.getPicurl()) && logoImage==null ) {
             return image.getPicurl();
         }
 
@@ -445,8 +489,43 @@ public class ShelvesItemParser {
 
         localFilePath = localFilePath.replace(".jpg", ".png");
         Imgcodecs.imwrite(localFilePath, src);
-        {
 
+
+        if ( logoImage!=null ) {
+
+            File picFile = new File(localFilePath);
+
+            String outputFile =  picFile.getParent() + File.separator + "mask_" + picFile.getName();
+
+            try {
+                // ImageIO读取图片
+                BufferedImage pic = ImageIO.read( new File(localFilePath));
+                Thumbnails.of(pic)
+                        // 设置图片大小
+                        .size(pic.getWidth(), pic.getHeight())
+                        // 加水印 参数：1.水印位置 2.水印图片 3.不透明度0.0-1.0
+                        .watermark(Positions.TOP_LEFT, logoImage, 0.9f)
+                        // 输出到文件
+                        .toFile(outputFile);
+                localFilePath = outputFile;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            NPicAddRequest request = new NPicAddRequest();
+            request.setPicFileData(localFilePath);
+            try {
+                NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
+                SuningResponse.SnError error = response.getSnerror();
+                if ( error!=null ) {
+                    System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                } else {
+                    picUrl = response.getSnbody().getAddNPic().getPicUrl();
+                }
+            } catch (SuningApiException e) {
+                e.printStackTrace();
+            }
+        } else {
             NPicAddRequest request = new NPicAddRequest();
             request.setPicFileData(localFilePath);
             try {
@@ -462,8 +541,8 @@ public class ShelvesItemParser {
             } catch (SuningApiException e) {
                 e.printStackTrace();
             }
-
         }
+
         return picUrl;
     }
 
@@ -527,7 +606,7 @@ public class ShelvesItemParser {
         return images;
     }
 
-    public static List<String> getImages(String skuCode, String defaultImage){
+    public static List<String> getImages(String skuCode, String defaultImage, BufferedImage logoImage){
         List<String> images = new ArrayList<>();
         try {
             HtmlCache htmlCache = HtmlPageLoader.getInstance().loadGraingerPage(skuCode, true);
@@ -573,11 +652,11 @@ public class ShelvesItemParser {
             }
 
             for (String picUrl : picUrls) {
-                String picSuningUrl = uploadImageWithoutDownload(picUrl, images.size());
+                String picSuningUrl = uploadImageWithoutDownload(picUrl, images.size(), logoImage);
                 if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
                     images.add(picSuningUrl);
                 } else {
-                    picSuningUrl = uploadImage(picUrl, images.size());
+                    picSuningUrl = uploadImage(picUrl, images.size(), logoImage);
                     if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
                         images.add(picSuningUrl);
                     }
@@ -607,14 +686,36 @@ public class ShelvesItemParser {
 
                 System.out.println(localFilePath);
                 Mat src = Imgcodecs.imread(imageFile.getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED);
-
+                if ( src.width()!=800 || src.height()!=800 ) {
+                    Imgproc.resize(src, src, new Size(800, 800));
+                }
                 Imgproc.circle(src, new Point(src.width()-images.size(), src.height()-images.size()),  2, new Scalar(238, 238, 238));
                 Imgcodecs.imwrite(imageFile.getAbsolutePath(), src);
+
+
+                String picFile = imageFile.getAbsolutePath();
+                if ( logoImage!=null ) {
+                    String outputFile =  imageFile.getParent() + File.separator + "mask_" + imageFile.getName();
+                    try {
+                        // ImageIO读取图片
+                        BufferedImage pic = ImageIO.read( new File(localFilePath));
+                        Thumbnails.of(pic)
+                                // 设置图片大小
+                                .size(pic.getWidth(), pic.getHeight())
+                                // 加水印 参数：1.水印位置 2.水印图片 3.不透明度0.0-1.0
+                                .watermark(Positions.TOP_LEFT, logoImage, 0.9f)
+                                // 输出到文件
+                                .toFile(outputFile);
+                        picFile = outputFile;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
 
                 String picUrl = null;
                 {
                     NPicAddRequest request = new NPicAddRequest();
-                    request.setPicFileData(imageFile.getAbsolutePath());
+                    request.setPicFileData(picFile);
                     try {
                         NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
                         SuningResponse.SnError error = response.getSnerror();
@@ -913,11 +1014,11 @@ public class ShelvesItemParser {
         Map<String, String> imageMap = new HashMap<>();
         for (String picUrl : picUrls) {
             System.out.println("\t" + picUrl);
-            String picSuningUrl = uploadImageWithoutDownload(picUrl, 0);
+            String picSuningUrl = uploadImageWithoutDownload(picUrl, 0, null);
             if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
                 imageMap.put(picUrl, picSuningUrl);
             } else {
-                picSuningUrl = uploadImage(picUrl, 0);
+                picSuningUrl = uploadImage(picUrl, 0, null);
                 if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
                     imageMap.put(picUrl, picSuningUrl);
                 }
