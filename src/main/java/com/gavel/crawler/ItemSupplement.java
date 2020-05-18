@@ -230,6 +230,7 @@ public class ItemSupplement {
 
         }
 
+        CrawlerExecutorService.getInstance().addTask(task);
     }
 
     private static void task() throws Exception {
