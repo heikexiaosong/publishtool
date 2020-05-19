@@ -36,15 +36,15 @@ public class ProductPageLoader {
         }
 
         if ( "g".equalsIgnoreCase(searchItem.getType()) ) {
-
             Document doc = null;
-
             HtmlCache cache = null;
-
-            cache = SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? ", HtmlCache.class, searchItem.getUrl());
+            cache = HtmlPageLoader.getInstance().loadHtmlPage(searchItem.getUrl(), true, true);
             if ( cache != null && cache.getHtml()!=null ) {
                 doc = Jsoup.parse(cache.getHtml());
                 if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
+                    SQLExecutor.delete(cache);
+                    cache = null;
+                } else if ( doc.title().equalsIgnoreCase("Error") ) {
                     SQLExecutor.delete(cache);
                     cache = null;
                 } else {
@@ -64,7 +64,6 @@ public class ProductPageLoader {
                 cache = DriverHtmlLoader.getInstance().loadHtmlPage(searchItem.getUrl(), true);
             }
             if ( cache != null ) {
-
                 if ( cache.getUpdatetime()==null ) {
                     cache.setUpdatetime(Calendar.getInstance().getTime());
                     SQLExecutor.insert(cache);
@@ -72,6 +71,8 @@ public class ProductPageLoader {
 
                 doc = Jsoup.parse(cache.getHtml());
                 Elements skuList = doc.select("div.leftTable2 tr.trsku2");
+                System.out.println("\tSKU: " + skuList.size());
+                int i = 0;
                 for (Element sku : skuList) {
                     String code = sku.child(0).attr("title");
                     Item item1 = SQLExecutor.executeQueryBean("select * from ITEM where code = ?", Item.class, code);
@@ -193,10 +194,14 @@ public class ProductPageLoader {
     }
 
     public static void main(String[] args) throws Exception {
+
+
+        DriverHtmlLoader.getInstance().start();
+
         SearchItem searchItem = new SearchItem();
         searchItem.setType("g");
-        searchItem.setCode("316838");
-        searchItem.setUrl("https://www.grainger.cn/g-316838.html");
+        searchItem.setCode("368841");
+        searchItem.setUrl("https://www.grainger.cn/g-368841.html");
         List<Item>  skus = ProductPageLoader.getInstance().loadPage(searchItem);
         System.out.println("SKU: " + skus.size());
         for (Item item : skus) {

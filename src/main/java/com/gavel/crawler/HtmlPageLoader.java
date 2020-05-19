@@ -66,7 +66,6 @@ public class HtmlPageLoader {
                 try {
                     SQLExecutor.delete(cache);
                 } catch (Exception e) {
-
                     System.out.println("[delete]SQLExecutor: " + e.getMessage());
                 }
                 cache = null;

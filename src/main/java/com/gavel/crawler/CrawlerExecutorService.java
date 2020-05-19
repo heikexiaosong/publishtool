@@ -50,6 +50,7 @@ public class CrawlerExecutorService {
 
     public void start() {
 
+        DriverHtmlLoader.getInstance().start();
 
         executors.scheduleWithFixedDelay(new Runnable() {
             @Override
@@ -81,27 +82,42 @@ public class CrawlerExecutorService {
     private void loadSkus() throws Exception {
 
 
+        if ( taskQueue.isEmpty() ) {
+            try {
+                List<Task> tasks = SQLExecutor.executeQueryBeanList("select * from TASK order by UPDATETIME desc", Task.class);
+                if ( tasks!=null && tasks.size()>0 ) {
+                    for (Task task : tasks) {
+                        taskQueue.put(task);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+
         Task task = taskQueue.poll();
         if ( task==null ) {
             return;
         }
 
         System.out.println("爬取任务: " + task.getTitle());
-        DriverHtmlLoader.getInstance().start();
 
-        while ( true) {
 
-            List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? and SKUNUM <> ACTUAL order by PAGENUM, XH ", SearchItem.class, task.getId());
+        List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? and SKUNUM <> ACTUAL order by PAGENUM, XH ", SearchItem.class, task.getId());
 
-            System.out.println("Product: " + searchItemList.size());
+        System.out.println("SearchItem: " + searchItemList.size());
 
-            if ( searchItemList==null || searchItemList.size() ==0 ) {
-                break;
-            }
+        if ( searchItemList==null || searchItemList.size() ==0 ) {
+            return;
+        }
 
-            for (int i = 0; i < searchItemList.size(); i++) {
+        int total = searchItemList.size();
+        for (int i = 0; i < total; i++) {
+            boolean success = true;
+            try {
                 SearchItem searchItem = searchItemList.get(i);
-                System.out.println( (i+1) + ". " + searchItem.getUrl() + ": " + searchItem.getSkunum());
+                System.out.println( (i+1) + "/" + total + ". " + searchItem.getUrl() + ": " + searchItem.getSkunum());
 
                 searchItem.setActual(searchItem.getSkunum());
                 if ( searchItem.getType().equalsIgnoreCase("g") ){
@@ -113,6 +129,7 @@ public class CrawlerExecutorService {
                         searchItem.setStatus(SearchItem.Status.EXCEPTION);
                         searchItem.setRemarks("预期: " + searchItem.getSkunum() + "; 实际: " + (skus==null ? 0: skus.size()));
                         System.out.println("\t...... 预期: " + searchItem.getSkunum() + "; 实际: " + (skus==null ? 0: skus.size()) );
+                        success = false;
                     }
 
                 } else {
@@ -123,17 +140,23 @@ public class CrawlerExecutorService {
                         searchItem.setStatus(SearchItem.Status.EXCEPTION);
                         searchItem.setRemarks("");
                         System.out.println("\t...... load failed!");
+                        success = false;
                     }
                 }
 
                 SQLExecutor.update(searchItem);
+                if ( !success ) {
+                   try {
+                       Thread.sleep(3000);
+                   } catch (Exception e) {
+
+                   }
+                }
+            } catch (Exception e) {
+
             }
-
-            Thread.sleep(1000*60*10);
-
-
-            System.out.println("Finish...");
-            DriverHtmlLoader.getInstance().quit();
         }
+
+        System.out.println("爬取任务[" + task.getTitle() + "]完成一轮.");
     }
 }
