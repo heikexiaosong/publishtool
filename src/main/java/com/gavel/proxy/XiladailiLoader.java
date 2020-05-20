@@ -1,5 +1,6 @@
 package com.gavel.proxy;
 
+import com.gavel.HttpUtils;
 import com.gavel.entity.Proxy;
 import com.google.common.io.Files;
 
@@ -52,5 +53,13 @@ public class XiladailiLoader implements ProxyLoader {
 
 
         return proxies;
+    }
+
+    public static void main(String[] args) throws IOException {
+
+        String content = HttpUtils.get("http://www.xiladaili.com/api/?uuid=ff120836bcb54f378e877400e6b6d8f8&num=100&yunyinshang=电信&place=中国&protocol=0&sortby=0&repeat=1&format=2&position=1");
+
+        Files.write(content.getBytes(), new File("ips"));
+
     }
 }

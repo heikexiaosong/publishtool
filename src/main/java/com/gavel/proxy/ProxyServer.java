@@ -49,7 +49,7 @@ public class ProxyServer {
     public void start(){
 
         Request request = new Request.Builder()
-                .url("http://119.3.92.249:8099/")
+                .url("http://119.3.92.249:8099/pub/test.txt")
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.113 Safari/537.36")
                 .build();
 

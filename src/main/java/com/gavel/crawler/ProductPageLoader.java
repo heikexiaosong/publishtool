@@ -87,7 +87,7 @@ public class ProductPageLoader {
 
                     int tryTimes = 0;
                     while ( tryTimes < 5  ) {
-                        skuCache = HtmlPageLoader.getInstance().loadHtmlPage(url, true);
+                        skuCache = HtmlPageLoader.getInstance().loadSkuHtmlPage(url, true, tryTimes);
                         if ( skuCache != null && skuCache.getHtml()!=null ) {
                             doc = Jsoup.parse(skuCache.getHtml());
                             if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
@@ -104,12 +104,6 @@ public class ProductPageLoader {
                         tryTimes++;
 
                         System.out.println("\t[Sku: " + code.trim() + "][Html]第 " + tryTimes + "次重试。。。" );
-
-                        try {
-                            Thread.sleep(tryTimes*3000);
-                        } catch (Exception e) {
-
-                        }
                     }
 
                     try {

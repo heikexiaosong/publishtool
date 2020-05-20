@@ -25,7 +25,9 @@ public class Main {
 
         //loadSearchItems("1589548611873");
 
-        loadSkus("1589793587686");
+        DriverHtmlLoader.getInstance().start();
+
+        loadSkus("1589979520661");
 
 
 
@@ -51,7 +53,7 @@ public class Main {
 
         while ( true) {
 
-            List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? and ( STATUS <> ? or STATUS is null ) order by skunum ", SearchItem.class, task.getId(), SearchItem.Status.SUCCESS);
+            List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? and  SKUNUM <> ACTUAL order by skunum ", SearchItem.class, task.getId());
 
             System.out.println("Product: " + searchItemList.size());
 

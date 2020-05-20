@@ -1,8 +1,11 @@
 package com.gavel.crawler;
 
+import com.gavel.HttpUtils;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
+import com.gavel.proxy.HttpProxyClient;
 import com.gavel.utils.StringUtils;
+import okhttp3.OkHttpClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -81,6 +84,67 @@ public class HtmlPageLoader {
 
         if ( cache == null ) {
             cache = DriverHtmlLoader.getInstance().loadHtmlPage(url, loadMore);
+            if ( cache!=null  ) {
+                cache.setUpdatetime(Calendar.getInstance().getTime());
+                try {
+                    SQLExecutor.insert(cache);
+                } catch (Exception e) {
+                    System.out.println("[insert]SQLExecutor: " + e.getMessage());
+                }
+            }
+        }
+        return cache;
+    }
+
+
+    public HtmlCache loadSkuHtmlPage(String url, boolean useCache, int times) {
+
+        System.out.println("URL: " + url);
+        HtmlCache cache = null;
+        if ( useCache ) {
+            try {
+                cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, url);
+            } catch (Exception e) {
+                System.out.println("[executeQueryBean]SQLExecutor: " + e.getMessage());
+            }
+        }
+
+        if ( cache!=null && cache.getHtml()!=null )  {
+            Document doc = Jsoup.parse(cache.getHtml());
+            if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
+                try {
+                    SQLExecutor.delete(cache);
+                } catch (Exception e) {
+                    System.out.println("[delete]SQLExecutor: " + e.getMessage());
+                }
+                cache = null;
+            }  else if ( doc.title().equalsIgnoreCase("Error") ) {
+                try {
+                    SQLExecutor.delete(cache);
+                } catch (Exception e) {
+                    System.out.println("[delete]SQLExecutor: " + e.getMessage());
+                }
+                cache = null;
+            }
+        }
+
+        if ( cache == null ) {
+            OkHttpClient client = HttpProxyClient.getInstance().defaultClient();
+            if ( times > 0 ) {
+                client = HttpProxyClient.getInstance().getClient();
+            }
+
+            try {
+                String html =  HttpUtils.get(url, client);
+                cache = new HtmlCache();
+                cache.setUrl(url.trim());
+                cache.setHtml(html);
+                cache.setContentlen(html.length());
+                HttpProxyClient.getInstance().release(client);
+            } catch (Exception e) {
+                System.out.println("[HttpUtils]: " + e.getMessage());
+            }
+
             if ( cache!=null  ) {
                 cache.setUpdatetime(Calendar.getInstance().getTime());
                 try {
