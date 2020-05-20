@@ -125,13 +125,19 @@ public class ShelvesItemParser {
         }
 
         Document doc = Jsoup.parse(htmlCache.getHtml());
+        if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
+            SQLExecutor.delete(htmlCache);
+            throw new Exception("[Item: " + item.getUrl() +"]html获取失败.");
+        } else if ( doc.title().equalsIgnoreCase("Error") ) {
+            SQLExecutor.delete(htmlCache);
+            throw new Exception("[Item: " + item.getUrl() +"]html获取失败.");
+        }
+
 
         Element err = doc.selectFirst("div.err-notice");
         if ( err!=null ) {
             throw new Exception("[URL: " + item.getUrl() + "]" + doc.title());
         }
-
-
 
         ShelvesItem shelvesItem = new ShelvesItem();
 
@@ -213,87 +219,6 @@ public class ShelvesItemParser {
 
         String _title = title(title.text(), brandCn.text(), brandEle.text(), model, number);
         shelvesItem.setCmTitle(_title);
-
-
-        // 规格数据表格
-        Element tableDiv = doc.selectFirst("div.tableDiv");
-        Element leftTable2 = tableDiv.selectFirst("div.leftTable2");
-        for (Element trsku2 : leftTable2.select("tr.trsku2")) {
-
-            Element selected = trsku2.selectFirst("td[name='tdItemNo'] > span.dweight");
-            System.out.println("selected: " +selected);
-            if ( selected != null ) {
-                System.out.println("订货号： " +  trsku2.child(0).attr("title"));
-                System.out.println("制造商型号： " +  trsku2.child(1).attr("title"));
-                break;
-            }
-        }
-
-        Element rightTable1 = tableDiv.selectFirst("div#rightTable1");
-
-        List<String> columnName = new ArrayList<>();
-        Element pxTR = rightTable1.selectFirst("tr.pxTR");
-        for (Element element : pxTR.children()) {
-            String tname = element.attr("title");
-            if ( tname==null || tname.trim().length()==0 ) {
-                tname = element.text();
-            }
-            columnName.add(tname);
-            System.out.println("属性: " + tname);
-
-        }
-
-        Element rightTable2 = tableDiv.selectFirst("div#rightTable2");
-        Elements trskus = rightTable2.select("tr.trsku2");
-
-        Map<String, String> columnValues = new HashMap<>();
-
-        if ( trskus.size() > 1 ) {
-            for (Element trsku : trskus) {
-                System.out.println(trsku);
-                Element selected = trsku.selectFirst("td  span.dweight");
-                if ( selected!=null ) {
-
-                    Elements tds = trsku.children();
-                    for (int i = 0; i < tds.size(); i++) {
-                        Element td = tds.get(i);
-
-                        String tvalue = td.attr("title");
-                        if ( tvalue==null || tvalue.trim().length()==0 ) {
-                            tvalue = td.text();
-                        }
-
-                        System.out.println(columnName.get(i) + ": " + tvalue);
-                        columnValues.put(columnName.get(i), tvalue);
-                    }
-                    System.out.println("================");
-                    break;
-                }
-            }
-        } else {
-            for (Element trsku : trskus) {
-                System.out.println(trsku);
-                Element selected = trsku.selectFirst("td > span.dweight");
-                if ( selected!=null ) {
-
-                    Elements tds = trsku.children();
-                    for (int i = 0; i < tds.size(); i++) {
-                        Element td = tds.get(i);
-
-                        String tvalue = td.attr("title");
-                        if ( tvalue==null || tvalue.trim().length()==0 ) {
-                            tvalue = td.text();
-                        }
-
-                        System.out.println(columnName.get(i) + ": " + tvalue);
-                        columnValues.put(columnName.get(i), tvalue);
-                    }
-                    System.out.println("================");
-                    break;
-                }
-            }
-
-        }
 
         return shelvesItem;
     }

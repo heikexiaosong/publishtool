@@ -69,6 +69,13 @@ public class HtmlPageLoader {
                     System.out.println("[delete]SQLExecutor: " + e.getMessage());
                 }
                 cache = null;
+            }  else if ( doc.title().equalsIgnoreCase("Error") ) {
+                try {
+                    SQLExecutor.delete(cache);
+                } catch (Exception e) {
+                    System.out.println("[delete]SQLExecutor: " + e.getMessage());
+                }
+                cache = null;
             }
         }
 

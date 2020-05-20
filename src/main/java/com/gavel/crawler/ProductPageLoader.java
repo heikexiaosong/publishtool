@@ -83,7 +83,35 @@ public class ProductPageLoader {
 
 
                     String url = "https://www.grainger.cn/u-" + code.trim() + ".html";
-                    HtmlCache skuCache = HtmlPageLoader.getInstance().loadHtmlPage(url, true);
+                    HtmlCache skuCache = null;
+
+                    int tryTimes = 0;
+                    while ( tryTimes < 5  ) {
+                        skuCache = HtmlPageLoader.getInstance().loadHtmlPage(url, true);
+                        if ( skuCache != null && skuCache.getHtml()!=null ) {
+                            doc = Jsoup.parse(skuCache.getHtml());
+                            if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
+                                SQLExecutor.delete(skuCache);
+                                skuCache = null;
+                            } else if ( doc.title().equalsIgnoreCase("Error") ) {
+                                SQLExecutor.delete(skuCache);
+                                skuCache = null;
+                            }
+                        }
+                        if ( skuCache!=null ) {
+                            break;
+                        }
+                        tryTimes++;
+
+                        System.out.println("\t[Sku: " + code.trim() + "][Html]第 " + tryTimes + "次重试。。。" );
+
+                        try {
+                            Thread.sleep(tryTimes*3000);
+                        } catch (Exception e) {
+
+                        }
+                    }
+
                     try {
                         item1 = parseSku(code, skuCache);
                         if ( item1!=null ) {

@@ -1,6 +1,7 @@
 package com.gavel.application.controller;
 
 import com.gavel.application.DataPagination;
+import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Item;
 import com.gavel.entity.ShelvesItem;
@@ -8,12 +9,18 @@ import com.gavel.entity.Task;
 import com.gavel.shelves.ShelvesItemParser;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
+import javafx.concurrent.Service;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -122,14 +129,66 @@ public class FXMLSkuImportController {
 
     @FXML
     private void handleOk() {
-        for (Item item : datas) {
-            ShelvesItem shelvesItem = null;
-            try {
-                shelvesItem = ShelvesItemParser.parse(item);
-                items.add(shelvesItem);
-            } catch (Exception e) {
-                e.printStackTrace();
+
+        final  int total = datas.size();
+
+        Service<String> service = new Service<String>() {
+
+            @Override
+            protected javafx.concurrent.Task<String> createTask() {
+                return new javafx.concurrent.Task<String>() {
+
+                    @Override
+                    protected String call() throws Exception {
+
+                        for (int i = 0; i < datas.size(); i++) {
+                            Item item = datas.get(i);
+
+                            ShelvesItem shelvesItem = null;
+                            try {
+                                shelvesItem = ShelvesItemParser.parse(item);
+                                items.add(shelvesItem);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } finally {
+                                updateProgress(i, total);
+                                updateValue(""+ i +"/" + total);
+                            }
+                        }
+                        return null;
+                    };
+                };
             }
+
+        };
+
+
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/ProgressDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage _dialogStage = new Stage();
+            _dialogStage.setTitle("进度");
+            _dialogStage.initModality(Modality.WINDOW_MODAL);
+            _dialogStage.initOwner(dialogStage);
+            _dialogStage.setScene(new Scene(page));
+
+            // Set the person into the controller.
+            FXMLProgressDialogController controller = loader.getController();
+            // Show the dialog and wait until the user closes it
+            controller.setDialogStage(_dialogStage);
+            controller.bind(service);
+            _dialogStage.showAndWait();
+
+            if ( service.isRunning() ) {
+                service.cancel();
+                service.reset();
+                service = null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         okClicked = true;

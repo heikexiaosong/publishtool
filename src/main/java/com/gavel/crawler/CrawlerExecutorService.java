@@ -50,7 +50,7 @@ public class CrawlerExecutorService {
 
     public void start() {
 
-        DriverHtmlLoader.getInstance().start();
+//        DriverHtmlLoader.getInstance().start();
 
         executors.scheduleWithFixedDelay(new Runnable() {
             @Override
