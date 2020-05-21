@@ -34,7 +34,7 @@ public class ItemparamterLoad {
 
     }
 
-    private static List<Itemparameter> loadItemparameters(String categoryCode, String shopid) {
+    public static List<Itemparameter> loadItemparameters(String categoryCode, String shopid) {
 
         List<Itemparameter> itemparameters = new ArrayList<>();
         if ( categoryCode==null || categoryCode.trim().length()<=0 ) {
@@ -97,6 +97,8 @@ public class ItemparamterLoad {
                             SQLExecutor.insert(itemparameter);
                         } catch (Exception e) {
                             e.printStackTrace();
+                        } finally {
+                            itemparameters.add(itemparameter);
                         }
                     }
                 }

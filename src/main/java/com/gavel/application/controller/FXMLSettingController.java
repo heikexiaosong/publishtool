@@ -4,6 +4,7 @@ import com.gavel.application.MainApp;
 import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.*;
+import com.gavel.suning.ItemparamterLoad;
 import com.gavel.utils.StringUtils;
 import com.google.gson.Gson;
 import com.suning.api.SelectSuningResponse;
@@ -230,7 +231,18 @@ public class FXMLSettingController {
 
         itemparameters = null;
         try {
-            itemparameters = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where categoryCode = ? order by isMust desc ", Itemparameter.class, paramsCategoryCode);
+            itemparameters = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where categoryCode = ? and SUPPLIERCODE = ? order by isMust desc ", Itemparameter.class, paramsCategoryCode, APPConfig.getInstance().getShopinfo().getCode());
+        } catch (Exception e) {
+            e.printStackTrace();
+            itemparameters = Collections.EMPTY_LIST;
+        }
+
+        if ( itemparameters.size()==0 ) {
+            ItemparamterLoad.loadItemparameters(paramsCategoryCode, APPConfig.getInstance().getShopinfo().getCode());
+        }
+
+        try {
+            itemparameters = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where categoryCode = ? and SUPPLIERCODE = ? order by isMust desc ", Itemparameter.class, paramsCategoryCode, APPConfig.getInstance().getShopinfo().getCode());
         } catch (Exception e) {
             e.printStackTrace();
             itemparameters = Collections.EMPTY_LIST;

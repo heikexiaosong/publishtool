@@ -1,7 +1,9 @@
 package com.gavel.application.controller;
 
 import com.gavel.application.DataPagination;
+import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
+import com.gavel.entity.Brand;
 import com.gavel.entity.Category;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -13,6 +15,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,6 +37,16 @@ public class FXMLSuningCateSelectedController {
     private TableColumn<Category, String> descPathCol;
 
 
+    // 品牌
+    @FXML
+    private TableView<Brand> brandTable;
+
+    @FXML
+    private TableColumn<Brand, String> brandCodeCol;
+    @FXML
+    private TableColumn<Brand, String> brandNameCol;
+
+
     private Stage dialogStage;
     private boolean okClicked = false;
 
@@ -47,18 +60,21 @@ public class FXMLSuningCateSelectedController {
     @FXML
     private void initialize() {
 
+
+        keyword.textProperty().bindBidirectional(_keyword);
+
         codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryCode()));
         nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryName()));
         descPathCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDescPath()));
 
-        keyword.textProperty().bindBidirectional(_keyword);
 
-//        try {
-//            categories = SQLExecutor.executeQueryBeanList("select * from CATEGORY", Category.class);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            categories = Collections.EMPTY_LIST;
-//        }
+
+        brandCodeCol.setCellValueFactory(cellData -> cellData.getValue().codeProperty());
+        brandNameCol.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
+
+
+
+        itemList.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> showBrandDetails(newValue));
 //
         DataPagination dataPagination = new DataPagination(Collections.EMPTY_LIST, 30);
         pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
@@ -66,6 +82,20 @@ public class FXMLSuningCateSelectedController {
             itemList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
             return itemList;
         });
+    }
+
+    private void showBrandDetails(Category newValue) {
+
+        brandTable.setItems(FXCollections.emptyObservableList());
+        if ( newValue!=null ) {
+            List<Brand> brands = new ArrayList<>();
+            try {
+                brands = SQLExecutor.executeQueryBeanList("select  distinct CODE, NAME from BRAND where SUPPLIERCODE = ?  and CATEGORYCODE = ? ", Brand.class, APPConfig.getInstance().getShopinfo().getCode(), newValue.getCategoryCode());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            brandTable.setItems(FXCollections.observableArrayList(brands));
+        }
     }
 
 
@@ -113,7 +143,6 @@ public class FXMLSuningCateSelectedController {
             e.printStackTrace();
             categories = Collections.EMPTY_LIST;
         }
-
 
         DataPagination dataPagination = new DataPagination(categories, 30);
         pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
