@@ -41,6 +41,9 @@ public class FXMLSuningCateSelectedController {
 
     private List<Category> categories;
 
+    private String suppliercode;
+    private final SimpleStringProperty _keyword = new SimpleStringProperty();
+
     @FXML
     private void initialize() {
 
@@ -48,16 +51,16 @@ public class FXMLSuningCateSelectedController {
         nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryName()));
         descPathCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getDescPath()));
 
+        keyword.textProperty().bindBidirectional(_keyword);
 
-        try {
-            categories = SQLExecutor.executeQueryBeanList("select * from CATEGORY", Category.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            categories = Collections.EMPTY_LIST;
-        }
-
-
-        DataPagination dataPagination = new DataPagination(categories, 30);
+//        try {
+//            categories = SQLExecutor.executeQueryBeanList("select * from CATEGORY", Category.class);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            categories = Collections.EMPTY_LIST;
+//        }
+//
+        DataPagination dataPagination = new DataPagination(Collections.EMPTY_LIST, 30);
         pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
         pagination.setPageFactory(pageIndex -> {
             itemList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
@@ -102,10 +105,10 @@ public class FXMLSuningCateSelectedController {
 
     public void handleKeyPressedAction(KeyEvent keyEvent) {
 
-        String _keyword = keyword.getText().trim();
         try {
-            String params = "%" + _keyword.trim() +"%";
-            categories = SQLExecutor.executeQueryBeanList("select * from CATEGORY where CATEGORYCODE like ? or CATEGORYNAME like ? or DESCPATH like ?", Category.class, params, params, params);
+            String key = _keyword.getValue();
+            String params = "%" + ( key==null ? "" : key.trim() ) +"%";
+            categories = SQLExecutor.executeQueryBeanList("select * from CATEGORY where SUPPLIERCODE = ? and (CATEGORYCODE like ? or CATEGORYNAME like ? or DESCPATH like ?)", Category.class, suppliercode, params, params, params);
         } catch (Exception e) {
             e.printStackTrace();
             categories = Collections.EMPTY_LIST;
@@ -118,6 +121,31 @@ public class FXMLSuningCateSelectedController {
             itemList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
             return itemList;
         });
+
+    }
+
+    public void initparams(String keyword, String code) {
+        System.out.println(keyword + " -- " + code);
+        this._keyword.setValue(keyword);
+        this.suppliercode = code;
+
+        try {
+            String key = _keyword.getValue();
+            String params = "%" + ( key==null ? "" : key.trim() ) +"%";
+            categories = SQLExecutor.executeQueryBeanList("select * from CATEGORY where SUPPLIERCODE = ? and (CATEGORYCODE like ? or CATEGORYNAME like ? or DESCPATH like ?)", Category.class, suppliercode, params, params, params);
+        } catch (Exception e) {
+            e.printStackTrace();
+            categories = Collections.EMPTY_LIST;
+        }
+
+
+        DataPagination dataPagination = new DataPagination(categories, 30);
+        pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
+        pagination.setPageFactory(pageIndex -> {
+            itemList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
+            return itemList;
+        });
+
 
     }
 }

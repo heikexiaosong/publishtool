@@ -169,7 +169,7 @@ public class FXMLSettingController {
 
         List<Category> categories = null;
         try {
-            categories = SQLExecutor.executeQueryBeanList("select * from category", Category.class);
+            categories = SQLExecutor.executeQueryBeanList("select * from category where SUPPLIERCODE = ? ", Category.class, APPConfig.getInstance().getShopinfo().getCode());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -394,7 +394,7 @@ public class FXMLSettingController {
         }
 
         Category mappingCate = new Category();
-        boolean okClicked = showCategoryMappingEditDialog(mappingCate);
+        boolean okClicked = showCategoryMappingEditDialog(mappingCate, categoryMapping);
         if (okClicked) {
             //mainApp.getPersonData().add(tempPerson);
             try {
@@ -409,7 +409,7 @@ public class FXMLSettingController {
         cateMapping.refresh();
     }
 
-    private boolean showCategoryMappingEditDialog(Category mappingCate) {
+    private boolean showCategoryMappingEditDialog(Category mappingCate, CategoryMapping selected) {
         try {
             // Load the fxml file and create a new stage for the popup dialog.
             FXMLLoader loader = new FXMLLoader();
@@ -428,6 +428,8 @@ public class FXMLSettingController {
             FXMLSuningCateSelectedController controller = loader.getController();
             controller.setDialogStage(dialogStage);
             controller.bind(mappingCate);
+
+            controller.initparams((selected==null ? "" : selected.getName()), APPConfig.getInstance().getShopinfo().getCode());
 
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
@@ -676,7 +678,15 @@ public class FXMLSettingController {
     public void handleCateBatchMappingAction(ActionEvent actionEvent) {
 
         Category mappingCate = new Category();
-        boolean okClicked = showCategoryMappingEditDialog(mappingCate);
+
+        CategoryMapping selected = null;
+        for (CategoryMapping categoryMapping : cateMapping.getItems()) {
+            if ( categoryMapping.isSelected() ) {
+                selected = categoryMapping;
+            }
+        }
+
+        boolean okClicked = showCategoryMappingEditDialog(mappingCate,  selected);
         if (okClicked) {
             for (CategoryMapping categoryMapping : cateMapping.getItems()) {
                 if ( categoryMapping.isSelected() ) {

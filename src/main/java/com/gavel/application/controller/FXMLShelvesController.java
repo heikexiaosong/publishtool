@@ -32,10 +32,8 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class FXMLShelvesController {
 
@@ -116,6 +114,9 @@ public class FXMLShelvesController {
     @FXML
     private ComboBox<String> status;
 
+    @FXML
+    private ComboBox<String> brand;
+
     private List<ShelvesItem> items = new ArrayList<>();
 
     @FXML
@@ -124,7 +125,7 @@ public class FXMLShelvesController {
         // 状态选择
         status.setItems(FXCollections.observableArrayList("上架状态", "上架失败", "上架成功"));
         status.getSelectionModel().select(0);
-        status.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> showShelvesStatusDetails(newValue));
+        status.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> showShelvesStatusDetails());
 
         select.setCellFactory(column -> new CheckBoxTableCell<>());
         select.setCellValueFactory(cellData -> {
@@ -139,8 +140,11 @@ public class FXMLShelvesController {
             return property;
         });
 
-        noCol.setCellFactory(new IDCell<>());
+        brand.setItems(FXCollections.observableArrayList("所有品牌"));
+        brand.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> showShelvesStatusDetails());
+        brand.getSelectionModel().select(0);
 
+        noCol.setCellFactory(new IDCell<>());
         cmTitleCol.setCellValueFactory(cellData -> cellData.getValue().cmTitleProperty());
         codeCol.setCellValueFactory(cellData -> cellData.getValue().itemCodeProperty());
         graingerbrandnameCol.setCellValueFactory(cellData -> cellData.getValue().brandnameProperty());
@@ -175,7 +179,10 @@ public class FXMLShelvesController {
         selectedNum.setText(String.valueOf(count));
     }
 
-    private void showShelvesStatusDetails(String newValue) {
+    private void showShelvesStatusDetails() {
+
+        String _status = status.getSelectionModel().getSelectedItem();
+        String _brand = brand.getSelectionModel().getSelectedItem();
 
         itemList.setItems(FXCollections.observableArrayList());
 
@@ -183,19 +190,17 @@ public class FXMLShelvesController {
 
         //"上架状态", "上架失败", "上架成功"
 
-        boolean filter = true;
-        switch ( newValue.trim() ) {
-            case "上架状态":
-                filter = false;
-                break;
-            case "上架失败":
-            case "上架成功":
-                break;
-        }
 
+        boolean statusFilter = !( _status==null || "上架状态".equalsIgnoreCase(_status.trim()) );
+
+        boolean brandFilter = !( _brand==null || "所有品牌".equalsIgnoreCase(_brand.trim()) );
+
+
+        System.out.println(_status + statusFilter + " -- " + _brand + brandFilter);
 
         for (ShelvesItem item : items) {
-            if ( !filter || (newValue!=null && newValue.equalsIgnoreCase(item.getStatus())) ) {
+            if (  ( !statusFilter ||  _status.equalsIgnoreCase(item.getStatus()))
+                    &&  ( !brandFilter || _brand.equalsIgnoreCase(item.getBrandname()) ) ) {
                 filterItems.add(item);
             }
         }
@@ -256,6 +261,12 @@ public class FXMLShelvesController {
                 e.printStackTrace();
             }
         }
+
+        brand.setItems(FXCollections.observableArrayList());
+        Set<String> brands = items.stream().map(e -> e.getBrandname() ).collect(Collectors.toSet());
+        brand.getItems().add("所有品牌");
+        brand.getItems().addAll(brands);
+        brand.getSelectionModel().select(0);
 
         DataPagination dataPagination = new DataPagination(items, 10000);
         pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());

@@ -47,7 +47,6 @@
                               <TextField fx:id="cateKeyword" onKeyReleased="#handleKeyReleasedAction" prefHeight="22.0" />
                                 <Button mnemonicParsing="false" onAction="#handleAutoMappingAction" text="自动匹配" />
                                 <Button mnemonicParsing="false" onAction="#handleCateBatchMappingAction" text="批量设置" />
-                                <Button mnemonicParsing="false" onAction="#handleCateMappingAction" text="映射设置" />
                             </buttons>
                         </ButtonBar>
                         <TableView fx:id="cateMapping" editable="true" layoutX="-12.0" layoutY="49.0" prefHeight="298.0" prefWidth="175.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="30.0">
@@ -115,9 +114,6 @@
                         </children>
                     </AnchorPane>
                 </content>
-               <graphic>
-                  <Button mnemonicParsing="false" text="Button" />
-               </graphic>
             </Tab>
 
             <Tab text="品牌设置">

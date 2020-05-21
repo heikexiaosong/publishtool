@@ -123,9 +123,10 @@
                                                 <Label fx:id="selectedNum" prefHeight="28.0" prefWidth="45.0" />
                                             </children>
                                         </HBox>
-                                          <ButtonBar prefHeight="30.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                          <ButtonBar prefHeight="30.0" prefWidth="700.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                               <buttons>
                                                   <ComboBox fx:id="status" prefWidth="100.0" />
+                                                  <ComboBox fx:id="brand" prefWidth="100.0" />
                                                   <Button mnemonicParsing="false" onAction="#handleImagesExportAction" text="导出图片" />
                                                   <Button mnemonicParsing="false" onAction="#handleEditSkuPerson" text="批量处理" />
                                                   <Button mnemonicParsing="false" onAction="#handleDetailEditAction" text="编 辑" />
