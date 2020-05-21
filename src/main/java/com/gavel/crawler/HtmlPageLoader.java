@@ -52,8 +52,6 @@ public class HtmlPageLoader {
     }
 
     public HtmlCache loadHtmlPage(String url, boolean useCache, boolean loadMore) {
-
-        System.out.println("URL: " + url);
         HtmlCache cache = null;
         if ( useCache ) {
             try {

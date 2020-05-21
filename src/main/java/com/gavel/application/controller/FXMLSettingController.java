@@ -1,9 +1,16 @@
 package com.gavel.application.controller;
 
 import com.gavel.application.MainApp;
+import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.*;
 import com.gavel.utils.StringUtils;
+import com.google.gson.Gson;
+import com.suning.api.SelectSuningResponse;
+import com.suning.api.SuningResponse;
+import com.suning.api.entity.item.*;
+import com.suning.api.exception.SuningApiException;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ChangeListener;
@@ -25,6 +32,7 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +112,9 @@ public class FXMLSettingController {
 
     @FXML
     private TextField brandKeyword;
+
+    @FXML
+    private TextArea log;
 
     private Map<String, SimpleStringProperty> paramers = new ConcurrentHashMap<>();
     private String paramsCategoryCode = "";
@@ -667,7 +678,6 @@ public class FXMLSettingController {
         Category mappingCate = new Category();
         boolean okClicked = showCategoryMappingEditDialog(mappingCate);
         if (okClicked) {
-
             for (CategoryMapping categoryMapping : cateMapping.getItems()) {
                 if ( categoryMapping.isSelected() ) {
                     categoryMapping.setCategoryCode(mappingCate.getCategoryCode());
@@ -738,5 +748,405 @@ public class FXMLSettingController {
 
             brandMapping.setItems(FXCollections.observableArrayList(brandMappings));
         }
+    }
+
+    /**
+     * 类目同步
+     * @param actionEvent
+     */
+    public void handleCateSyncAction(ActionEvent actionEvent) {
+
+
+        Shopinfo shopinfo = APPConfig.getInstance().getShopinfo();
+
+        System.out.println(shopinfo.getName());
+
+        log.appendText("开始同步[" + shopinfo.getName() + "]的类目数据\n");
+
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                int pageNo = 1;
+
+                CategoryQueryRequest request = new CategoryQueryRequest();
+                request.setPageSize(50);
+                request.setPageNo(pageNo);
+                //        request.setCategoryName("家装建材及五金");
+                //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
+                request.setCheckParam(true);
+
+                try {
+                    CategoryQueryResponse response = APPConfig.getInstance().client().excute(request);
+                    System.out.println("CategoryQueryRequest :" + response.getBody());
+
+                    while ( response.getSnbody()!=null && response.getSnbody().getCategoryQueries()!=null && response.getSnbody().getCategoryQueries().size() == 50 ) {
+
+                        final SelectSuningResponse.SnHead head = response.getSnhead();
+                        Platform.runLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                log.appendText(new Gson().toJson(head) + "\n");
+                            }
+                        });
+
+
+                        for (CategoryQueryResponse.CategoryQuery categoryQuery : response.getSnbody().getCategoryQueries()) {
+                            System.out.println(new Gson().toJson(categoryQuery));
+
+                            Category category = new Category();
+
+                            category.setSupplierCode(shopinfo.getCode());
+                            category.setCategoryCode(categoryQuery.getCategoryCode());
+                            category.setCategoryName(categoryQuery.getCategoryName());
+                            category.setIsBottom(categoryQuery.getIsBottom());
+                            category.setDescPath(categoryQuery.getDescPath());
+                            category.setGrade(categoryQuery.getGrade());
+
+                            try {
+                                SQLExecutor.insert(category);
+                            } catch (Exception e) {
+                                System.out.println(categoryQuery.getCategoryCode() + "： " + e.getMessage());
+                            }
+
+                        }
+
+
+                        pageNo += 1;
+                        request.setPageNo(pageNo);
+                        response = APPConfig.getInstance().client().excute(request);
+                    }
+
+                    if ( response.getSnbody()!=null && response.getSnbody().getCategoryQueries()!=null && response.getSnbody().getCategoryQueries().size() > 0 ) {
+
+                        final SelectSuningResponse.SnHead head = response.getSnhead();
+                        Platform.runLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                log.appendText(new Gson().toJson(head) + "\n");
+                            }
+                        });
+
+
+                        for (CategoryQueryResponse.CategoryQuery categoryQuery : response.getSnbody().getCategoryQueries()) {
+                            System.out.println(new Gson().toJson(categoryQuery));
+
+                            //新增
+
+                            Category category = new Category();
+
+                            category.setSupplierCode(shopinfo.getCode());
+                            category.setCategoryCode(categoryQuery.getCategoryCode());
+                            category.setCategoryName(categoryQuery.getCategoryName());
+                            category.setIsBottom(categoryQuery.getIsBottom());
+                            category.setDescPath(categoryQuery.getDescPath());
+                            category.setGrade(categoryQuery.getGrade());
+
+                            try {
+                                SQLExecutor.insert(category);
+                            } catch (Exception e) {
+                                System.out.println(categoryQuery.getCategoryCode() + "： " + e.getMessage());
+                            }
+                        }
+                    }
+                } catch (SuningApiException e) {
+                    e.printStackTrace();
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            log.appendText(e.getMessage());
+                        }
+                    });
+                } finally {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            log.appendText("同步完成\n");
+                        }
+                    });
+                }
+            }
+        }).start();
+
+    }
+
+    /**
+     * 品牌同步
+     * @param actionEvent
+     */
+    public void handleBrandSyncAction(ActionEvent actionEvent) {
+
+        Shopinfo shopinfo = APPConfig.getInstance().getShopinfo();
+
+        System.out.println(shopinfo.getName());
+
+        log.appendText("开始同步[" + shopinfo.getName() + "]的品牌数据\n");
+
+
+        List<Category> _cates = null;
+        try {
+            _cates = SQLExecutor.executeQueryBeanList("select * from  CATEGORY where SUPPLIERCODE = ? ", Category.class, shopinfo.getCode());
+        } catch (Exception e) {
+            e.printStackTrace();
+            _cates = Collections.EMPTY_LIST;
+        }
+        log.appendText("店铺[" + shopinfo.getName() + "]类目: " + _cates.size());
+
+
+        final  List<Category> cates = _cates;
+        if ( cates.size() > 0 ) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                    for (int i = 0; i < cates.size(); i++) {
+                        Category cate = cates.get(i);
+                        final String msg = "[" +(i+1) + "/" + cates.size()  + "] " + cate.getCategoryCode() + " - " + cate.getCategoryName();
+                        Platform.runLater( () -> log.appendText(msg + "\n"));
+                        try {
+                            queryBrand(cate.getCategoryCode(), shopinfo.getCode());
+                        } catch (Exception e) {
+                            Platform.runLater( () -> log.appendText(e.getMessage() + "\n"));
+                        }
+                    }
+
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            log.appendText("同步完成\n");
+                        }
+                    });
+                }
+            }).start();
+        } else {
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    log.appendText("同步完成\n");
+                }
+            });
+        }
+    }
+
+    private void queryBrand(String categoryCode, String shopid)  {
+
+        int pageNo = 1;
+
+        BrandQueryRequest request = new BrandQueryRequest();
+        request.setPageSize(50);
+        request.setPageNo(pageNo);
+        request.setCategoryCode(categoryCode);
+//        request.setCategoryName("家装建材及五金");
+        //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
+        request.setCheckParam(true);
+
+        try {
+            BrandQueryResponse response = APPConfig.getInstance().client().excute(request);
+
+            while ( response.getSnbody()!=null && response.getSnbody().getBrandQueries()!=null && response.getSnbody().getBrandQueries().size() == 50 ) {
+                final SelectSuningResponse.SnHead head = response.getSnhead();
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        log.appendText(new Gson().toJson(head) + "\n");
+                    }
+                });
+
+                for (BrandQueryResponse.BrandQuery brandQuery : response.getSnbody().getBrandQueries()) {
+                    //新增
+                    Brand brand = new Brand();
+                    brand.setSupplierCode(shopid);
+                    brand.setCategoryCode(categoryCode);
+                    brand.setCode(brandQuery.getBrandCode());
+                    brand.setName(brandQuery.getBrandName());
+                    try {
+                        SQLExecutor.insert(brand);
+                    } catch (Exception e) {
+                        System.out.println(categoryCode + "-" + brandQuery.getBrandCode() + "： " + e.getMessage());
+                    }
+
+                }
+
+                pageNo += 1;
+                request.setPageNo(pageNo);
+                response = APPConfig.getInstance().client().excute(request);
+            }
+
+            if (response.getSnbody()!=null && response.getSnbody().getBrandQueries()!=null && response.getSnbody().getBrandQueries().size() > 0 ) {
+                final SelectSuningResponse.SnHead head = response.getSnhead();
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        log.appendText(new Gson().toJson(head) + "\n");
+                    }
+                });
+                for (BrandQueryResponse.BrandQuery brandQuery : response.getSnbody().getBrandQueries()) {
+                    Brand brand = new Brand();
+                    brand.setSupplierCode(shopid);
+                    brand.setCategoryCode(categoryCode);
+                    brand.setCode(brandQuery.getBrandCode());
+                    brand.setName(brandQuery.getBrandName());
+                    try {
+                        SQLExecutor.insert(brand);
+                    } catch (Exception e) {
+                        System.out.println(categoryCode + "-" + brandQuery.getBrandCode() + "： " + e.getMessage());
+                    }
+                }
+
+            }
+
+        } catch (SuningApiException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * 类目属性同步
+     * @param actionEvent
+     */
+    public void handleParamterSyncAction(ActionEvent actionEvent) {
+
+
+        Shopinfo shopinfo = APPConfig.getInstance().getShopinfo();
+
+        System.out.println(shopinfo.getName());
+
+        log.appendText("开始同步[" + shopinfo.getName() + "]的类目属性数据\n");
+
+
+        List<Category> _cates = null;
+        try {
+            _cates = SQLExecutor.executeQueryBeanList("select * from  CATEGORY where SUPPLIERCODE = ? ", Category.class, shopinfo.getCode());
+        } catch (Exception e) {
+            e.printStackTrace();
+            _cates = Collections.EMPTY_LIST;
+        }
+        log.appendText("店铺[" + shopinfo.getName() + "]类目: " + _cates.size());
+
+
+        final  List<Category> cates = _cates;
+        if ( cates.size() > 0 ) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                    for (int i = 0; i < cates.size(); i++) {
+                        Category cate = cates.get(i);
+                        final String msg = "[" +(i+1) + "/" + cates.size()  + "] " + cate.getCategoryCode() + " - " + cate.getCategoryName();
+                        Platform.runLater( () -> log.appendText(msg + "\n"));
+                        try {
+                            loadItemparameters(cate.getCategoryCode(), shopinfo.getCode());
+                        } catch (Exception e) {
+                            Platform.runLater( () -> log.appendText(e.getMessage() + "\n"));
+                        }
+                    }
+
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            log.appendText("同步完成\n");
+                        }
+                    });
+                }
+            }).start();
+        } else {
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    log.appendText("同步完成\n");
+                }
+            });
+        }
+
+    }
+
+    private List<Itemparameter> loadItemparameters(String categoryCode, String shopid) {
+
+        List<Itemparameter> itemparameters = new ArrayList<>();
+        if ( categoryCode==null || categoryCode.trim().length()<=0 ) {
+            return itemparameters;
+        }
+
+        ItemparametersQueryRequest request = new ItemparametersQueryRequest();
+        request.setCategoryCode(categoryCode);
+
+
+        int next = 1;
+        int total = 1;
+
+        while ( next <= total ) {
+            request.setPageNo(next);
+            request.setPageSize(20);
+            //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
+            request.setCheckParam(true);
+
+            try {
+                ItemparametersQueryResponse response = APPConfig.getInstance().client().excute(request);
+                System.out.println("NationQueryRequest :" + response.getBody());
+
+                SuningResponse.SnError error = response.getSnerror();
+                if ( error!=null ) {
+                    System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                } else {
+
+                    next = response.getSnhead().getPageNo() + 1;
+                    total = response.getSnhead().getPageTotal();
+
+                    final SelectSuningResponse.SnHead head = response.getSnhead();
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            log.appendText(new Gson().toJson(head) + "\n");
+                        }
+                    });
+
+                    for (ItemparametersQueryResponse.ItemparametersQuery item : response.getSnbody().getItemparametersQueries()) {
+
+                        Itemparameter itemparameter = new Itemparameter();
+
+                        itemparameter.setCategoryCode(categoryCode.trim());
+                        itemparameter.setSupplierCode(shopid);
+                        itemparameter.setParaTemplateCode(item.getParaTemplateCode());
+                        itemparameter.setParaTemplateDesc(item.getParaTemplateDesc());
+                        itemparameter.setParCode(item.getParCode());
+                        itemparameter.setParName(item.getParName());
+                        itemparameter.setParType(item.getParType());
+                        itemparameter.setParUnit(item.getParUnit());
+                        itemparameter.setDataType(item.getDataType());
+                        itemparameter.setIsMust(item.getIsMust());
+                        itemparameter.setOptions(new Gson().toJson(item.getParOption()));
+
+                        System.out.println(new Gson().toJson(item));
+
+                        if ( item.getParOption()!=null &&  item.getParOption().size() == 1 ) {
+                            ItemparametersQueryResponse.ParOption option = item.getParOption().get(0);
+                            itemparameter.setParam(option.getParOptionCode());
+                            if (StringUtils.isBlank(option.getParOptionCode())) {
+                                itemparameter.setParam(option.getParOptionDesc());
+                            }
+                        }
+
+
+                        try {
+                            SQLExecutor.insert(itemparameter);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+
+
+            } catch (SuningApiException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+
+
+        return itemparameters;
     }
 }

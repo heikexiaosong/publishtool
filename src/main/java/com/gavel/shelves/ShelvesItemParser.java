@@ -148,7 +148,6 @@ public class ShelvesItemParser {
         Element c4 = elements.get(4);
         Element c5 = elements.get(5);
 
-        System.out.println(StringUtils.getCode(c4.attr("href")) + ": " + c4.text());
         shelvesItem.setCategoryCode(StringUtils.getCode(c4.attr("href")));
         shelvesItem.setCategoryname(c4.text());
 
@@ -162,11 +161,9 @@ public class ShelvesItemParser {
 
         Element brandCn = h3.selectFirst(" > span a");
         brandCn.remove();
-        System.out.println("中文品牌: " + brandCn.text() + ": " + StringUtils.getCode(brandCn.attr("href")));
 
         Element title = h3.selectFirst(" > a");
         title.remove();
-        System.out.println("标题: " + title.text());
         shelvesItem.setCmTitle(title.text());
 
 
@@ -177,8 +174,6 @@ public class ShelvesItemParser {
 
         Element price = proDetailCon.selectFirst(" > div.price");
         price.remove();
-        System.out.println("价格: " + price.text());
-
         Element priceEle =  (Element)price.childNodes().get(1);
         TextNode unitEle =  (TextNode)price.childNodes().get(2);
 
@@ -189,8 +184,6 @@ public class ShelvesItemParser {
             unit1 = unit.split("/")[1];
         }
 
-        System.out.println("Price: " + _price + "[" + unit + "]" + "[" + unit1 + "]");
-
         Elements attrs = proDetailCon.select(" > div font");
         attrs.remove();
         /**
@@ -200,9 +193,6 @@ public class ShelvesItemParser {
          * 包装内件数：1双
          * 预计发货日： 停止销售
          */
-
-        System.out.println("\n属性: \n" + attrs.html());
-
         Element brandEle = attrs.get(1).selectFirst("a");
         shelvesItem.setBrandCode(StringUtils.getCode(brandEle.attr("href")));
         shelvesItem.setBrandname(brandEle.text());
@@ -211,10 +201,6 @@ public class ShelvesItemParser {
         String number = attrs.get(3).text();
         String fahuori = attrs.get(4).text();
         shelvesItem.setModel(model);
-
-        System.out.println("制造商型号： " + model);
-        System.out.println("包装内件数： " + number);
-        System.out.println("预计发货日： " + fahuori);
 
 
         String _title = title(title.text(), brandCn.text(), brandEle.text(), model, number);

@@ -18,6 +18,7 @@ import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Service;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -587,7 +588,13 @@ public class FXMLShelvesController {
             SuningCatetoryBrandSelector catetoryBrandSelector = new SuningCatetoryBrandSelector();
 
             ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
-            for (ShelvesItem item : items) {
+            System.out.println("SKU: " + items.size());
+
+
+            int total = items.size();
+            for (int i = 0; i < items.size(); i++) {
+                ShelvesItem item = items.get(i);
+
                 item.setTaskid(taskSelected.getId());
                 item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
 
@@ -602,11 +609,11 @@ public class FXMLShelvesController {
                 try {
                     SQLExecutor.insert(item);
                     itemList.getItems().add(item);
+                    System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入成功: ");
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    System.out.println("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入失败: " + e.getMessage() );
                 }
             }
-
         }
 
     }
@@ -764,29 +771,83 @@ public class FXMLShelvesController {
     }
 
     public void handleImagesExportAction(ActionEvent actionEvent) {
-        List<String> pendding = new ArrayList<>();
-        for (ShelvesItem item : items) {
 
-           List<String> images = ShelvesItemParser.getProductImages(item.getSkuCode());
-           if ( images==null || images.size() > 0 ) {
-               pendding.addAll(images);
-           }
-        }
 
-        String taskId =  idField.getText();
+       final  String taskId =  idField.getText();
 
-        for (String s : pendding) {
-            System.out.println( " ==> " + s);
+        final  int total = items.size();
 
-            try {
-                File dest = new File(s.replace("D:\\images", "D:\\images\\" + taskId));
-                if ( !dest.getParentFile().exists() ) {
-                    dest.getParentFile().mkdirs();
-                }
-                Files.copy(new File(s), dest);
-            } catch (IOException e) {
-                e.printStackTrace();
+        Service<String> service = new Service<String>() {
+
+            @Override
+            protected javafx.concurrent.Task<String> createTask() {
+                return new javafx.concurrent.Task<String>() {
+
+                    @Override
+                    protected String call() throws Exception {
+
+                        for (int i = 0; i < items.size(); i++) {
+                            ShelvesItem item = items.get(i);
+                            try {
+                                List<String> images = ShelvesItemParser.getProductImages(item.getSkuCode());
+                                if ( images!=null && images.size() > 0 ) {
+                                    for (String s : images) {
+                                        System.out.println( " ==> " + s);
+
+                                        try {
+                                            File dest = new File(s.replace("D:\\images", "D:\\images" + File.separator + taskId + File.separator + item.getSkuCode() ));
+                                            if ( !dest.getParentFile().exists() ) {
+                                                dest.getParentFile().mkdirs();
+                                            }
+                                            Files.copy(new File(s), dest);
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } finally {
+                                updateProgress(i, total);
+                                updateValue(""+ i +"/" + total);
+                            }
+                        }
+
+                        updateValue("图片导出完成");
+                        return null;
+                    };
+                };
             }
+
+        };
+
+
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/ProgressDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage _dialogStage = new Stage();
+            _dialogStage.setTitle("图片导出进度");
+            _dialogStage.initModality(Modality.WINDOW_MODAL);
+            _dialogStage.initOwner(stage());
+            _dialogStage.setScene(new Scene(page));
+
+            // Set the person into the controller.
+            FXMLProgressDialogController controller = loader.getController();
+            // Show the dialog and wait until the user closes it
+            controller.setDialogStage(_dialogStage);
+            controller.bind(service);
+            _dialogStage.showAndWait();
+
+            if ( service.isRunning() ) {
+                service.cancel();
+                service.reset();
+                service = null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);

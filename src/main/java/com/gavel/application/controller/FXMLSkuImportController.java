@@ -148,8 +148,9 @@ public class FXMLSkuImportController {
                             try {
                                 shelvesItem = ShelvesItemParser.parse(item);
                                 items.add(shelvesItem);
+                                System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getCode() +"]解析成功: ");
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                System.out.println("\r[" + i + "/" + total + "][Item: " + item.getCode() +"]解析失败: " + e.getMessage());
                             } finally {
                                 updateProgress(i, total);
                                 updateValue(""+ i +"/" + total);

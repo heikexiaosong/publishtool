@@ -83,7 +83,6 @@ public class SuningShelvesService implements ShelvesService {
                 item.setMappingbrandname(catetoryBrand.getBrandZh());
                 brand = catetoryBrand.getBrandCode();
             }
-
         }
 
         if ( StringUtils.isBlank(item.getMappingcategorycode()) ) {
