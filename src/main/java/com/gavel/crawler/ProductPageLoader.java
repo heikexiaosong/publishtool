@@ -217,9 +217,6 @@ public class ProductPageLoader {
 
     public static void main(String[] args) throws Exception {
 
-
-        DriverHtmlLoader.getInstance().start();
-
         SearchItem searchItem = new SearchItem();
         searchItem.setType("g");
         searchItem.setCode("368841");

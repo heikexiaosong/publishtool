@@ -136,6 +136,7 @@ public class ShelvesItemParser {
 
         Element err = doc.selectFirst("div.err-notice");
         if ( err!=null ) {
+            SQLExecutor.delete(htmlCache);
             throw new Exception("[URL: " + item.getUrl() + "]" + doc.title());
         }
 
@@ -174,22 +175,13 @@ public class ShelvesItemParser {
 
         Element price = proDetailCon.selectFirst(" > div.price");
         price.remove();
-        Element priceEle =  (Element)price.childNodes().get(1);
-        TextNode unitEle =  (TextNode)price.childNodes().get(2);
-
-        float _price = Float.parseFloat(priceEle.text().replace(",", "").replace("¥", ""));
-        String unit = unitEle.text().trim();
-        String unit1 = unit ;
-        if ( unit.contains("/") ) {
-            unit1 = unit.split("/")[1];
-        }
 
         Elements attrs = proDetailCon.select(" > div font");
         attrs.remove();
         /**
          * 订 货 号：5W8061
          * 品   牌：霍尼韦尔 Honeywell
-         * 制造商型号： SHSL00202-42
+         * 制造商型号：SHSL00202-42
          * 包装内件数：1双
          * 预计发货日： 停止销售
          */
@@ -199,7 +191,6 @@ public class ShelvesItemParser {
 
         String model = attrs.get(2).text();
         String number = attrs.get(3).text();
-        String fahuori = attrs.get(4).text();
         shelvesItem.setModel(model);
 
 

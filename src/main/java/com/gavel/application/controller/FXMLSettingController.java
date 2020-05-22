@@ -5,6 +5,7 @@ import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.*;
 import com.gavel.suning.ItemparamterLoad;
+import com.gavel.utils.MD5Utils;
 import com.gavel.utils.StringUtils;
 import com.google.gson.Gson;
 import com.suning.api.SelectSuningResponse;
@@ -33,11 +34,9 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 
 public class FXMLSettingController {
@@ -799,6 +798,19 @@ public class FXMLSettingController {
                 //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
                 request.setCheckParam(true);
 
+                Map<String, Category> categoryMap = null;
+                try {
+                    List<Category> categorys = SQLExecutor.executeQueryBeanList("select * from CATEGORY where SUPPLIERCODE = ? ", Category.class, shopinfo.getCode());
+                    if ( categorys!=null ) {
+                        categoryMap = categorys.stream().collect(Collectors.toMap(Category::getId, v->v, (v1, v2)->v1));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                if ( categoryMap==null ) {
+                    categoryMap = new HashMap<>();
+                }
+
                 try {
                     CategoryQueryResponse response = APPConfig.getInstance().client().excute(request);
                     System.out.println("CategoryQueryRequest :" + response.getBody());
@@ -817,23 +829,29 @@ public class FXMLSettingController {
                         for (CategoryQueryResponse.CategoryQuery categoryQuery : response.getSnbody().getCategoryQueries()) {
                             System.out.println(new Gson().toJson(categoryQuery));
 
+                            String id = MD5Utils.md5Hex(shopinfo.getCode() + "_" + categoryQuery.getCategoryCode());
                             Category category = new Category();
-
+                            category.setId(id);
                             category.setSupplierCode(shopinfo.getCode());
                             category.setCategoryCode(categoryQuery.getCategoryCode());
                             category.setCategoryName(categoryQuery.getCategoryName());
                             category.setIsBottom(categoryQuery.getIsBottom());
                             category.setDescPath(categoryQuery.getDescPath());
                             category.setGrade(categoryQuery.getGrade());
-
-                            try {
-                                SQLExecutor.insert(category);
-                            } catch (Exception e) {
-                                System.out.println(categoryQuery.getCategoryCode() + "： " + e.getMessage());
+                            if ( categoryMap.containsKey(id) ) {
+                                try {
+                                    SQLExecutor.update(category);
+                                } catch (Exception e) {
+                                    System.out.println(categoryQuery.getCategoryCode() + "： " + e.getMessage());
+                                }
+                            } else {
+                                try {
+                                    SQLExecutor.insert(category);
+                                } catch (Exception e) {
+                                    System.out.println(categoryQuery.getCategoryCode() + "： " + e.getMessage());
+                                }
                             }
-
                         }
-
 
                         pageNo += 1;
                         request.setPageNo(pageNo);
@@ -854,21 +872,27 @@ public class FXMLSettingController {
                         for (CategoryQueryResponse.CategoryQuery categoryQuery : response.getSnbody().getCategoryQueries()) {
                             System.out.println(new Gson().toJson(categoryQuery));
 
-                            //新增
-
+                            String id = MD5Utils.md5Hex(shopinfo.getCode() + "_" + categoryQuery.getCategoryCode());
                             Category category = new Category();
-
+                            category.setId(id);
                             category.setSupplierCode(shopinfo.getCode());
                             category.setCategoryCode(categoryQuery.getCategoryCode());
                             category.setCategoryName(categoryQuery.getCategoryName());
                             category.setIsBottom(categoryQuery.getIsBottom());
                             category.setDescPath(categoryQuery.getDescPath());
                             category.setGrade(categoryQuery.getGrade());
-
-                            try {
-                                SQLExecutor.insert(category);
-                            } catch (Exception e) {
-                                System.out.println(categoryQuery.getCategoryCode() + "： " + e.getMessage());
+                            if ( categoryMap.containsKey(id) ) {
+                                try {
+                                    SQLExecutor.update(category);
+                                } catch (Exception e) {
+                                    System.out.println(categoryQuery.getCategoryCode() + "： " + e.getMessage());
+                                }
+                            } else {
+                                try {
+                                    SQLExecutor.insert(category);
+                                } catch (Exception e) {
+                                    System.out.println(categoryQuery.getCategoryCode() + "： " + e.getMessage());
+                                }
                             }
                         }
                     }
@@ -1100,7 +1124,7 @@ public class FXMLSettingController {
 
         while ( next <= total ) {
             request.setPageNo(next);
-            request.setPageSize(20);
+            request.setPageSize(50);
             //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
             request.setCheckParam(true);
 

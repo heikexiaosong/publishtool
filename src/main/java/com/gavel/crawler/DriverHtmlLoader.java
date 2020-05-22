@@ -47,9 +47,7 @@ public class DriverHtmlLoader {
         options.setExperimentalOption("prefs", chromePrefs);
 
         driver = new ChromeDriver(options);
-    }
 
-    public void start() {
         driver.get("https://www.grainger.cn/");
     }
 

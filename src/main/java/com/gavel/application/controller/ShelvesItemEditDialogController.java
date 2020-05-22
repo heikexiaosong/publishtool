@@ -1,6 +1,7 @@
 package com.gavel.application.controller;
 
 import com.gavel.application.MainApp;
+import com.gavel.config.APPConfig;
 import com.gavel.entity.Brand;
 import com.gavel.entity.Category;
 import com.gavel.utils.StringUtils;
@@ -121,6 +122,7 @@ public class ShelvesItemEditDialogController {
             FXMLSuningCateSelectedController controller = loader.getController();
             controller.setDialogStage(_dialogStage);
             controller.bind(mappingCate);
+            controller.initparams(mappingCate.getCategoryName(), APPConfig.getInstance().getShopinfo().getCode());
 
             // Show the dialog and wait until the user closes it
             _dialogStage.showAndWait();

@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FXMLSkuImportController {
 
@@ -140,7 +142,7 @@ public class FXMLSkuImportController {
 
                     @Override
                     protected String call() throws Exception {
-
+                        Map<String, List<Item>> productMap = datas.stream().collect(Collectors.groupingBy(Item::getProductcode));
                         for (int i = 0; i < datas.size(); i++) {
                             Item item = datas.get(i);
 

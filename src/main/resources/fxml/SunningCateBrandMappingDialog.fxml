@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane prefHeight="640.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLSunningCateBrandMappingController">
+    <children>
+        <TextField fx:id="keyword" onKeyPressed="#handleKeyPressedAction" prefHeight="40.0" prefWidth="1120.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="210.0" AnchorPane.topAnchor="7.0" />
+      <ButtonBar maxWidth="200.0" minWidth="200.0" prefHeight="49.0" prefWidth="200.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="0.0">
+        <buttons>
+            <Button mnemonicParsing="false" onAction="#handleAutoMappingAction" text="自动匹配" />
+            <Button mnemonicParsing="false" onAction="#handleCateBatchMappingAction" text="设置" />
+        </buttons>
+      </ButtonBar>
+
+        <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
+            <buttons>
+                <Button mnemonicParsing="false" onAction="#handleCancel" text="取 消" />
+                <Button mnemonicParsing="false" onAction="#handleOk" text="确 定" />
+            </buttons>
+        </ButtonBar>
+      <SplitPane dividerPositions="0.3" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="50.0">
+         <items>
+
+             <AnchorPane prefHeight="666.0" prefWidth="395.0">
+                 <children>
+                     <TableView fx:id="brandTable" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                         <columns>
+                             <TableColumn fx:id="brandCodeCol" prefWidth="129.0" text="编码" />
+                             <TableColumn fx:id="brandNameCol" prefWidth="144.0" text="品牌" />
+                         </columns>
+                     </TableView>
+                 </children>
+             </AnchorPane>
+
+              <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0" prefWidth="200.0">
+                  <content>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
+                          <children>
+                              <TableView fx:id="cateBrandTable" prefHeight="217.0" prefWidth="389.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                  <columns>
+                                      <TableColumn fx:id="brandnameCol" prefWidth="80.0" text="原有品牌" />
+                                      <TableColumn fx:id="catenameCol" prefWidth="120.0" text="原有类目" />
+                                      <TableColumn fx:id="categoryCodeCol" prefWidth="80.0" text="上架类目编码" />
+                                      <TableColumn fx:id="categoryNameCol" prefWidth="80.0" text="上架类目" />
+                                  </columns>
+                              </TableView>
+                              <Pagination fx:id="pagination" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                          </children>
+                      </AnchorPane>
+                  </content>
+              </ScrollPane>
+
+         </items></SplitPane>
+    </children>
+</AnchorPane>

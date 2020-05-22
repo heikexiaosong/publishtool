@@ -216,8 +216,11 @@ public class FXMLShelvesController {
 
     private void showShelvesDetails(ShelvesTask newValue) {
 
+
+        long start = System.currentTimeMillis();
+
         items.clear();
-        itemList.setItems(FXCollections.observableList(items));
+        itemList.setItems(FXCollections.observableArrayList());
         if ( newValue!=null ) {
 
             status.getSelectionModel().select(0);
@@ -260,6 +263,8 @@ public class FXMLShelvesController {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
+            System.out.println("Cost: " + ( System.currentTimeMillis()  - start) + " ms");
         }
 
         brand.setItems(FXCollections.observableArrayList());
@@ -268,12 +273,16 @@ public class FXMLShelvesController {
         brand.getItems().addAll(brands);
         brand.getSelectionModel().select(0);
 
+        System.out.println("Cost: " + ( System.currentTimeMillis()  - start) + " ms");
+
         DataPagination dataPagination = new DataPagination(items, 10000);
         pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
         pagination.setPageFactory(pageIndex -> {
             itemList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
             return itemList;
         });
+
+        System.out.println("Cost: " + ( System.currentTimeMillis()  - start) + " ms");
 
     }
 
@@ -926,6 +935,123 @@ public class FXMLShelvesController {
             FXMLShelvesTaskImportDialogController controller = loader.getController();
             controller.setDialogStage(dialogStage);
             controller.bind(shelvesTasks);
+
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 品牌类目映射
+     * @param actionEvent
+     */
+    public void handlBrandCateMappingAction(ActionEvent actionEvent) {
+
+        String shopid = APPConfig.getInstance().getShopinfo().getCode();
+
+
+        Map<String, CateBrandMapping> existMap = new HashMap<>();
+        try {
+            List<CateBrandMapping> exist = SQLExecutor.executeQueryBeanList("select * from BRAND_CATE_MAPPING where SHOPID = ? ", CateBrandMapping.class, shopid);
+            existMap = exist.stream().collect(Collectors.toMap(CateBrandMapping::getId, e -> e));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+        List<CateBrandMapping> cateBrandMappings = new ArrayList<>();
+        Map<String, CateBrandMapping> cateBrandMappingMap = new HashMap<>();
+        for (ShelvesItem item : items) {
+            CateBrandMapping cateBrandMapping = null;
+            String key = shopid + "_" +item.getBrandCode() + "_" + item.getCategoryCode();
+            if ( cateBrandMappingMap.containsKey(key) ) {
+                cateBrandMapping = cateBrandMappingMap.get(key);
+            }
+
+            if ( cateBrandMapping==null && existMap.containsKey(key) ) {
+                cateBrandMapping = existMap.get(key);
+            }
+
+            if ( cateBrandMapping==null ) {
+                cateBrandMapping = new CateBrandMapping();
+                cateBrandMapping.setId(key);
+                cateBrandMapping.setShopid(APPConfig.getInstance().getShopinfo().getCode());
+                cateBrandMapping.setBrandcode(item.getBrandCode());
+                cateBrandMapping.setBrandname(item.getBrandname());
+                cateBrandMapping.setCatecode(item.getCategoryCode());
+                cateBrandMapping.setCatename(item.getCategoryname());
+
+                try {
+                    SQLExecutor.insert(cateBrandMapping);
+                } catch (Exception e) {
+
+                }
+            }
+            cateBrandMappingMap.put(key, cateBrandMapping);
+        }
+
+        cateBrandMappings.addAll(cateBrandMappingMap.values());
+//
+        boolean okClicked = shelvesItemMappingEditDialog(shopid, cateBrandMappings);
+        if (okClicked) {
+            if ( cateBrandMappings.size() > 0 ) {
+                Map<String, CateBrandMapping> map = new HashMap<>();
+                for (CateBrandMapping cateBrandMapping : cateBrandMappings) {
+                    try {
+                        SQLExecutor.update(cateBrandMapping);
+                        String key = cateBrandMapping.getBrandcode() + "_" + cateBrandMapping.getCatecode();
+                        map.put(key,cateBrandMapping);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                for (ShelvesItem item : items) {
+                    String key = item.getBrandCode() + "_" + item.getCategoryCode();
+                    if ( map.containsKey(key) && map.get(key)!=null ) {
+                        CateBrandMapping match = map.get(key);
+                        item.setMappingcategorycode(match.getCategorycode());
+                        item.setMappingcategoryname(match.getCategoryname());
+
+                        try {
+                            SQLExecutor.update(item);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    private boolean shelvesItemMappingEditDialog(String shopid, List<CateBrandMapping> cateBrandMappings) {
+
+
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/SunningCateBrandMappingDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("品牌类目映射");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(stage());
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            FXMLSunningCateBrandMappingController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            controller.bind(shopid, cateBrandMappings);
 
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();

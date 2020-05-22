@@ -25,8 +25,6 @@ public class Main {
 
         //loadSearchItems("1589548611873");
 
-        DriverHtmlLoader.getInstance().start();
-
         loadSkus("1589979520661");
 
 
@@ -48,8 +46,6 @@ public class Main {
             System.out.println("任务为空");
             return;
         }
-
-        DriverHtmlLoader.getInstance().start();
 
         while ( true) {
 

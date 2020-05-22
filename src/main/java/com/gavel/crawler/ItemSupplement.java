@@ -1,10 +1,13 @@
 package com.gavel.crawler;
 
+import com.gavel.HttpUtils;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Item;
 import com.gavel.entity.SearchItem;
 import com.gavel.entity.Task;
+import com.gavel.proxy.HttpProxyClient;
+import okhttp3.OkHttpClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -22,9 +25,7 @@ public class ItemSupplement {
     private static final Pattern NUMBER = Pattern.compile("\\d*");
 
     public static void main(String[] args) throws Exception {
-
         supplement("1588407103792");
-
     }
 
 
@@ -41,8 +42,6 @@ public class ItemSupplement {
             System.out.println("任务为空");
             return;
         }
-
-        DriverHtmlLoader.getInstance().start();
 
         List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? order by skunum ", SearchItem.class, task.getId());
 
@@ -71,10 +70,6 @@ public class ItemSupplement {
             }
 
             System.out.println("\r" + (i+1) + ". [" + searchItem.getUrl() + "][Expected: " + searchItem.getSkunum() + "]Got: " + actual);
-
-
-
-
 
             if ( searchItem.getType().equalsIgnoreCase("g") ){
 
@@ -170,15 +165,44 @@ public class ItemSupplement {
                 pageUrl = task.getUrl() + "&page=" + pageCur;
             }
 
-            HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(pageUrl, false);
+            HtmlCache cache = null;
+            int times = 0;
+            while ( cache==null &&  times < 10 ) {
+                OkHttpClient client = HttpProxyClient.getInstance().defaultClient();
+                if ( times > 0 ) {
+                    client = HttpProxyClient.getInstance().getClient();
+                }
 
-            if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
+                try {
+                    String html =  HttpUtils.get(pageUrl, client);
+                    cache = new HtmlCache();
+                    cache.setUrl(pageUrl.trim());
+                    cache.setHtml(html);
+                    cache.setContentlen(html.length());
+                    HttpProxyClient.getInstance().release(client);
+                } catch (Exception e) {
+                    System.out.println("[HttpUtils]: " + e.getMessage());
+                } finally {
+                    times++;
+                }
+            }
+
+            if ( cache!=null  ) {
+                cache.setUpdatetime(Calendar.getInstance().getTime());
+                try {
+                    SQLExecutor.insert(cache);
+                } catch (Exception e) {
+                    System.out.println("[insert]SQLExecutor: " + e.getMessage());
+                }
+            }
+
+            if ( cache==null || cache.getHtml()==null || cache.getHtml().trim().length()==0 ) {
                 System.out.println("[URL: " + pageUrl + "]网页打开失败");
                 continue;
             }
 
 
-            Document document = Jsoup.parse(htmlCache.getHtml());
+            Document document = Jsoup.parse(cache.getHtml());
 
             Elements proUL = document.select("div.proUL li");
             for (int i = 0; i < proUL.size(); i++) {

@@ -2,6 +2,7 @@ package com.gavel.application;
 
 import javafx.beans.property.SimpleIntegerProperty;
 
+import java.util.Collections;
 import java.util.List;
 
 public class DataPagination<T> {
@@ -26,6 +27,27 @@ public class DataPagination<T> {
         initialize();
 
 
+    }
+
+    /**
+     * @param pageSize    the number of data in per page
+     */
+    public DataPagination(int pageSize) {
+        this.totalRecord = new SimpleIntegerProperty();
+        this.totalPage = new SimpleIntegerProperty();
+        this.rowDataList = Collections.EMPTY_LIST;
+        this.pageSize = new SimpleIntegerProperty(pageSize);
+        initialize();
+
+
+    }
+
+    public void setDatas(List<T> rowDataList) {
+        this.rowDataList = rowDataList;
+        if ( rowDataList==null ) {
+            this.rowDataList = Collections.EMPTY_LIST;
+        }
+        initialize();
     }
 
     private void initialize() {

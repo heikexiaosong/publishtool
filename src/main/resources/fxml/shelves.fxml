@@ -127,6 +127,7 @@
                                               <buttons>
                                                   <ComboBox fx:id="status" prefWidth="100.0" />
                                                   <ComboBox fx:id="brand" prefWidth="100.0" />
+                                                  <Button mnemonicParsing="false" onAction="#handlBrandCateMappingAction" text="品牌类目映射" />
                                                   <Button mnemonicParsing="false" onAction="#handleImagesExportAction" text="导出图片" />
                                                   <Button mnemonicParsing="false" onAction="#handleEditSkuPerson" text="批量处理" />
                                                   <Button mnemonicParsing="false" onAction="#handleDetailEditAction" text="编 辑" />
