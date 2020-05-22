@@ -40,8 +40,11 @@
                                   <columns>
                                       <TableColumn fx:id="brandnameCol" prefWidth="80.0" text="原有品牌" />
                                       <TableColumn fx:id="catenameCol" prefWidth="120.0" text="原有类目" />
+                                      <TableColumn fx:id="countCol" prefWidth="120.0" text="SKU数" />
                                       <TableColumn fx:id="categoryCodeCol" prefWidth="80.0" text="上架类目编码" />
                                       <TableColumn fx:id="categoryNameCol" prefWidth="80.0" text="上架类目" />
+                                      <TableColumn fx:id="sbrandCodeCol" prefWidth="80.0" text="上架品牌编码" />
+                                      <TableColumn fx:id="sbrandNameCol" prefWidth="80.0" text="上架品牌类目" />
                                   </columns>
                               </TableView>
                               <Pagination fx:id="pagination" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />

@@ -4,6 +4,7 @@ import com.gavel.application.DataPagination;
 import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Brand;
+import com.gavel.entity.CateBrandMapping;
 import com.gavel.entity.Category;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -56,6 +57,7 @@ public class FXMLSuningCateSelectedController {
 
     private String suppliercode;
     private final SimpleStringProperty _keyword = new SimpleStringProperty();
+    private CateBrandMapping cateBrandMapping;
 
     @FXML
     private void initialize() {
@@ -114,7 +116,20 @@ public class FXMLSuningCateSelectedController {
             mappingCate.setCategoryCode(selected.getCategoryCode());
             mappingCate.setCategoryName(selected.getCategoryName());
             mappingCate.setDescPath(selected.getDescPath());
+
+            if ( cateBrandMapping!=null ) {
+                cateBrandMapping.setCategorycode(selected.getCategoryCode());
+                cateBrandMapping.setCategoryname(selected.getCategoryName());
+                cateBrandMapping.setDescpath(selected.getCategoryName());
+            }
         }
+
+        Brand brandSelected = brandTable.getSelectionModel().getSelectedItem();
+        if ( brandSelected!=null && cateBrandMapping!=null ){
+            cateBrandMapping.setSbrandcode(brandSelected.getCode());
+            cateBrandMapping.setSbrandname(brandSelected.getName());
+        }
+
 
         okClicked = true;
         dialogStage.close();
@@ -175,6 +190,11 @@ public class FXMLSuningCateSelectedController {
             return itemList;
         });
 
+
+    }
+
+    public void bind(CateBrandMapping _cateBrandMapping) {
+        this.cateBrandMapping = _cateBrandMapping;
 
     }
 }

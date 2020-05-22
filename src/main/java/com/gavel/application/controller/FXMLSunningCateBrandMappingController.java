@@ -2,7 +2,6 @@ package com.gavel.application.controller;
 
 import com.gavel.application.DataPagination;
 import com.gavel.application.MainApp;
-import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.CateBrandMapping;
 import com.gavel.entity.Category;
@@ -19,9 +18,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FXMLSunningCateBrandMappingController {
@@ -51,10 +48,15 @@ public class FXMLSunningCateBrandMappingController {
     @FXML
     private TableColumn<CateBrandMapping, String> catenameCol;
     @FXML
+    private TableColumn<CateBrandMapping, String> countCol;
+    @FXML
     private TableColumn<CateBrandMapping, String> categoryCodeCol;
     @FXML
     private TableColumn<CateBrandMapping, String> categoryNameCol;
-
+    @FXML
+    private TableColumn<CateBrandMapping, String> sbrandCodeCol;
+    @FXML
+    private TableColumn<CateBrandMapping, String> sbrandNameCol;
 
     private Stage dialogStage;
     private boolean okClicked = false;
@@ -77,6 +79,9 @@ public class FXMLSunningCateBrandMappingController {
         catenameCol.setCellValueFactory(cellData -> cellData.getValue().catenameProperty());
         categoryCodeCol.setCellValueFactory(cellData -> cellData.getValue().categorycodeProperty());
         categoryNameCol.setCellValueFactory(cellData -> cellData.getValue().categorynameProperty());
+        sbrandCodeCol.setCellValueFactory(cellData -> cellData.getValue().sbrandcodeProperty());
+        sbrandNameCol.setCellValueFactory(cellData -> cellData.getValue().sbrandnameProperty());
+        countCol.setCellValueFactory( cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getCount().longValue())));
 
 
         brandCodeCol.setCellValueFactory(cellData -> cellData.getValue().brandcodeProperty());
@@ -140,6 +145,13 @@ public class FXMLSunningCateBrandMappingController {
         this.suppliercode = _suppliercode;
         this.cateBrandMappings = _cateBrandMappings;
 
+        Collections.sort(_cateBrandMappings, new Comparator<CateBrandMapping>() {
+            @Override
+            public int compare(CateBrandMapping o1, CateBrandMapping o2) {
+                return o2.getCount().intValue() - o1.getCount().intValue();
+            }
+        });
+
         dataPagination.setDatas(_cateBrandMappings);
 
         if ( _cateBrandMappings==null ) {
@@ -172,9 +184,6 @@ public class FXMLSunningCateBrandMappingController {
         Category category = new Category();
         boolean okClicked = showCategoryMappingEditDialog(category,  selected);
         if (okClicked) {
-            selected.setCategorycode(category.getCategoryCode());
-            selected.setCategoryname(category.getCategoryName());
-            selected.setDescpath(category.getDescPath());
             try {
                 SQLExecutor.update(selected);
             } catch (Exception e) {
@@ -203,7 +212,9 @@ public class FXMLSunningCateBrandMappingController {
             controller.setDialogStage(_dialogStage);
             controller.bind(mappingCate);
 
-            controller.initparams((selected==null ? "" : selected.getCatename()),  APPConfig.getInstance().getShopinfo().getCode());
+            controller.bind(selected);
+
+            controller.initparams((selected==null ? "" : selected.getCatename()),  suppliercode);
 
             // Show the dialog and wait until the user closes it
             _dialogStage.showAndWait();

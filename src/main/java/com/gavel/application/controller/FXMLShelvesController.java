@@ -963,8 +963,6 @@ public class FXMLShelvesController {
             e.printStackTrace();
         }
 
-
-
         List<CateBrandMapping> cateBrandMappings = new ArrayList<>();
         Map<String, CateBrandMapping> cateBrandMappingMap = new HashMap<>();
         for (ShelvesItem item : items) {
@@ -972,6 +970,7 @@ public class FXMLShelvesController {
             String key = shopid + "_" +item.getBrandCode() + "_" + item.getCategoryCode();
             if ( cateBrandMappingMap.containsKey(key) ) {
                 cateBrandMapping = cateBrandMappingMap.get(key);
+                cateBrandMapping.getCount().incrementAndGet();
             }
 
             if ( cateBrandMapping==null && existMap.containsKey(key) ) {
@@ -993,6 +992,12 @@ public class FXMLShelvesController {
 
                 }
             }
+
+            if ( StringUtils.isBlank(cateBrandMapping.getSbrandcode()) &&  StringUtils.isNotBlank(item.getMappingbrandcode()) ) {
+                cateBrandMapping.setSbrandcode(item.getMappingbrandcode());
+                cateBrandMapping.setSbrandname(item.getMappingbrandname());
+            }
+
             cateBrandMappingMap.put(key, cateBrandMapping);
         }
 
@@ -1003,6 +1008,9 @@ public class FXMLShelvesController {
             if ( cateBrandMappings.size() > 0 ) {
                 Map<String, CateBrandMapping> map = new HashMap<>();
                 for (CateBrandMapping cateBrandMapping : cateBrandMappings) {
+                    if ( StringUtils.isBlank(cateBrandMapping.getCategorycode()) && StringUtils.isBlank(cateBrandMapping.getSbrandcode()) ) {
+                        continue;
+                    }
                     try {
                         SQLExecutor.update(cateBrandMapping);
                         String key = cateBrandMapping.getBrandcode() + "_" + cateBrandMapping.getCatecode();
@@ -1018,11 +1026,9 @@ public class FXMLShelvesController {
                         CateBrandMapping match = map.get(key);
                         item.setMappingcategorycode(match.getCategorycode());
                         item.setMappingcategoryname(match.getCategoryname());
-
-                        try {
-                            SQLExecutor.update(item);
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        if (StringUtils.isNotBlank(match.getSbrandcode()) ) {
+                            item.setMappingbrandcode(match.getSbrandcode());
+                            item.setMappingbrandname(match.getSbrandname());
                         }
                     }
                 }

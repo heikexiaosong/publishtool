@@ -3,10 +3,7 @@ package com.gavel.shelves.suning;
 import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.ShelvesItem;
-import com.gavel.shelves.CatetoryBrand;
-import com.gavel.shelves.ParameterLoader;
-import com.gavel.shelves.ShelvesItemParser;
-import com.gavel.shelves.ShelvesService;
+import com.gavel.shelves.*;
 import com.gavel.utils.StringUtils;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -41,6 +38,8 @@ public class SuningShelvesService implements ShelvesService {
 
     private BufferedImage logoImage;
 
+    private CatetoryBrandSelector catetoryBrandSelector = new SuningCatetoryBrandSelector();
+
     public SuningShelvesService(int moq, String _defaultImage) {
         this(moq, _defaultImage, null);
     }
@@ -71,7 +70,7 @@ public class SuningShelvesService implements ShelvesService {
         String brand = StringUtils.trim(item.getMappingbrandcode());
 
         if ( StringUtils.isBlank(category)|| StringUtils.isBlank(brand) ) {
-            CatetoryBrand catetoryBrand =  new SuningCatetoryBrandSelector().selectCatetoryBrand(item.getCategoryCode(), item.getBrandCode());
+            CatetoryBrand catetoryBrand =  catetoryBrandSelector.selectCatetoryBrand(item.getCategoryCode(), item.getBrandCode());
             if (  StringUtils.isBlank(category) ) {
                 item.setMappingcategorycode(catetoryBrand.getCategoryCode());
                 item.setMappingcategoryname(catetoryBrand.getCategory());
@@ -212,7 +211,7 @@ public class SuningShelvesService implements ShelvesService {
         //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
         request.setCheckParam(true);
 
-            try {
+        try {
             ApplyAddResponse response = APPConfig.getInstance().client().excute(request);
             logger.info("ApplyAddResponse: " + response.getBody());
             SuningResponse.SnError error = response.getSnerror();
@@ -441,7 +440,7 @@ public class SuningShelvesService implements ShelvesService {
         ShelvesItem shelvesItem = null;
 
         try {
-            shelvesItem = SQLExecutor.executeQueryBean("select * from SHELVESITEM where TASKID =? and SKUCODE = ? ", ShelvesItem.class, "1589182362981", "5V9689");
+            shelvesItem = SQLExecutor.executeQueryBean("select * from SHELVESITEM where TASKID =? and SKUCODE = ? ", ShelvesItem.class, "1589966530402", "12W3877");
             suningShelvesService.shelves(shelvesItem);
         } catch (Exception e) {
             e.printStackTrace();

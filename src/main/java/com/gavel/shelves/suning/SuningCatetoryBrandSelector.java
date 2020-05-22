@@ -1,8 +1,7 @@
 package com.gavel.shelves.suning;
 
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.BrandMapping;
-import com.gavel.entity.CategoryMapping;
+import com.gavel.entity.CateBrandMapping;
 import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.CatetoryBrandSelector;
 
@@ -18,20 +17,12 @@ public class SuningCatetoryBrandSelector implements CatetoryBrandSelector {
         String category = null;
 
         try {
-            CategoryMapping categoryMapping = SQLExecutor.executeQueryBean("select * from CATEGORYMAPPING where  code = ? ", CategoryMapping.class, _category);
+            CateBrandMapping categoryMapping = SQLExecutor.executeQueryBean("select * from BRAND_CATE_MAPPING where BRANDCODE = ? and  CATECODE = ? ", CateBrandMapping.class, _brand, _category);
             if ( categoryMapping!=null ) {
-                categoryCode = categoryMapping.getCategoryCode();
-                category = categoryMapping.getCategoryName();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            BrandMapping brandMapping = SQLExecutor.executeQueryBean("select * from BRANDMAPPING where  graingercode = ? ", BrandMapping.class, _brand);
-            if ( brandMapping!=null ) {
-                brandCode = brandMapping.getBrand();
-                brandZh = brandMapping.getBrandname();
+                categoryCode = categoryMapping.getCategorycode();
+                category = categoryMapping.getCategoryname();
+                brandCode = categoryMapping.getSbrandcode();
+                brandZh = categoryMapping.getSbrandname();
             }
         } catch (Exception e) {
             e.printStackTrace();

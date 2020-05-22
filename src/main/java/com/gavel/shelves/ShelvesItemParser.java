@@ -908,7 +908,7 @@ public class ShelvesItemParser {
                 src = "https:" + src;
             }
             src = src.replace("product_images_new/350/", "product_images_new/800/");
-            if ( com.gavel.utils.StringUtils.isBlank(src) ) {
+            if ( com.gavel.utils.StringUtils.isNotBlank(src) ) {
                 picUrls.add(src);
             }
         }

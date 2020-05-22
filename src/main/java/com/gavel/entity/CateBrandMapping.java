@@ -8,6 +8,8 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 @TableMeta(name = "BRAND_CATE_MAPPING", title = "品牌类目映射")
 public class CateBrandMapping {
 
@@ -48,6 +50,14 @@ public class CateBrandMapping {
 
     @FieldMeta(name = "DESCPATH", title = "采购目录层级描述", length = 128)
     private final StringProperty descpath = new SimpleStringProperty();
+
+    @FieldMeta(name = "SBRANDCODE", title = "苏宁品牌编码", length = 32)
+    private final StringProperty sbrandcode = new SimpleStringProperty();
+
+    @FieldMeta(name = "SBRANDNAME", title = "苏宁品牌名称", length = 50)
+    private final StringProperty sbrandname = new SimpleStringProperty();
+
+    private final AtomicLong count = new AtomicLong(1);
 
     public void setSelected(boolean selected) {
         this.selected.set(selected);
@@ -160,6 +170,35 @@ public class CateBrandMapping {
 
     public void setDescpath(String descpath) {
         this.descpath.set(descpath);
+    }
+
+    public String getSbrandcode() {
+        return sbrandcode.get();
+    }
+
+    public StringProperty sbrandcodeProperty() {
+        return sbrandcode;
+    }
+
+    public void setSbrandcode(String sbrandcode) {
+        this.sbrandcode.set(sbrandcode);
+    }
+
+    public String getSbrandname() {
+        return sbrandname.get();
+    }
+
+    public StringProperty sbrandnameProperty() {
+        return sbrandname;
+    }
+
+    public void setSbrandname(String sbrandname) {
+        this.sbrandname.set(sbrandname);
+    }
+
+
+    public AtomicLong getCount() {
+        return count;
     }
 
     public static void main(String[] args) throws Exception {
