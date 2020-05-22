@@ -139,26 +139,26 @@ public class SuningShelvesService implements ShelvesService {
         ApplyAddRequest.SupplierImgUrl supplierImgUrl = new ApplyAddRequest.SupplierImgUrl();
         supplierImgUrls.add(supplierImgUrl);
 
-        List<String> images = ShelvesItemParser.getImages(item.getSkuCode(), defaultImage, logoImage);
-        for (String image : images) {
-            System.out.println("Image: " + image);
+        List<ShelvesItemParser.Pic> images = ShelvesItemParser.getImages(item.getSkuCode(), defaultImage, logoImage);
+        for (ShelvesItemParser.Pic image : images) {
+            System.out.println("Image: " + image.getUrl());
         }
 
         if ( images.size() >= 1 ) {
-            supplierImgUrl.setUrlA(images.get(0));
+            supplierImgUrl.setUrlA(images.get(0).getUrl());
         }
         if ( images.size() >= 2 ) {
-            supplierImgUrl.setUrlB(images.get(1));
+            supplierImgUrl.setUrlB(images.get(1).getUrl());
         }
         if ( images.size() >= 3 ) {
-            supplierImgUrl.setUrlC(images.get(2));
+            supplierImgUrl.setUrlC(images.get(2).getUrl());
         }
 
         if ( images.size() >= 4 ) {
-            supplierImgUrl.setUrlD(images.get(3));
+            supplierImgUrl.setUrlD(images.get(3).getUrl());
         }
         if ( images.size() >= 5 ) {
-            supplierImgUrl.setUrlE(images.get(4));
+            supplierImgUrl.setUrlE(images.get(4).getUrl());
         }
 
         List<ParameterLoader.Parameter> commonParameters = parameterLoader.loadCommonParameters(category);
@@ -178,7 +178,7 @@ public class SuningShelvesService implements ShelvesService {
             //
 
             if ( images.size() > 0 ) {
-                childItem.setSupplierImgAUrl(images.get(0));
+                childItem.setSupplierImgAUrl(images.get(0).getUrl());
             }
 
             List<ApplyAddRequest.ParsX> parsX = new ArrayList<>();
@@ -200,7 +200,7 @@ public class SuningShelvesService implements ShelvesService {
         String introduction = item.getIntroduction();
         try {
             if ( StringUtils.isBlank(introduction)) {
-                introduction = ShelvesItemParser.buildIntroduction(item, moq);
+                introduction = ShelvesItemParser.buildIntroduction(item, moq, images);
                 item.setIntroduction(introduction);
             }
         } catch (Exception e) {

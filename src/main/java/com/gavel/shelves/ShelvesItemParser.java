@@ -508,8 +508,28 @@ public class ShelvesItemParser {
         return images;
     }
 
-    public static List<String> getImages(String skuCode, String defaultImage, BufferedImage logoImage){
-        List<String> images = new ArrayList<>();
+    public static class Pic {
+
+        private final String url;
+
+        private final boolean iscreate ;
+
+        public Pic(String url, boolean iscreate) {
+            this.url = url;
+            this.iscreate = iscreate;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public boolean isIscreate() {
+            return iscreate;
+        }
+    }
+
+    public static List<ShelvesItemParser.Pic> getImages(String skuCode, String defaultImage, BufferedImage logoImage){
+        List<Pic> images = new ArrayList<>();
         try {
             HtmlCache htmlCache = HtmlPageLoader.getInstance().loadGraingerPage(skuCode, true);
             if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
@@ -548,7 +568,7 @@ public class ShelvesItemParser {
             if ( picUrls.size() ==0 ) {
                 String picSuningUrl =  uploadLocalImage(defaultImage);
                 if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
-                    images.add(picSuningUrl);
+                    images.add(new Pic(picSuningUrl, true));
                 }
                 return images;
             }
@@ -556,11 +576,11 @@ public class ShelvesItemParser {
             for (String picUrl : picUrls) {
                 String picSuningUrl = uploadImageWithoutDownload(picUrl, images.size(), logoImage);
                 if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
-                    images.add(picSuningUrl);
+                    images.add(new Pic(picSuningUrl, false));
                 } else {
                     picSuningUrl = uploadImage(picUrl, images.size(), logoImage);
                     if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
-                        images.add(picSuningUrl);
+                        images.add(new Pic(picSuningUrl, false));
                     }
                 }
             }
@@ -568,12 +588,12 @@ public class ShelvesItemParser {
             if ( images==null || images.size()==0) {
                 String picSuningUrl =  uploadLocalImage(defaultImage);
                 if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
-                    images.add(picSuningUrl);
+                    images.add(new Pic(picSuningUrl, true));
                 }
                 return images;
             }
 
-            String pic1 = images.get(0);
+            String pic1 = images.get(0).getUrl();
             while ( images.size() < 5 ) {
 
                 String localFilePath =  skuCode + "_" + images.size() + ".png";
@@ -625,7 +645,7 @@ public class ShelvesItemParser {
                             System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
                         } else {
                             picUrl = response.getSnbody().getAddNPic().getPicUrl();
-                            images.add(picUrl);
+                            images.add(new Pic(picUrl, true));
                         }
                     } catch (SuningApiException e) {
                         e.printStackTrace();
@@ -693,13 +713,13 @@ public class ShelvesItemParser {
         return picUrl;
     }
 
-    public static String buildIntroduction(ShelvesItem _item, int moq) throws Exception {
+    public static String buildIntroduction(ShelvesItem _item, int moq, List<ShelvesItemParser.Pic> images) throws Exception {
 
-        return buildIntroduction(_item.getSkuCode(), moq);
+        return buildIntroduction(_item.getSkuCode(), moq, images);
     }
 
 
-    public static String buildIntroduction(String skuCode, int moq) throws Exception {
+    public static String buildIntroduction(String skuCode, int moq, List<ShelvesItemParser.Pic> images) throws Exception {
 
         HtmlCache htmlCache = HtmlPageLoader.getInstance().loadGraingerPage(skuCode, true);
         if ( htmlCache==null || htmlCache.getHtml()==null || htmlCache.getHtml().trim().length()==0 ) {
@@ -895,48 +915,24 @@ public class ShelvesItemParser {
 
 
 
-        // 小图片
         List<String> picUrls = new ArrayList<>();
-        Elements imgs = doc.select("div.xiaotu > div.xtu > dl > dd > img");
-        for (Element img : imgs) {
-            String  src = img.attr("src");
-            if ( "/Content/images/hp_np.png".equalsIgnoreCase(src) ) {
-                continue;
-            }
-
-            if ( src!=null && src.startsWith("//") ) {
-                src = "https:" + src;
-            }
-            src = src.replace("product_images_new/350/", "product_images_new/800/");
-            if ( com.gavel.utils.StringUtils.isNotBlank(src) ) {
-                picUrls.add(src);
-            }
-        }
-
-        Map<String, String> imageMap = new HashMap<>();
-        for (String picUrl : picUrls) {
-            System.out.println("\t" + picUrl);
-            String picSuningUrl = uploadImageWithoutDownload(picUrl, 0, null);
-            if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
-                imageMap.put(picUrl, picSuningUrl);
-            } else {
-                picSuningUrl = uploadImage(picUrl, 0, null);
-                if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
-                    imageMap.put(picUrl, picSuningUrl);
+        if ( images!=null && images.size() > 0 ) {
+            for (Pic image : images) {
+                if ( !image.isIscreate() &&  com.gavel.utils.StringUtils.isNotBlank(image.getUrl()) ){
+                    picUrls.add(image.getUrl());
                 }
             }
 
-            System.out.println("\t ==> " + imageMap.get(picUrl));
         }
 
-
-        detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品图片</div>");
-        for (String picUrl : picUrls) {
-            if ( imageMap.containsKey(picUrl) && com.gavel.utils.StringUtils.isNotBlank(imageMap.get(picUrl))) {
-                detail.append("<p><img alt=\"\" src=\"" +  imageMap.get(picUrl).trim() + "\" class=\"product\"></p>");
+        if ( picUrls.size() > 0 ) {
+            detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品图片</div>");
+            for (String picUrl : picUrls) {
+                detail.append("<p><img alt=\"\" src=\"" + picUrl + "\" class=\"product\"></p>");
             }
+            detail.append("</div>");
         }
-        detail.append("</div>");
+
 
         System.out.println("Detail: " + detail.toString());
 
@@ -949,7 +945,7 @@ public class ShelvesItemParser {
 
         APPConfig.getInstance().getShopinfo();
 
-        buildIntroduction("1M0412", 100);
+        buildIntroduction("1M0412", 100, null);
     }
 
 }
