@@ -65,7 +65,7 @@ public class CrawlerExecutorService {
 
 
         try {
-            List<Task> tasks = SQLExecutor.executeQueryBeanList("select * from TASK order by UPDATETIME desc", Task.class);
+            List<Task> tasks = SQLExecutor.executeQueryBeanList("select * from TASK where STATUS <> 'success' order by UPDATETIME desc", Task.class);
             if ( tasks!=null && tasks.size()>0 ) {
                 for (Task task : tasks) {
                     taskQueue.put(task);
@@ -107,6 +107,12 @@ public class CrawlerExecutorService {
         System.out.println("SearchItem: " + searchItemList.size());
 
         if ( searchItemList==null || searchItemList.size() ==0 ) {
+            task.setStatus("success");
+            try {
+                SQLExecutor.update(task);
+            } catch (Exception e) {
+
+            }
             return;
         }
 

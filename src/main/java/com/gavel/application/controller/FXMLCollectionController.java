@@ -6,22 +6,21 @@ import com.gavel.crawler.ItemSupplement;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.SearchItem;
 import com.gavel.entity.Task;
+import com.gavel.utils.StringUtils;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.Pagination;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -86,6 +85,9 @@ public class FXMLCollectionController {
     @FXML
     private Pagination pagination;
 
+    @FXML
+    private TextField keyword;
+
 
     @FXML
     private void initialize() {
@@ -105,7 +107,7 @@ public class FXMLCollectionController {
 
         List<Task> tasks = null;
         try {
-            tasks = SQLExecutor.executeQueryBeanList("select * from TASK", Task.class);
+            tasks = SQLExecutor.executeQueryBeanList("select * from TASK order by UPDATETIME desc", Task.class);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -222,5 +224,32 @@ public class FXMLCollectionController {
      * @param actionEvent
      */
     public void handleDelTaskAction(ActionEvent actionEvent) {
+    }
+
+    public void handleSearchAction(ActionEvent actionEvent) {
+
+        String _keyword = keyword.getText();
+
+
+        List<Task> tasks = null;
+        if (StringUtils.isBlank(_keyword)) {
+            try {
+                tasks = SQLExecutor.executeQueryBeanList("select * from TASK order by UPDATETIME desc", Task.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                tasks = SQLExecutor.executeQueryBeanList("select * from TASK where TITLE like ? order by UPDATETIME desc ", Task.class, "%" + _keyword.trim()  + "%");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if ( tasks==null ) {
+            tasks = Collections.EMPTY_LIST;
+        }
+
+        taskTable.setItems(FXCollections.observableArrayList(tasks));
+
     }
 }

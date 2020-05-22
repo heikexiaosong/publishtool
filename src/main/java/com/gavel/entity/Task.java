@@ -19,7 +19,7 @@ public class Task {
     @FieldMeta(name = "ID", title = "ID", length = 32, primary = true)
     private String id;
 
-    @FieldMeta(name = "title", title = "任务名称", length = 50)
+    @FieldMeta(name = "TITLE", title = "任务名称", length = 50)
     private String title;
 
     @FieldMeta(name = "URL", title = "爬取URL", length = 1024)

@@ -75,6 +75,9 @@ public class FXMLShelvesController {
     @FXML
     private Label brand_en;
 
+    @FXML
+    private Label moqLabel;
+
     // 产品SKU列表
     @FXML
     private TableView<ShelvesItem> itemList;

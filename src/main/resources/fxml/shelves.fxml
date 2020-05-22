@@ -74,8 +74,8 @@
 
                                         <HBox alignment="CENTER_LEFT" GridPane.columnIndex="3">
                                             <children>
-                                                <Label styleClass="title" text="说明: " />
-                                                <Label fx:id="remarkField" />
+                                                <Label styleClass="title" text="起定量: " />
+                                                <Label fx:id="moqLabel" />
                                             </children>
                                         </HBox>
 
@@ -99,6 +99,13 @@
                                             <children>
                                                 <Label styleClass="title" text="英文品牌替换 " />
                                                 <Label fx:id="brand_en" />
+                                            </children>
+                                        </HBox>
+
+                                        <HBox alignment="CENTER_LEFT" GridPane.columnIndex="3"  GridPane.RowIndex = "1">
+                                            <children>
+                                                <Label styleClass="title" text="说明: " />
+                                                <Label fx:id="remarkField" />
                                             </children>
                                         </HBox>
 
