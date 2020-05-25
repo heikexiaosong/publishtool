@@ -508,6 +508,96 @@ public class ShelvesItemParser {
         return images;
     }
 
+    public static Map<String, String> parseAttrs(String skuCode) throws Exception {
+
+        Map<String, String> attrs = new HashMap<>();
+
+        Document doc = null;
+        HtmlCache htmlCache = HtmlPageLoader.getInstance().loadGraingerPage(skuCode, true);
+        if ( htmlCache!=null && htmlCache.getHtml()!=null && htmlCache.getHtml().trim().length()>0 ) {
+            try {
+                doc = Jsoup.parse(htmlCache.getHtml());
+                if ( doc.selectFirst("div.err-notice")!=null ) {
+                    doc = null;
+                }
+                if ( doc!=null && doc.title().equalsIgnoreCase("403 Forbidden") ) {
+                    doc = null;
+                }
+                if ( doc!=null && doc.title().equalsIgnoreCase("Error") ) {
+                    doc = null;
+                }
+            } catch (Exception e) {
+
+            }
+        }
+
+        if ( doc == null ) {
+            return attrs;
+        }
+
+
+        // 规格数据表格
+        Element tableDiv = doc.selectFirst("div.tableDiv");
+
+        Element rightTable1 = tableDiv.selectFirst("div#rightTable1");
+        List<String> columnName = new ArrayList<>();
+        Element pxTR = rightTable1.selectFirst("tr.pxTR");
+        for (Element element : pxTR.children()) {
+            String tname = element.attr("title");
+            if ( tname==null || tname.trim().length()==0 ) {
+                tname = element.text();
+            }
+            columnName.add(tname);
+        }
+
+        Element rightTable2 = tableDiv.selectFirst("div#rightTable2");
+        Elements trskus = rightTable2.select("tr.trsku2");
+
+        if ( trskus.size() > 1 ) {
+            for (Element trsku : trskus) {
+                Element selected = trsku.selectFirst("td  span.dweight");
+                if ( selected!=null ) {
+
+                    Elements tds = trsku.children();
+                    for (int i = 0; i < tds.size(); i++) {
+                        Element td = tds.get(i);
+
+                        String tvalue = td.attr("title");
+                        if ( tvalue==null || tvalue.trim().length()==0 ) {
+                            tvalue = td.text();
+                        }
+                        attrs.put(columnName.get(i), tvalue);
+                    }
+                    break;
+                }
+            }
+        } else {
+            for (Element trsku : trskus) {
+                System.out.println(trsku);
+                Element selected = trsku.selectFirst("td > span.dweight");
+                if ( selected!=null ) {
+
+                    Elements tds = trsku.children();
+                    for (int i = 0; i < tds.size(); i++) {
+                        Element td = tds.get(i);
+
+                        String tvalue = td.attr("title");
+                        if ( tvalue==null || tvalue.trim().length()==0 ) {
+                            tvalue = td.text();
+                        }
+
+                        System.out.println(columnName.get(i) + ": " + tvalue);
+                        attrs.put(columnName.get(i), tvalue);
+                    }
+                    System.out.println("================");
+                    break;
+                }
+            }
+        }
+
+        return attrs;
+    }
+
     public static class Pic {
 
         private final String url;
@@ -925,13 +1015,16 @@ public class ShelvesItemParser {
 
         }
 
+
+        detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品图片</div>");
         if ( picUrls.size() > 0 ) {
-            detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品图片</div>");
             for (String picUrl : picUrls) {
                 detail.append("<p><img alt=\"\" src=\"" + picUrl + "\" class=\"product\"></p>");
             }
-            detail.append("</div>");
         }
+        detail.append("<p><img alt=\"\" src=\"https://uimgproxy.suning.cn/uimg1/sop/commodity/MhdqxYCAnkWz57dhaZS4PQ.jpg\" class=\"product\"></p>");
+        detail.append("</div>");
+
 
 
         System.out.println("Detail: " + detail.toString());
@@ -945,7 +1038,8 @@ public class ShelvesItemParser {
 
         APPConfig.getInstance().getShopinfo();
 
-        buildIntroduction("1M0412", 100, null);
+        Map<String, String> attrs = parseAttrs("12W1544");
+        System.out.println("dd");
     }
 
 }

@@ -82,7 +82,7 @@ public class CrawlerExecutorService {
 
         if ( taskQueue.isEmpty() ) {
             try {
-                List<Task> tasks = SQLExecutor.executeQueryBeanList("select * from TASK order by UPDATETIME desc", Task.class);
+                List<Task> tasks = SQLExecutor.executeQueryBeanList("select * from TASK  where STATUS <> 'success'  order by UPDATETIME desc", Task.class);
                 if ( tasks!=null && tasks.size()>0 ) {
                     for (Task task : tasks) {
                         taskQueue.put(task);

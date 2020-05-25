@@ -18,8 +18,7 @@ import org.slf4j.LoggerFactory;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class SuningShelvesService implements ShelvesService {
 
@@ -101,8 +100,35 @@ public class SuningShelvesService implements ShelvesService {
         request.setCmTitle(item.getCmTitle());         // 商品标题
         request.setSellingPoints(item.getSellingPoints()); // 商品卖点
 
+
+
+        Map<String, String> attrs = ShelvesItemParser.parseAttrs(item.getSkuCode());
+
+        Set<String> keys = new HashSet<>(attrs.keySet());
+
+        Map<String, String> _attrs = new HashMap<String, String>();
+        for (String key : keys) {
+            String value = attrs.get(key);
+            System.out.println(key + ": " + value);
+            if ( key.contains("外形尺寸") ) {
+                String[] datas = value.split("×");
+                if ( datas.length > 2 ) {
+                    _attrs.put("长度", datas[0]);
+                    _attrs.put("宽度", datas[1]);
+                    _attrs.put("高度", datas[2]);
+                    _attrs.put("尺寸（长×宽×高）", value);
+                }
+            }
+        }
+
+        /**
+         * 长度 => {"categoryCode":"R9008653","supplierCode":"10148425","paraTemplateCode":"basic","paraTemplateDesc":"基本参数模板","parCode":"LAENG","parName":"长度","parType":"3","parUnit":"毫米","isMust":"X","options":"null","parOption":[]}
+         * 宽度 => {"categoryCode":"R9008653","supplierCode":"10148425","paraTemplateCode":"basic","paraTemplateDesc":"基本参数模板","parCode":"BREIT","parName":"宽度","parType":"3","parUnit":"毫米","isMust":"X","options":"null","parOption":[]}
+         * 高度 => {"categoryCode":"R9008653","supplierCode":"10148425","paraTemplateCode":"basic","paraTemplateDesc":"基本参数模板","parCode":"HOEHE","parName":"高度","parType":"3","parUnit":"毫米","isMust":"X","options":"null","parOption":[]}
+         */
+
         // 商品属性设置
-        ParameterLoader parameterLoader = new SuningParameterLoader();
+        ParameterLoader parameterLoader = new SuningParameterLoader(_attrs);
         List<ParameterLoader.Parameter> parameters = parameterLoader.loadParameters(category);
 
         List<ApplyAddRequest.Pars> parsList =new ArrayList<ApplyAddRequest.Pars>();
@@ -216,7 +242,6 @@ public class SuningShelvesService implements ShelvesService {
             logger.info("ApplyAddResponse: " + response.getBody());
             SuningResponse.SnError error = response.getSnerror();
             if ( error!=null ) {
-
                 StringBuilder content =  new StringBuilder("请求报文: \n");
                 content.append(request.getResParams()).append("\n\n");
                 content.append("响应报文:\n");
@@ -440,7 +465,7 @@ public class SuningShelvesService implements ShelvesService {
         ShelvesItem shelvesItem = null;
 
         try {
-            shelvesItem = SQLExecutor.executeQueryBean("select * from SHELVESITEM where TASKID =? and SKUCODE = ? ", ShelvesItem.class, "1589966530402", "12W3877");
+            shelvesItem = SQLExecutor.executeQueryBean("select * from SHELVESITEM where TASKID =? and SKUCODE = ? ", ShelvesItem.class, "1590027322458", "5G8354");
             suningShelvesService.shelves(shelvesItem);
         } catch (Exception e) {
             e.printStackTrace();

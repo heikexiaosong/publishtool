@@ -138,6 +138,7 @@
                                                   <Button mnemonicParsing="false" onAction="#handleImagesExportAction" text="导出图片" />
                                                   <Button mnemonicParsing="false" onAction="#handleEditSkuPerson" text="批量处理" />
                                                   <Button mnemonicParsing="false" onAction="#handleDetailEditAction" text="编 辑" />
+                                                  <Button mnemonicParsing="false" onAction="#handleExportAction" text="导出价格数据" />
                                                   <Button mnemonicParsing="false" onAction="#handleShelvesAction" text="上 架" />
                                                </buttons>
                                           </ButtonBar>
