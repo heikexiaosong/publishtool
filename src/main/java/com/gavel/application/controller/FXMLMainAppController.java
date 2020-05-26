@@ -195,7 +195,7 @@ public class FXMLMainAppController {
                                         } catch (Exception e) {
 
                                         } finally {
-                                            updateValue("["+ i +"/" + total  + "]正在导出" + task.getTitle() + "]... ");
+                                            updateValue("["+ i +"/" + total  + "][Sku " + item.getCode() + "]正在导出" + task.getTitle() + "]... ");
                                         }
                                     }
                                 } catch (Exception e) {
@@ -234,11 +234,6 @@ public class FXMLMainAppController {
                 controller.bind(service);
                 _dialogStage.showAndWait();
 
-                if ( service.isRunning() ) {
-                    service.cancel();
-                    service.reset();
-                    service = null;
-                }
             } catch (IOException e) {
                 e.printStackTrace();
             }

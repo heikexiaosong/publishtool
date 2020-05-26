@@ -176,6 +176,29 @@ public class FXMLCollectionController {
         Task task = new Task();
         boolean okClicked = showAddTaskDialog(task);
         if (okClicked) {
+
+            boolean exist = false;
+            try {
+                int count = SQLExecutor.intQuery("select count(1) from  TASK where URL = ? ",  task.getUrl());
+                exist = (count > 0);
+            } catch (Exception e) {
+
+            }
+
+            if ( exist ) {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "", new ButtonType("取消", ButtonBar.ButtonData.NO), new ButtonType("确定", ButtonBar.ButtonData.YES));
+                alert.initOwner(stage());
+                alert.setTitle("信息确认");
+                alert.setHeaderText("此页面已经采集过, 需要重新采集?");
+                alert.setContentText("标题: " + task.getTitle() + "\nURL: " + task.getUrl());
+
+                Optional<ButtonType> _buttonType = alert.showAndWait();
+
+                if(_buttonType.get().getButtonData().equals(ButtonBar.ButtonData.NO)){
+                    return;
+                }
+            }
+
             try {
                 SQLExecutor.insert(task);
                 taskTable.getItems().add(0, task);
@@ -206,6 +229,7 @@ public class FXMLCollectionController {
             FXMLTaskAddDialogController controller = loader.getController();
             controller.setDialogStage(dialogStage);
             controller.bindTask(task);
+            dialogStage.setMaximized(true);
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
 

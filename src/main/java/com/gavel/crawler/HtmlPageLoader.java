@@ -66,30 +66,22 @@ public class HtmlPageLoader {
             if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
                 try {
                     SQLExecutor.delete(cache);
+                    cache = null;
                 } catch (Exception e) {
                     System.out.println("[delete]SQLExecutor: " + url);
                 }
-                cache = null;
             }  else if ( doc.title().equalsIgnoreCase("Error") ) {
                 try {
                     SQLExecutor.delete(cache);
+                    cache = null;
                 } catch (Exception e) {
                     System.out.println("[delete]SQLExecutor: " + url);
                 }
-                cache = null;
             }
         }
 
         if ( cache == null ) {
             cache = loadSkuHtmlPage(url, loadMore, 0);
-            if ( cache!=null  && cache.getUpdatetime()==null ) {
-                cache.setUpdatetime(Calendar.getInstance().getTime());
-                try {
-                    SQLExecutor.insert(cache);
-                } catch (Exception e) {
-                    System.out.println("[insert]SQLExecutor: " + url);
-                }
-            }
         }
         return cache;
     }
@@ -110,17 +102,17 @@ public class HtmlPageLoader {
             if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
                 try {
                     SQLExecutor.delete(cache);
+                    cache = null;
                 } catch (Exception e) {
                     System.out.println("[delete]SQLExecutor: " + e.getMessage());
                 }
-                cache = null;
             }  else if ( doc.title().equalsIgnoreCase("Error") ) {
                 try {
                     SQLExecutor.delete(cache);
+                    cache = null;
                 } catch (Exception e) {
                     System.out.println("[delete]SQLExecutor: " + e.getMessage());
                 }
-                cache = null;
             }
         }
 
