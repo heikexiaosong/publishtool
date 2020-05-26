@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+<AnchorPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLGraingerSkuController">
+
+    <stylesheets>
+        <URL value="@../css/collection.css" />
+    </stylesheets>
+
+
+    <children>
+
+        <HBox prefHeight="28.0" prefWidth="200.0" spacing="10.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="400.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <CheckBox fx:id="categoryAll" mnemonicParsing="false" onAction="#handleCateALlPageAction" prefHeight="41.0" prefWidth="69.0" text="选择所有" />
+                <Label alignment="CENTER_RIGHT" prefHeight="28.0" prefWidth="57.0" text="已选择： " />
+                <Label fx:id="selectedNum" prefHeight="28.0" prefWidth="45.0" />
+            </children>
+        </HBox>
+        <ButtonBar prefHeight="30.0" prefWidth="464.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <buttons>
+                <TextField fx:id="cateKeyword" onKeyReleased="#handleKeyReleasedAction" prefHeight="22.0" />
+                <Button mnemonicParsing="false" onAction="#handleAutoMappingAction" text="自动匹配" />
+                <Button mnemonicParsing="false" onAction="#handleCateBatchMappingAction" text="批量设置" />
+            </buttons>
+        </ButtonBar>
+        <TableView fx:id="brandInfoTable" editable="true" layoutX="-12.0" layoutY="49.0" prefHeight="298.0" prefWidth="175.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="30.0">
+            <columns>
+                <TableColumn fx:id="select" prefWidth="60.0" text="选择" visible="true"> </TableColumn>
+                <TableColumn fx:id="xh" prefWidth="60.0" text="序号" />
+                <TableColumn fx:id="code" prefWidth="100.0" text="名称1" />
+                <TableColumn fx:id="name1" prefWidth="100.0" text="名称1" />
+                <TableColumn fx:id="name2" prefWidth="100.0" text="名称2" />
+                <TableColumn fx:id="skunum" prefWidth="100.0" text="产品数" />
+                <TableColumn fx:id="productnum" prefWidth="100.0" text="产品组" />
+                <TableColumn fx:id="pagenum" prefWidth="200.0" text="页数" />
+                <TableColumn fx:id="url" prefWidth="100.0" text="URL" />
+            </columns>
+        </TableView>
+    </children>
+</AnchorPane>

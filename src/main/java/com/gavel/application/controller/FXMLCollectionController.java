@@ -297,4 +297,8 @@ public class FXMLCollectionController {
         taskTable.setItems(FXCollections.observableArrayList(tasks));
 
     }
+
+    public void handleAddBrandTaskAction(ActionEvent actionEvent) {
+
+    }
 }

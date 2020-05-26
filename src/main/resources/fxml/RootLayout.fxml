@@ -27,6 +27,7 @@
           </HBox>
             <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="490.0" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                <children>
+                   <Button mnemonicParsing="false" onAction="#handlGraingerBoardAction" styleClass="titleButton" text="固安捷SKU信息" />
                    <Button mnemonicParsing="false" onAction="#handlShelvesAction" styleClass="titleButton" text="上架管理" />
                    <Button mnemonicParsing="false" onAction="#handlCollectionAction" styleClass="titleButton" text="采集任务" />
                    <Button mnemonicParsing="false" onAction="#handlSettingAction" styleClass="titleButton" text="设置" />

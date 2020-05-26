@@ -1,8 +1,8 @@
 package com.gavel.grainger;
 
 import com.gavel.HttpUtils;
-import com.gavel.database.SQLExecutor;
 import com.gavel.entity.GraingerBrand;
+import com.google.gson.Gson;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -27,13 +27,9 @@ public class GraingerBrandLoad {
 
 
         for (Element element : elements) {
-            System.out.println(element);
-
             GraingerBrand graingerBrand = new GraingerBrand();
 
             Element logo = element.selectFirst("a img");
-            System.out.println(logo.attr("data-original"));
-
             graingerBrand.setLogo(logo.attr("data-original"));
 
             Element brand = element.selectFirst("h3 a");
@@ -44,8 +40,6 @@ public class GraingerBrandLoad {
 
             Elements childrens = brand.children();
             if ( childrens==null || childrens.size() <= 0 ) {
-                System.out.println(brand.text());
-
                 graingerBrand.setName1(brand.text());
                 graingerBrand.setName2(brand.text());
 
@@ -65,17 +59,18 @@ public class GraingerBrandLoad {
             graingerBrandList.add(graingerBrand);
 
 
+            System.out.println(new Gson().toJson(graingerBrand));
             System.out.println("---");
         }
 
 
-        for (GraingerBrand graingerBrand : graingerBrandList) {
-            try {
-                SQLExecutor.insert(graingerBrand);
-            } catch (Exception e) {
-                System.out.println(graingerBrand.getName1() + ": " + e.getMessage());
-            }
-        }
+//        for (GraingerBrand graingerBrand : graingerBrandList) {
+//            try {
+//                SQLExecutor.insert(graingerBrand);
+//            } catch (Exception e) {
+//                System.out.println(graingerBrand.getName1() + ": " + e.getMessage());
+//            }
+//        }
 
 
     }

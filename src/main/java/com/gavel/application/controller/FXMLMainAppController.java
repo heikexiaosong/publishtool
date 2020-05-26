@@ -272,4 +272,23 @@ public class FXMLMainAppController {
             return false;
         }
     }
+
+    /**
+     * 固安捷SKU信息
+     * @param actionEvent
+     */
+    public void handlGraingerBoardAction(ActionEvent actionEvent) {
+        try {
+            // Load person overview.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/graingersku.fxml"));
+
+            // Set person overview into the center of root layout.
+            root.setCenter(loader.load());
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
