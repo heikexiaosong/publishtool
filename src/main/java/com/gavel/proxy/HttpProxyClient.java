@@ -62,8 +62,9 @@ public class HttpProxyClient {
             lines = Collections.EMPTY_LIST;
         }
 
+        StringBuilder msg = new StringBuilder("IPS: " + lines.size());
+
         List<Future> futures = new ArrayList<>();
-        System.out.println("IPS: " + lines.size());
         for (String line : lines) {
             final String ip = line.trim().split(":")[0];
             final int port = Integer.parseInt(line.trim().split(":")[1]);
@@ -117,7 +118,10 @@ public class HttpProxyClient {
         }
         httpClients.clear();
         httpClients.addAll(_httpClients);
-        System.out.println("有效的代理: " + httpClients.size());
+
+        msg.append("; 有效的代理: " + httpClients.size());
+
+        System.out.println("\r" + msg.toString());
     }
 
     public static HttpProxyClient getInstance() {

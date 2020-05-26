@@ -121,7 +121,7 @@ public class CrawlerExecutorService {
             boolean success = true;
             try {
                 SearchItem searchItem = searchItemList.get(i);
-                System.out.println( (i+1) + "/" + total + ". " + searchItem.getUrl() + ": " + searchItem.getSkunum());
+                System.out.println("\r" + (i+1) + "/" + total + ". " + searchItem.getUrl() + ": " + searchItem.getSkunum());
 
                 searchItem.setActual(searchItem.getSkunum());
                 if ( searchItem.getType().equalsIgnoreCase("g") ){

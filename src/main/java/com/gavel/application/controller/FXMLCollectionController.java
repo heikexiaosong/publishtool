@@ -22,6 +22,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 
 public class FXMLCollectionController {
@@ -177,12 +178,9 @@ public class FXMLCollectionController {
         if (okClicked) {
             try {
                 SQLExecutor.insert(task);
-                taskTable.getItems().add(task);
+                taskTable.getItems().add(0, task);
                 taskTable.getSelectionModel().select(task);
-
-
                 ItemSupplement.loadSearchItems(task);
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -224,6 +222,29 @@ public class FXMLCollectionController {
      * @param actionEvent
      */
     public void handleDelTaskAction(ActionEvent actionEvent) {
+
+        Task selectedTask = taskTable.getSelectionModel().getSelectedItem();
+        if ( selectedTask==null ) {
+            return;
+        }
+
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "", new ButtonType("取消", ButtonBar.ButtonData.NO), new ButtonType("确定", ButtonBar.ButtonData.YES));
+        alert.initOwner(stage());
+        alert.setTitle("删除确认");
+        alert.setHeaderText("确定删除采集任务[" + selectedTask.getTitle() +"]?");
+
+        Optional<ButtonType> _buttonType = alert.showAndWait();
+
+        if(_buttonType.get().getButtonData().equals(ButtonBar.ButtonData.YES)){
+
+            try {
+                SQLExecutor.delete(selectedTask);
+                taskTable.getItems().remove(selectedTask);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void handleSearchAction(ActionEvent actionEvent) {

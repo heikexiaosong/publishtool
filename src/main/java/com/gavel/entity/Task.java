@@ -2,6 +2,10 @@ package com.gavel.entity;
 
 import com.gavel.annotation.FieldMeta;
 import com.gavel.annotation.TableMeta;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 import java.util.Date;
 
@@ -15,18 +19,33 @@ public class Task {
         public static final String COMPLETE = "complete";
     }
 
+    private final BooleanProperty selected = new SimpleBooleanProperty(false);
+
+    public boolean isSelected() {
+        return selected.get();
+    }
+
+    public BooleanProperty selectedProperty() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected.set(selected);
+    }
+
 
     @FieldMeta(name = "ID", title = "ID", length = 32, primary = true)
-    private String id;
+    private final StringProperty id = new SimpleStringProperty();
 
     @FieldMeta(name = "TITLE", title = "任务名称", length = 50)
-    private String title;
+    private final StringProperty title = new SimpleStringProperty();
+
 
     @FieldMeta(name = "URL", title = "爬取URL", length = 1024)
-    private String url;
+    private final StringProperty url = new SimpleStringProperty();
 
     @FieldMeta(name = "REMARK", title = "说明", length = 1024)
-    private String remark;
+    private final StringProperty remark = new SimpleStringProperty();
 
     @FieldMeta(name = "PAGENUM", title = "页数")
     private int pagenum;
@@ -38,45 +57,61 @@ public class Task {
     private int skunum;
 
     @FieldMeta(name = "STATUS", title = "状态", length = 20)
-    private String status;
+    private final StringProperty status = new SimpleStringProperty();
 
     @FieldMeta(name = "UPDATETIME", title = "创建时间")
     private Date updatetime;
 
     public Task() {
-        id = String.valueOf(System.currentTimeMillis());
+        id.set(String.valueOf(System.currentTimeMillis()));
     }
 
     public String getId() {
+        return id.get();
+    }
+
+    public StringProperty idProperty() {
         return id;
     }
 
     public void setId(String id) {
-        this.id = id;
+        this.id.set(id);
     }
 
     public String getTitle() {
+        return title.get();
+    }
+
+    public StringProperty titleProperty() {
         return title;
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        this.title.set(title);
     }
 
     public String getUrl() {
+        return url.get();
+    }
+
+    public StringProperty urlProperty() {
         return url;
     }
 
     public void setUrl(String url) {
-        this.url = url;
+        this.url.set(url);
     }
 
     public String getRemark() {
+        return remark.get();
+    }
+
+    public StringProperty remarkProperty() {
         return remark;
     }
 
     public void setRemark(String remark) {
-        this.remark = remark;
+        this.remark.set(remark);
     }
 
     public int getPagenum() {
@@ -104,11 +139,15 @@ public class Task {
     }
 
     public String getStatus() {
+        return status.get();
+    }
+
+    public StringProperty statusProperty() {
         return status;
     }
 
     public void setStatus(String status) {
-        this.status = status;
+        this.status.set(status);
     }
 
     public Date getUpdatetime() {

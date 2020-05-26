@@ -4,6 +4,7 @@ import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Task;
 import com.gavel.utils.StringUtils;
+import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
@@ -50,6 +51,14 @@ public class FXMLTaskAddDialogController {
         webView.getEngine().setUserAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36");
 
         webView.getEngine().load("https://www.grainger.cn");
+
+
+        webView.getEngine().getLoadWorker().stateProperty()
+                .addListener((obs, oldValue, newValue) -> {
+                    if (newValue == Worker.State.SUCCEEDED) {
+                        address.setText(webView.getEngine().getLocation());
+                    }
+                }); // addListener()
     }
 
     @FXML
@@ -58,7 +67,7 @@ public class FXMLTaskAddDialogController {
         // TODO
         String url = webView.getEngine().getLocation();
         try {
-            HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(url, true);
+            HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(url, false);
             if ( htmlCache!=null && htmlCache.getHtml()!=null ) {
 
                 Document document = Jsoup.parse(htmlCache.getHtml());

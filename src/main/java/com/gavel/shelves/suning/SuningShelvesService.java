@@ -196,7 +196,7 @@ public class SuningShelvesService implements ShelvesService {
 
             ApplyAddRequest.ChildItem childItem = new ApplyAddRequest.ChildItem();
             childItems.add(childItem);
-
+            childItem.setBarcode("0000000000000");
 
             if ( images==null || images.size() ==0) {
                 throw  new Exception("[通子码商品]缺少商品图片");

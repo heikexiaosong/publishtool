@@ -57,7 +57,7 @@ public class HtmlPageLoader {
             try {
                 cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, url);
             } catch (Exception e) {
-                System.out.println("[executeQueryBean]SQLExecutor: " + e.getMessage());
+                System.out.println("[executeQueryBean]SQLExecutor: " + url);
             }
         }
 
@@ -67,27 +67,27 @@ public class HtmlPageLoader {
                 try {
                     SQLExecutor.delete(cache);
                 } catch (Exception e) {
-                    System.out.println("[delete]SQLExecutor: " + e.getMessage());
+                    System.out.println("[delete]SQLExecutor: " + url);
                 }
                 cache = null;
             }  else if ( doc.title().equalsIgnoreCase("Error") ) {
                 try {
                     SQLExecutor.delete(cache);
                 } catch (Exception e) {
-                    System.out.println("[delete]SQLExecutor: " + e.getMessage());
+                    System.out.println("[delete]SQLExecutor: " + url);
                 }
                 cache = null;
             }
         }
 
         if ( cache == null ) {
-            cache = DriverHtmlLoader.getInstance().loadHtmlPage(url, loadMore);
-            if ( cache!=null  ) {
+            cache = loadSkuHtmlPage(url, loadMore, 0);
+            if ( cache!=null  && cache.getUpdatetime()==null ) {
                 cache.setUpdatetime(Calendar.getInstance().getTime());
                 try {
                     SQLExecutor.insert(cache);
                 } catch (Exception e) {
-                    System.out.println("[insert]SQLExecutor: " + e.getMessage());
+                    System.out.println("[insert]SQLExecutor: " + url);
                 }
             }
         }
@@ -96,8 +96,6 @@ public class HtmlPageLoader {
 
 
     public HtmlCache loadSkuHtmlPage(String url, boolean useCache, int times) {
-
-        System.out.println("URL: " + url);
         HtmlCache cache = null;
         if ( useCache ) {
             try {

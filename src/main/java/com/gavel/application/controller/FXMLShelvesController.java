@@ -540,6 +540,7 @@ public class FXMLShelvesController {
                         String src = editTask.getSrc().trim();
                         String desc = editTask.getDest().trim();
                         item.setCmTitle(item.getCmTitle().replace(src, desc));
+                        item.setSellingPoints(item.getSellingPoints().replace(src, desc));
                     }
 
                     if ( editTask.getCodePrefix()!=null && editTask.getCodePrefix().trim().length()>0 ) {

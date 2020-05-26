@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane prefHeight="768.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLTaskSelectedController">
+   <children>
+       <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+           <buttons>
+            <Label maxWidth="57.0" minWidth="57.0" prefHeight="18.0" prefWidth="36.0" text="采集任务: " />
+            <TextField fx:id="keyword" />
+               <Button mnemonicParsing="false" onAction="#handleSearchAction" text="搜 索" />
+           </buttons>
+       </ButtonBar>
+      <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="50.0">
+        <content>
+            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="200.0">
+                <children>
+                    <TableView fx:id="skuList" prefHeight="217.0" prefWidth="389.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <columns>
+                            <TableColumn fx:id="select" prefWidth="60.0" text="选择" visible="true"> </TableColumn>
+                            <TableColumn fx:id="noCol" prefWidth="60.0" text="序号" />
+                            <TableColumn fx:id="titleCol" prefWidth="120.0" text="任务名称" />
+                            <TableColumn fx:id="urlCol" prefWidth="480.0" text="URL" />
+                            <TableColumn fx:id="pagenumCol" prefWidth="120.0" text="页数" />
+                            <TableColumn fx:id="productnumCol" prefWidth="140.0" text="产品组" />
+                            <TableColumn fx:id="skunumCol" prefWidth="140.0" text="SKU数" />
+                            <TableColumn fx:id="statusCol" prefWidth="140.0" text="状态" />
+                        </columns>
+                    </TableView>
+                </children>
+            </AnchorPane>
+        </content>
+      </ScrollPane>
+
+      <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
+        <buttons>
+            <Button mnemonicParsing="false" onAction="#handleCancel" text="取 消" />
+            <Button mnemonicParsing="false" onAction="#handleOk" text="确 定" />
+        </buttons>
+      </ButtonBar>
+   </children>
+</AnchorPane>
