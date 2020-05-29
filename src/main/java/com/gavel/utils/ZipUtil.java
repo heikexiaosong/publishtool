@@ -2,6 +2,8 @@ package com.gavel.utils;
 
 import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.entity.HtmlCache;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -64,11 +66,9 @@ public class ZipUtil {
 
       HtmlCache cache = HtmlPageLoader.getInstance().loadHtmlPage("https://www.grainger.cn/u-10H5595.html", true);
 
+      Document doc = Jsoup.parse(cache.getHtml());
 
-
-
-
-    System.out.println("解压缩：" + cache.getHtml());
+      System.out.println(doc.selectFirst("html").html());
 
   }
 }

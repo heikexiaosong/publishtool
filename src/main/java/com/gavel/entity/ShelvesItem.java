@@ -50,6 +50,9 @@ public class ShelvesItem {
     @FieldMeta(name = "SELLINGPOINTS", title = "商品卖点", length = 100)
     private final StringProperty sellingPoints= new SimpleStringProperty();
 
+    @FieldMeta(name = "DELIVERY", title = "预计发货日", length = 100)
+    private final StringProperty delivery= new SimpleStringProperty();
+
     @FieldMeta(name = "CATEGORYCODE", title = "类目", length = 64)
     private final StringProperty categoryCode= new SimpleStringProperty();
 
@@ -320,5 +323,17 @@ public class ShelvesItem {
 
     public void setUpdatetime(Date updatetime) {
         this.updatetime = updatetime;
+    }
+
+    public String getDelivery() {
+        return delivery.get();
+    }
+
+    public StringProperty deliveryProperty() {
+        return delivery;
+    }
+
+    public void setDelivery(String delivery) {
+        this.delivery.set(delivery);
     }
 }

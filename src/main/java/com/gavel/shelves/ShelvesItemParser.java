@@ -192,6 +192,7 @@ public class ShelvesItemParser {
         String model = attrs.get(2).text();
         String number = attrs.get(3).text();
         shelvesItem.setModel(model);
+        shelvesItem.setDelivery(attrs.get(4).text());
 
 
         String _title = title(title.text(), brandCn.text(), brandEle.text(), model, number);

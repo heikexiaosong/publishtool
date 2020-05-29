@@ -97,6 +97,8 @@ public class FXMLShelvesController {
     @FXML
     private TableColumn<ShelvesItem, String> cmTitleCol;
     @FXML
+    private TableColumn<ShelvesItem, String> deliveryCol;
+    @FXML
     private TableColumn<ShelvesItem, String> graingerbrandnameCol;
     @FXML
     private TableColumn<ShelvesItem, String> graingercategorynameCol;
@@ -155,6 +157,7 @@ public class FXMLShelvesController {
         brand.getSelectionModel().select(0);
 
         noCol.setCellFactory(new IDCell<>());
+        deliveryCol.setCellValueFactory(cellData -> cellData.getValue().deliveryProperty());
         cmTitleCol.setCellValueFactory(cellData -> cellData.getValue().cmTitleProperty());
         codeCol.setCellValueFactory(cellData -> cellData.getValue().itemCodeProperty());
         graingerbrandnameCol.setCellValueFactory(cellData -> cellData.getValue().brandnameProperty());
