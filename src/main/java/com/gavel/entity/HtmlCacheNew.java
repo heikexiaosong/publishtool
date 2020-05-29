@@ -5,14 +5,17 @@ import com.gavel.annotation.TableMeta;
 
 import java.util.Date;
 
-@TableMeta(name = "HTMLCACHE", title = "html缓存")
-public class HtmlCache {
+@TableMeta(name = "HTML_CACHE", title = "html缓存")
+public class HtmlCacheNew {
 
-    @FieldMeta(name = "URL", title = "URL", length = 1024, primary = true)
+    @FieldMeta(name = "ID", title = "ID", length = 40, primary = true)
+    private String id;
+
+    @FieldMeta(name = "URL", title = "URL", length = 1024)
     private String url;
 
-    @FieldMeta(name = "HTML", title = "压缩文本")
-    private String html;
+    @FieldMeta(name = "COMPRESS", title = "压缩文本")
+    private String compress;
 
     @FieldMeta(name = "CONTENTLEN", title = "内容长度")
     private int contentlen;
@@ -20,6 +23,14 @@ public class HtmlCache {
     @FieldMeta(name = "UPDATETIME", title = "更新时间")
     private Date updatetime;
 
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getUrl() {
         return url;
@@ -29,12 +40,12 @@ public class HtmlCache {
         this.url = url;
     }
 
-    public String getHtml() {
-        return html;
+    public String getCompress() {
+        return compress;
     }
 
-    public void setHtml(String html) {
-        this.html = html;
+    public void setCompress(String compress) {
+        this.compress = compress;
     }
 
     public int getContentlen() {

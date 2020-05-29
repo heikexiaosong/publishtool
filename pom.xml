@@ -197,7 +197,7 @@
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
 							<mainClass>
-                                com.gavel.application.StartApp
+                                com.gavel.MongoTest
                             </mainClass>
 						</manifest>
 						<manifestEntries>

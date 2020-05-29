@@ -2,11 +2,10 @@ package com.gavel;
 
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
+import com.gavel.entity.HtmlCacheNew;
+import com.gavel.utils.MD5Utils;
+import com.gavel.utils.StringUtils;
 import com.gavel.utils.ZipUtil;
-import com.mongodb.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,13 +14,6 @@ import java.util.List;
 public class MongoTest {
 
     public static void main(String[] args) {
-        //连接到 mongodb 服务
-        MongoClient mongoClient = new MongoClient("localhost", 27017);
-
-        //连接到数据库
-        MongoDatabase mongoDatabase = mongoClient.getDatabase("jingsu");
-
-        MongoCollection<Document> collection = mongoDatabase.getCollection("htmlcache");
 
         final  int size = 500;
         int offset = 0;
@@ -40,11 +32,35 @@ public class MongoTest {
                 for (int i = 0; i < htmlCaches.size(); i++) {
                     HtmlCache htmlCache =  htmlCaches.get(i);
 
-                    String text = htmlCache.getHtml();
+                    if (StringUtils.isBlank(htmlCache.getHtml())) {
+                        continue;
+                    }
+
+                    String url = htmlCache.getUrl();
+
+                    url = url.replace("https://www.grainger.cn/","");
+                    if ( !url.startsWith("g-") && !url.startsWith("u-") ) {
+
+                        try {
+                            SQLExecutor.delete(htmlCache);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        continue;
+
+                    }
+
+
+                    HtmlCacheNew cache = new HtmlCacheNew();
+                    cache.setId(MD5Utils.md5Hex(htmlCache.getUrl().toLowerCase().trim()));
+                    cache.setUrl(htmlCache.getUrl());
+                    cache.setContentlen(htmlCache.getContentlen());
                     try {
-                        htmlCache.setCompress(ZipUtil.compress(text));
-                        htmlCache.setHtml(null);
-                        SQLExecutor.update(htmlCache);
+                        cache.setCompress(ZipUtil.compress(htmlCache.getHtml()));
+                        SQLExecutor.insert(cache);
+
+                        SQLExecutor.delete(htmlCache);
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (Exception e) {
@@ -62,10 +78,6 @@ public class MongoTest {
 
             offset += size;
         }
-
-
-
-
 
     }
 }
