@@ -80,7 +80,7 @@ public class FXMLTaskSelectedController {
                 (observable, oldValue, newValue) -> updateStatus(newValue));
 
         try {
-            items = SQLExecutor.executeQueryBeanList("select * from TASK where STATUS = 'success' ", Task.class);
+            items = SQLExecutor.executeQueryBeanList("select * from TASK where STATUS = 'success' order by UPDATETIME desc ", Task.class);
         } catch (Exception e) {
             e.printStackTrace();
             items = Collections.EMPTY_LIST;

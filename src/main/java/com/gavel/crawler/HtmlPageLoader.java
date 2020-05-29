@@ -144,4 +144,8 @@ public class HtmlPageLoader {
         }
         return cache;
     }
+
+    public static void main(String[] args) throws Exception {
+        getInstance().loadHtmlPage("https://www.grainger.cn/u-10H5595.html11", true);
+    }
 }

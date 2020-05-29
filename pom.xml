@@ -197,7 +197,7 @@
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
 							<mainClass>
-                                com.gavel.application.MainApp
+                                com.gavel.application.StartApp
                             </mainClass>
 						</manifest>
 						<manifestEntries>
