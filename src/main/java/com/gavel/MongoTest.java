@@ -2,12 +2,13 @@ package com.gavel;
 
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
-import com.gavel.utils.StringUtils;
+import com.gavel.utils.ZipUtil;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class MongoTest {
         while (true) {
             List<HtmlCache> htmlCaches = new ArrayList<>();
             try {
-                htmlCaches =  SQLExecutor.executeQueryBeanList(" select URL from HTMLCACHE order by URL limit ?, ? ", HtmlCache.class, offset, size);
+                htmlCaches =  SQLExecutor.executeQueryBeanList(" select * from HTMLCACHE order by URL limit ?, ? ", HtmlCache.class, offset, size);
             } catch (Exception e) {
 
                 e.printStackTrace();
@@ -39,25 +40,17 @@ public class MongoTest {
                 for (int i = 0; i < htmlCaches.size(); i++) {
                     HtmlCache htmlCache =  htmlCaches.get(i);
 
+                    String text = htmlCache.getHtml();
                     try {
-                        htmlCache =  SQLExecutor.executeQueryBean(" select URL, HTML from HTMLCACHE where URL = ? ", HtmlCache.class, htmlCache.getUrl());
+                        htmlCache.setCompress(ZipUtil.compress(text));
+                        htmlCache.setHtml(null);
+                        SQLExecutor.update(htmlCache);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     } catch (Exception e) {
-
                         e.printStackTrace();
                     }
 
-                    if ( htmlCache==null || StringUtils.isBlank(htmlCache.getHtml())) {
-                        continue;
-                    }
-
-
-                    //创建文档
-                    Document document = new Document("url", htmlCache.getUrl())
-                            .append("html", htmlCache.getHtml())
-                            .append("length",  htmlCache.getContentlen());
-
-
-                    collection.insertOne(document);
 
                     System.out.print("\r" + i + "/" + htmlCaches.size() + ": " + htmlCache.getUrl());
                 }

@@ -65,19 +65,10 @@ public class ZipUtil {
       HtmlCache cache = HtmlPageLoader.getInstance().loadHtmlPage("https://www.grainger.cn/u-10H5595.html11", true);
 
 
-  String str=cache.getHtml();
 
 
 
-  System.out.println("原长度："+str.length()); 
-
-
-
-  System.out.println("压缩后："+ZipUtil.compress(str).length()); 
-
-
-
-    System.out.println("解压缩："+ZipUtil.uncompress(ZipUtil.compress(str)));
+    System.out.println("解压缩：" + cache.getHtml());
 
   }
 }
