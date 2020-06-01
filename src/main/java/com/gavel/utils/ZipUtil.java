@@ -1,6 +1,7 @@
 package com.gavel.utils;
 
 import com.gavel.crawler.HtmlPageLoader;
+import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -65,6 +66,8 @@ public class ZipUtil {
 
 
       HtmlCache cache = HtmlPageLoader.getInstance().loadHtmlPage("https://www.grainger.cn/u-10H5595.html", true);
+
+      SQLExecutor.insert(cache);
 
       Document doc = Jsoup.parse(cache.getHtml());
 

@@ -132,15 +132,6 @@ public class HtmlPageLoader {
             } catch (Exception e) {
                 System.out.println("[HttpUtils]: " + e.getMessage());
             }
-
-            if ( cache!=null  ) {
-                cache.setUpdatetime(Calendar.getInstance().getTime());
-                try {
-                    SQLExecutor.insert(cache);
-                } catch (Exception e) {
-                    System.out.println("[insert]SQLExecutor: " + e.getMessage());
-                }
-            }
         }
         return cache;
     }

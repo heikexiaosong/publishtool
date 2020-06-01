@@ -2,6 +2,7 @@ package com.gavel.crawler;
 
 import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
+import com.gavel.entity.BrandInfo;
 import com.gavel.entity.Item;
 import com.gavel.entity.SearchItem;
 import com.gavel.entity.Task;
@@ -91,6 +92,51 @@ public class CrawlerExecutorService {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+
+
+        if ( taskQueue.isEmpty() ) {
+
+            try {
+                List<BrandInfo> brandInfos = SQLExecutor.executeQueryBeanList("select * from BRAND_INFO order by SKUNUM desc", BrandInfo.class);
+                if ( brandInfos!=null && brandInfos.size() > 0 ) {
+                    for (BrandInfo brandInfo : brandInfos) {
+
+                        String url = brandInfo.getUrl();
+
+                        try {
+                            Task task = SQLExecutor.executeQueryBean("select * from TASK  where URL = ?", Task.class, url);
+                            if ( task!=null ) {
+                                continue;
+                            }
+
+                            task = new Task();
+
+                            task.setUrl(url);
+                            task.setTitle(brandInfo.getName1() + " " + ( brandInfo.getName2()==null ? "" : brandInfo.getName2() ));
+                            task.setStatus("init");
+
+                            task.setPagenum(brandInfo.getPagenum());
+                            task.setProductnum(brandInfo.getProductnum());
+                            task.setSkunum(brandInfo.getSkunum());
+
+                            try {
+                                SQLExecutor.insert(task);
+                                taskQueue.put(task);
+                            } catch (Exception e) {
+                                System.out.println("[Task]" +brandInfo.getName1() + "任务生成失败");
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
 
 

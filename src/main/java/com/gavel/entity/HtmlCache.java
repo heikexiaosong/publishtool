@@ -2,6 +2,7 @@ package com.gavel.entity;
 
 import com.gavel.annotation.FieldMeta;
 import com.gavel.annotation.TableMeta;
+import com.gavel.database.SQLExecutor;
 
 import java.util.Date;
 
@@ -51,5 +52,9 @@ public class HtmlCache {
 
     public void setUpdatetime(Date updatetime) {
         this.updatetime = updatetime;
+    }
+
+    public static void main(String[] args) throws Exception {
+        SQLExecutor.createTable(HtmlCache.class);
     }
 }

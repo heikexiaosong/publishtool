@@ -5,6 +5,7 @@ import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.BrandInfo;
 import com.gavel.entity.HtmlCache;
+import com.gavel.entity.Task;
 import com.gavel.utils.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -92,12 +93,25 @@ public class SkuNumber {
     public static void main(String[] args) throws Exception {
 
 
+        if ( args.length == 0 ) {
+            return;
+        }
+
+        if ( "1".equalsIgnoreCase(args[0]) ) {
+            loadBrandInfo();
+        } else if ( "2".equalsIgnoreCase(args[0]) ) {
+            updateBrandInfo();
+        } else if ( "3".equalsIgnoreCase(args[0]) ) {
+            loadBrandInfo();
+            updateBrandInfo();
+        }
 
         //
 
-       //  loadBrandInfo();
+       // loadBrandInfo();
 
-        updateBrandInfo();
+
+
 
 
 
@@ -130,8 +144,8 @@ public class SkuNumber {
                         Element total = document.selectFirst("font.total");
                         System.out.println("产品组: " + cpz.text() + "; 产品: " + total.text());
 
-
                         brandInfo.setProductnum(Integer.parseInt(cpz.text()));
+                        brandInfo.setSkunum(Integer.parseInt(total.text()));
 
                         int pageCur = 0;
                         int pageTotal = 0;
@@ -145,6 +159,25 @@ public class SkuNumber {
                         System.out.println("总页数: " + pageTotal);
 
                         brandInfo.setPagenum(pageTotal);
+
+
+                        Task task = new Task();
+
+                        task.setUrl(url);
+                        task.setTitle(document.title());
+                        task.setStatus("init");
+
+                        task.setPagenum(pageTotal);
+                        task.setProductnum(brandInfo.getProductnum());
+                        task.setSkunum(brandInfo.getSkunum());
+
+                        try {
+                            SQLExecutor.insert(task);
+                        } catch (Exception e) {
+                            System.out.println("[Task]" +brandInfo.getName1() + "任务生成失败");
+                        }
+
+                        Thread.sleep(100);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
