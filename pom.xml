@@ -141,7 +141,7 @@
 
 
 	<build>
-		<finalName>publishtool</finalName>
+		<finalName>CrawlerApp</finalName>
 
 		<resources>
 			<resource>
@@ -197,7 +197,7 @@
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
 							<mainClass>
-                                com.gavel.application.MainApp
+                                com.gavel.application.CrawlerApp
                             </mainClass>
 						</manifest>
 						<manifestEntries>

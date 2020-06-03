@@ -50,6 +50,9 @@ public class BrandInfo {
     @FieldMeta(name = "SKUNUM", title = "产品数")
     private int skunum;
 
+    @FieldMeta(name = "FLAG", title = "标记")
+    private  final StringProperty flag = new SimpleStringProperty();
+
 
     public String getCode() {
         return code.get();
@@ -133,6 +136,18 @@ public class BrandInfo {
 
     public void setSkunum(int skunum) {
         this.skunum = skunum;
+    }
+
+    public String getFlag() {
+        return flag.get();
+    }
+
+    public StringProperty flagProperty() {
+        return flag;
+    }
+
+    public void setFlag(String flag) {
+        this.flag.set(flag);
     }
 
     public static void main(String[] args) {

@@ -98,7 +98,7 @@ public class CrawlerExecutorService {
         if ( taskQueue.isEmpty() ) {
 
             try {
-                List<BrandInfo> brandInfos = SQLExecutor.executeQueryBeanList("select * from BRAND_INFO order by SKUNUM desc", BrandInfo.class);
+                List<BrandInfo> brandInfos = SQLExecutor.executeQueryBeanList("select * from BRAND_INFO where FLAG is null or FLAG <> 'X' order by SKUNUM desc", BrandInfo.class);
                 if ( brandInfos!=null && brandInfos.size() > 0 ) {
                     for (BrandInfo brandInfo : brandInfos) {
 

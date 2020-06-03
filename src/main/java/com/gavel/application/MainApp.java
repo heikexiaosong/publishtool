@@ -1,6 +1,5 @@
 package com.gavel.application;
 
-import com.gavel.crawler.CrawlerExecutorService;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -79,9 +78,6 @@ public class MainApp extends Application {
     }
 
     public static void main(String[] args) {
-
-        CrawlerExecutorService.getInstance().start();
-
         launch(args);
     }
 }
