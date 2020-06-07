@@ -11,6 +11,7 @@ import com.suning.api.SuningResponse;
 import com.suning.api.entity.selfmarket.ApplyAddRequest;
 import com.suning.api.entity.selfmarket.ApplyAddResponse;
 import com.suning.api.exception.SuningApiException;
+import org.apache.commons.codec.binary.Base64;
 import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -232,7 +233,16 @@ public class SuningShelvesService implements ShelvesService {
         } catch (Exception e) {
             System.out.println("[" + item.getItemCode() + "]生成商品详情异常: " + e.getMessage());
         }
+
         request.setIntroduction(introduction); // 商品介绍
+
+        if ( StringUtils.isNotBlank(item.getSrc()) ) {
+            byte[] datas = Base64.decodeBase64(introduction.getBytes("UTF8"));
+            String _introduction = new String(datas, "UTF8");
+            _introduction = _introduction.replace(item.getSrc(), item.getDest());
+            request.setIntroduction(Base64.encodeBase64String(_introduction.getBytes("UTF8"))); // 商品介绍
+        }
+
 
         //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
         request.setCheckParam(true);

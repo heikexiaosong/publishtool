@@ -543,7 +543,11 @@ public class FXMLShelvesController {
                         String src = editTask.getSrc().trim();
                         String desc = editTask.getDest().trim();
                         item.setCmTitle(item.getCmTitle().replace(src, desc));
-                        item.setSellingPoints(item.getSellingPoints().replace(src, desc));
+                        if ( editTask.isCkALl() ) {
+                            item.setSellingPoints(item.getSellingPoints().replace(src, desc));
+                            item.setSrc(editTask.getSrc());
+                            item.setDest(editTask.getDest());
+                        }
                     }
 
                     if ( editTask.getCodePrefix()!=null && editTask.getCodePrefix().trim().length()>0 ) {
@@ -1282,6 +1286,8 @@ public class FXMLShelvesController {
 
         private Brand brand;
 
+        private boolean ckALl;
+
         public String getPrefix() {
             return prefix;
         }
@@ -1344,6 +1350,14 @@ public class FXMLShelvesController {
 
         public void setBrand(Brand brand) {
             this.brand = brand;
+        }
+
+        public boolean isCkALl() {
+            return ckALl;
+        }
+
+        public void setCkALl(boolean ckALl) {
+            this.ckALl = ckALl;
         }
     }
 }

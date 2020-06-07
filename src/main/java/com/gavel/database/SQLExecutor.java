@@ -277,7 +277,7 @@ public class SQLExecutor {
 
 
     public static void main(String[] args) throws Exception {
-//        createTable(Brand.class);
+//        createTable(JDBrand.class);
 //        createTable(Category.class);
         createTable(GraingerBrand.class);
 //        createTable(GraingerCategory.class);

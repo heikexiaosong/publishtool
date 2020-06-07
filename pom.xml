@@ -63,6 +63,20 @@
 		</dependency>
 
 		<dependency>
+			<groupId>com.jd</groupId>
+			<artifactId>open-api-sdk</artifactId>
+			<version>2.0</version>
+			<scope>system</scope>
+			<systemPath>${basedir}\lib\open-api-sdk-2.0.jar</systemPath> <!-- ${basedir} 是当前项目里的路径和pom.xml同级的路径-->
+		</dependency>
+
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.9.13</version>
+        </dependency>
+
+		<dependency>
 			<groupId>org.opencv</groupId>
 			<artifactId>opencv-430</artifactId>
 			<version>1.0.0</version>

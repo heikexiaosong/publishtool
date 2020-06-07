@@ -89,6 +89,12 @@ public class ShelvesItem {
     @FieldMeta(name = "UPDATETIME", title = "更新时间")
     private Date updatetime;
 
+    @FieldMeta(name = "SRC", title = "替换原")
+    private String src;
+
+    @FieldMeta(name = "DEST", title = "替换目标")
+    private String dest;
+
     public String getId() {
         return id.get();
     }
@@ -335,5 +341,21 @@ public class ShelvesItem {
 
     public void setDelivery(String delivery) {
         this.delivery.set(delivery);
+    }
+
+    public String getSrc() {
+        return src;
+    }
+
+    public void setSrc(String src) {
+        this.src = src;
+    }
+
+    public String getDest() {
+        return dest;
+    }
+
+    public void setDest(String dest) {
+        this.dest = dest;
     }
 }
