@@ -11,7 +11,10 @@ import java.util.List;
 @TableMeta(name = "ITEMPARAMETER", title = "类目参数")
 public class Itemparameter {
 
-    @FieldMeta(name = "CATEGORYCODE", title = "类目编码", length = 32, primary = true)
+    @FieldMeta(name = "ID", title = "ID", length = 32, primary = true)
+    private String id;
+
+    @FieldMeta(name = "CATEGORYCODE", title = "类目编码", length = 32)
     private String categoryCode;
 
     @FieldMeta(name = "SUPPLIERCODE", title = "供应商编码", length = 32)
@@ -72,6 +75,14 @@ public class Itemparameter {
         public void setParOptionDesc(String parOptionDesc) {
             this.parOptionDesc = parOptionDesc;
         }
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getSupplierCode() {

@@ -1150,7 +1150,20 @@ public class FXMLSettingController {
 
                     for (ItemparametersQueryResponse.ItemparametersQuery item : response.getSnbody().getItemparametersQueries()) {
 
-                        Itemparameter itemparameter = new Itemparameter();
+                        Itemparameter itemparameter = null;
+
+                        String id = MD5Utils.md5Hex(shopid + "_" + categoryCode.trim() + "_" + item.getParCode());
+
+
+                        try {
+                            itemparameter = SQLExecutor.executeQueryBean("select * from ITEMPARAMETER where ID = ?", Itemparameter.class, id);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        if ( itemparameter==null ) {
+                            itemparameter = new Itemparameter();
+                        }
 
                         itemparameter.setCategoryCode(categoryCode.trim());
                         itemparameter.setSupplierCode(shopid);
@@ -1166,19 +1179,29 @@ public class FXMLSettingController {
 
                         System.out.println(new Gson().toJson(item));
 
-                        if ( item.getParOption()!=null &&  item.getParOption().size() == 1 ) {
-                            ItemparametersQueryResponse.ParOption option = item.getParOption().get(0);
-                            itemparameter.setParam(option.getParOptionCode());
-                            if (StringUtils.isBlank(option.getParOptionCode())) {
-                                itemparameter.setParam(option.getParOptionDesc());
+                        if ( StringUtils.isBlank(itemparameter.getParam()) ) {
+                            if ( item.getParOption()!=null &&  item.getParOption().size() == 1 ) {
+                                ItemparametersQueryResponse.ParOption option = item.getParOption().get(0);
+                                itemparameter.setParam(option.getParOptionCode());
+                                if (StringUtils.isBlank(option.getParOptionCode())) {
+                                    itemparameter.setParam(option.getParOptionDesc());
+                                }
                             }
                         }
 
-
-                        try {
-                            SQLExecutor.insert(itemparameter);
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        if ( StringUtils.isBlank(itemparameter.getId()) ) {
+                            itemparameter.setId(id);
+                            try {
+                                SQLExecutor.insert(itemparameter);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            try {
+                                SQLExecutor.insert(itemparameter);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }

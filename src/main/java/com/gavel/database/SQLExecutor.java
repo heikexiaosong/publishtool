@@ -1,6 +1,7 @@
 package com.gavel.database;
 
 import com.gavel.annotation.FieldMeta;
+import com.gavel.annotation.PartitionMeta;
 import com.gavel.annotation.TableMeta;
 import com.gavel.entity.BrandMapping;
 import com.gavel.entity.GraingerBrand;
@@ -48,6 +49,10 @@ public class SQLExecutor {
     }
 
     public static void insert(Object record) throws Exception {
+        insert(record, null);
+    }
+
+    public static void insert(Object record, String suffix) throws Exception {
 
         if ( record==null ){
             return;
@@ -61,6 +66,13 @@ public class SQLExecutor {
         }
 
         String table = tableMeta.name();
+
+
+        PartitionMeta partitionMeta = (PartitionMeta)clz.getAnnotation(PartitionMeta.class);
+        if ( suffix!=null && tableMeta!=null ){
+            table = table + "_" + suffix;
+        }
+
         // INSERT INTO jingsu.itemparameter (CATEGORYCODE, PARATEMPLATECODE, PARATEMPLATEDESC, PARCODE, PARNAME, PARTYPE, PARUNIT, ISMUST, DATATYPE, OPTIONS) VALUES ('R9002886', 'basic', '基本参数模板', 'cmModel', '商品型号', '3', '', 'X', null, 'null');
         StringBuilder builder = new StringBuilder("INSERT INTO ");
         builder.append(table).append(" (");
