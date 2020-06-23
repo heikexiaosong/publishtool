@@ -1,13 +1,19 @@
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.HtmlCache;
 import com.gavel.entity.PHtmlCache;
 import com.gavel.utils.MD5Utils;
+import com.gavel.utils.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class AlertHtmlCache {
+
+    private static ExecutorService executor = Executors.newFixedThreadPool(50);
 
     public static void main(String[] args) throws Exception {
 
@@ -17,34 +23,63 @@ public class AlertHtmlCache {
 
         int total = 0;
 
-       List<HtmlCache> items = SQLExecutor.executeQueryBeanList("select URL from HTMLCACHE limit ? ", HtmlCache.class, PAGE_SIZE);
+       List<PHtmlCache> items = SQLExecutor.executeQueryBeanList("select * from HTMLCACHE limit ? ", PHtmlCache.class, PAGE_SIZE);
 
        while ( items!=null && items.size()>0 ) {
-           System.out.println(items.size());
+           System.out.print(items.size());
 
            total += items.size();
 
 
-           for (HtmlCache item : items) {
-               PHtmlCache pHtmlCache = SQLExecutor.executeQueryBean("select * from HTMLCACHE where URL = ? ", PHtmlCache.class, item.getUrl());
+           final List<Future> futures = new ArrayList<>();
 
-               pHtmlCache.setId(MD5Utils.md5Hex(item.getUrl()));
+           for (final PHtmlCache item : items) {
 
-               Document doc = Jsoup.parse(pHtmlCache.getHtml());
-               doc.select("script").remove();
-               pHtmlCache.setHtml(doc.outerHtml());
+               futures.clear();
+                   Future<?>  future = executor.submit(new Runnable() {
+                       @Override
+                       public void run() {
+                               try {
+                                   item.setId(MD5Utils.md5Hex(item.getUrl()));
 
+                                   String suffix =  item.getId().substring(item.getId().length()-1);
 
-               pHtmlCache.setContentlen(pHtmlCache.getHtml().length());
-               SQLExecutor.insert(pHtmlCache, pHtmlCache.getId().substring(pHtmlCache.getId().length()-1));
+                                   PHtmlCache exist = SQLExecutor.executeQueryBean("select * from HTMLCACHE_" + StringUtils.trim(suffix) + " where ID = ? ", PHtmlCache.class, item.getId());
+                                   if ( exist==null ) {
+                                       Document doc = Jsoup.parse(item.getHtml());
+                                       doc.select("script").remove();
+                                       item.setHtml(doc.outerHtml());
 
-               SQLExecutor.delete(item);
+                                       item.setContentlen(item.getHtml().length());
+                                       SQLExecutor.insert(item, item.getId().substring(item.getId().length()-1));
+                                   } else {
+                                       if ( item.getUrl().equalsIgnoreCase(exist.getUrl()) ) {
+
+                                       } else {
+                                           System.out.println("MD5 Conflict" + exist.getUrl() + " ==> " + item.getUrl());
+                                       }
+                                   }
+
+                                   SQLExecutor.execute("DELETE from HTMLCACHE where  URL = ?", item.getUrl());
+                               } catch (Exception e) {
+                                   e.printStackTrace();
+                               }
+                       }
+                   });
+
+                   futures.add(future);
 
            }
 
-           System.out.println("total: " + total);
+           for (Future future : futures) {
+               future.get();
+           }
 
-           items = SQLExecutor.executeQueryBeanList("select URL from HTMLCACHE limit ? ", HtmlCache.class, PAGE_SIZE);
+
+
+           System.out.println(" ==> total: " + total);
+
+           items = SQLExecutor.executeQueryBeanList("select * from HTMLCACHE limit ? ", PHtmlCache.class, PAGE_SIZE);
        }
 
 

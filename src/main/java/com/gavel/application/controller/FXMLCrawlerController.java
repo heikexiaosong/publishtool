@@ -3,14 +3,12 @@ package com.gavel.application.controller;
 
 import com.gavel.application.DataPagination;
 import com.gavel.application.MainApp;
+import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.crawler.ItemSupplement;
 import com.gavel.crawler.ProductPageLoader;
 import com.gavel.crawler.SkuPageLoader;
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.BrandInfo;
-import com.gavel.entity.Item;
-import com.gavel.entity.SearchItem;
-import com.gavel.entity.Task;
+import com.gavel.entity.*;
 import com.gavel.utils.StringUtils;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -24,8 +22,13 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -210,21 +213,61 @@ public class FXMLCrawlerController {
                             task.setTitle(brandInfo.getName1() + " " + ( brandInfo.getName2()==null ? "" : brandInfo.getName2() ));
                             task.setStatus("init");
 
-                            task.setPagenum(brandInfo.getPagenum());
-                            task.setProductnum(brandInfo.getProductnum());
-                            task.setSkunum(brandInfo.getSkunum());
+
+
                             try {
-                                SQLExecutor.insert(task);
-                                taskTable.getItems().add(0, task);
+                                HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(url, false);
+                                if ( htmlCache!=null && htmlCache.getHtml()!=null ) {
 
-                                ItemSupplement.loadSearchItems(task);
+                                    Document document = Jsoup.parse(htmlCache.getHtml());
 
-                                taskQueue.put(task);
-                                brandInfo.setFlag("X");
-                                SQLExecutor.update(brandInfo);
+                                    task.setTitle(document.title());
+
+                                    Element cpz = document.selectFirst("font.cpz");
+                                    Element total = document.selectFirst("font.total");
+                                    System.out.println("产品组: " + cpz.text() + "; 产品: " + total.text());
+
+                                    task.setProductnum(Integer.parseInt(cpz.text()));
+                                    task.setSkunum(Integer.parseInt(total.text()));
+
+                                    int pageCur = 0;
+                                    int pageTotal = 0;
+                                    Elements labels = document.select("div.pagination > label");
+                                    if ( labels.size()==2 ) {
+                                        pageCur = Integer.parseInt(labels.get(0).text());
+                                        pageTotal = Integer.parseInt(labels.get(1).text());
+                                    }
+
+                                    System.out.println("当前页: " + pageCur);
+                                    System.out.println("总页数: " + pageTotal);
+
+                                    task.setPagenum(pageTotal);
+
+
+                                    task.setTitle(document.title());
+                                    task.setUpdatetime(Calendar.getInstance().getTime());
+
+
+                                    try {
+                                        SQLExecutor.insert(task);
+                                        taskTable.getItems().add(0, task);
+
+                                        ItemSupplement.loadSearchItems(task);
+
+                                        taskQueue.put(task);
+                                        brandInfo.setFlag("X");
+                                        SQLExecutor.update(brandInfo);
+                                    } catch (Exception e) {
+                                        System.out.println("[Task]" +brandInfo.getName1() + "任务生成失败");
+                                    }
+
+                                }
                             } catch (Exception e) {
-                                System.out.println("[Task]" +brandInfo.getName1() + "任务生成失败");
+                                e.printStackTrace();
                             }
+
+
+
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
