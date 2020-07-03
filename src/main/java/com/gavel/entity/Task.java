@@ -14,6 +14,7 @@ public class Task {
 
 
     public static class Status {
+        public static final String READY = "ready";
         public static final String INIT = "init";
         public static final String RUNNING = "running";
         public static final String COMPLETE = "complete";
@@ -61,6 +62,10 @@ public class Task {
 
     @FieldMeta(name = "UPDATETIME", title = "创建时间")
     private Date updatetime;
+
+    @FieldMeta(name = "TYPE", title = "类型", length = 20)
+    private final StringProperty type = new SimpleStringProperty();
+
 
     public Task() {
         id.set(String.valueOf(System.currentTimeMillis()));
@@ -156,5 +161,17 @@ public class Task {
 
     public void setUpdatetime(Date updatetime) {
         this.updatetime = updatetime;
+    }
+
+    public String getType() {
+        return type.get();
+    }
+
+    public StringProperty typeProperty() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type.set(type);
     }
 }

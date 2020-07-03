@@ -702,7 +702,8 @@ public class ShelvesItemParser {
                 if ( src.width()!=800 || src.height()!=800 ) {
                     Imgproc.resize(src, src, new Size(800, 800));
                 }
-                Imgproc.circle(src, new Point(src.width()-images.size(), src.height()-images.size()),  2, new Scalar(238, 238, 238));
+                Imgproc.putText(src, Integer.toString(images.size()), new Point(src.width()-20, src.height()-10), 0, 1.0, new Scalar(220,220,220));
+                //Imgproc.circle(src, new Point(src.width()-images.size(), src.height()-images.size()),  2, new Scalar(238, 238, 238));
                 Imgcodecs.imwrite(imageFile.getAbsolutePath(), src);
 
 

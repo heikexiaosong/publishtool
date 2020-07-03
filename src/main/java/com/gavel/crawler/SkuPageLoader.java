@@ -3,8 +3,10 @@ package com.gavel.crawler;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Item;
+import com.gavel.entity.PHtmlCache;
 import com.gavel.entity.SearchItem;
 import com.gavel.grainger.StringUtils;
+import com.gavel.utils.MD5Utils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -37,28 +39,50 @@ public class SkuPageLoader {
             }
 
             Document doc = null;
-            HtmlCache cache = SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, searchItem.getUrl());
-            if ( cache != null && cache.getHtml()!=null ) {
-                doc = Jsoup.parse(cache.getHtml());
-                if ( doc.title().equalsIgnoreCase("403 Forbidden") ) {
-                    SQLExecutor.execute("delete from htmlcache  where url = ? ", searchItem.getUrl());
+
+            String id = MD5Utils.md5Hex(searchItem.getUrl());
+            String suffix =  id.substring(id.length()-1);
+
+            HtmlCache cache = SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
+            if ( cache!=null ) {
+                try {
+                    item = parseSku(searchItem.getCode(), cache.getHtml());
+                } catch (Exception e) {
+                    SQLExecutor.execute("delete from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? ", id);
                     cache = null;
                 }
             }
 
-            if ( cache == null ) {
+
+            if ( item == null ) {
                 cache = DriverHtmlLoader.getInstance().loadHtmlPage(searchItem.getUrl());
-            }
-            if ( cache != null ) {
-                if ( cache.getUpdatetime()==null ) {
-                    cache.setUpdatetime(Calendar.getInstance().getTime());
-                    SQLExecutor.insert(cache);
+
+                if ( cache != null ) {
+                    try {
+                        item = parseSku(searchItem.getCode(), cache.getHtml());
+
+                        if ( cache.getUpdatetime()==null ) {
+                            cache.setUpdatetime(Calendar.getInstance().getTime());
+
+                            PHtmlCache _cache = new PHtmlCache();
+                            _cache.setId(MD5Utils.md5Hex(cache.getUrl().trim()));
+                            _cache.setUrl(cache.getUrl().trim());
+                            _cache.setHtml(cache.getHtml());
+                            _cache.setContentlen(cache.getContentlen());
+                            _cache.setUpdatetime(Calendar.getInstance().getTime());
+                            SQLExecutor.insert(_cache, _cache.getId().substring(_cache.getId().length()-1));
+                        }
+
+                        if ( item!=null ) {
+                            SQLExecutor.insert(item);
+                        }
+
+                    } catch (Exception e) {
+
+                    }
                 }
 
-                item = parseSku(searchItem.getCode(), cache);
-                if ( item!=null ) {
-                    SQLExecutor.insert(item);
-                }
+
             }
         }
 
@@ -66,7 +90,7 @@ public class SkuPageLoader {
         return item;
     }
 
-    private static Item parseSku(String code, HtmlCache cache) throws Exception {
+    private static Item parseSku(String code, String html) throws Exception {
 
         if ( code==null || code.trim().length()==0 ) {
             return null;
@@ -75,13 +99,13 @@ public class SkuPageLoader {
         Item skuItem = new Item();
         skuItem.setCode(code);
 
-        String url = cache.getUrl();
-        if ( cache==null || cache.getHtml()==null || cache.getHtml().trim().length()==0 ) {
+        String url = code;
+        if ( html==null ||  html.trim().length()==0 ) {
             throw new Exception("[" + url + "]获取Html页面异常");
         }
 
 
-        Document doc = Jsoup.parse(cache.getHtml());
+        Document doc = Jsoup.parse(html);
 
         Element err = doc.selectFirst("div.err-notice");
         if ( err!=null ) {
@@ -96,6 +120,10 @@ public class SkuPageLoader {
 
         // 4级类目 + 产品组ID + ID
         Elements elements = doc.select("div.crumbs  a");
+        if ( elements==null || elements.size() < 5 ) {
+            throw new Exception("[" + url + "]Html内容有异常: " + doc.title());
+        }
+
         Element c1 = elements.get(1);
         Element c2 = elements.get(2);
         Element c3 = elements.get(3);

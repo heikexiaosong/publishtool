@@ -98,6 +98,7 @@
 
       <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
         <buttons>
+            <Button mnemonicParsing="false" onAction="#handleUpdateAttrs" text="更新属性" />
             <Button mnemonicParsing="false" onAction="#handleCancel" text="取 消" />
             <Button mnemonicParsing="false" onAction="#handleOk" text="确 定" />
         </buttons>

@@ -1,14 +1,15 @@
 package com.gavel.application.controller;
 
 
+import com.gavel.HttpUtils;
 import com.gavel.application.DataPagination;
 import com.gavel.application.MainApp;
-import com.gavel.crawler.HtmlPageLoader;
-import com.gavel.crawler.ItemSupplement;
 import com.gavel.crawler.ProductPageLoader;
 import com.gavel.crawler.SkuPageLoader;
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.*;
+import com.gavel.entity.Item;
+import com.gavel.entity.SearchItem;
+import com.gavel.entity.Task;
 import com.gavel.utils.StringUtils;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -28,13 +29,12 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 
-public class FXMLCrawlerController {
+public class FXMLJDCrawlerController {
 
     @FXML
     private AnchorPane root;
@@ -117,7 +117,7 @@ public class FXMLCrawlerController {
 
         List<Task> tasks = null;
         try {
-            tasks = SQLExecutor.executeQueryBeanList("select * from TASK order by UPDATETIME desc", Task.class);
+            tasks = SQLExecutor.executeQueryBeanList("select * from TASK  where TYPE = 'JD'  order by UPDATETIME desc", Task.class);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -177,7 +177,7 @@ public class FXMLCrawlerController {
 
         if ( taskQueue.isEmpty() ) {
             try {
-                List<Task> tasks = SQLExecutor.executeQueryBeanList("select * from TASK   order by UPDATETIME desc", Task.class);
+                List<Task> tasks = SQLExecutor.executeQueryBeanList("select * from TASK  where TYPE = 'JD' and STATUS <> 'success'  order by UPDATETIME desc", Task.class);
                 System.out.println("未完成Task: " + taskQueue.size());
                 if ( tasks!=null && tasks.size()>0 ) {
                     for (Task task : tasks) {
@@ -189,108 +189,66 @@ public class FXMLCrawlerController {
             }
         }
 
-
-        if ( taskQueue.isEmpty() ) {
-
-            try {
-                List<BrandInfo> brandInfos = SQLExecutor.executeQueryBeanList("select * from BRAND_INFO where FLAG is null or FLAG <> 'X' order by SKUNUM desc", BrandInfo.class);
-                System.out.println("brandInfos: " + brandInfos.size());
-                if ( brandInfos!=null && brandInfos.size() > 0 ) {
-                    for (BrandInfo brandInfo : brandInfos) {
-                        System.out.println("品牌Task: " + brandInfo.getName1());
-                        String url = brandInfo.getUrl();
-
-                        try {
-                            Task task = SQLExecutor.executeQueryBean("select * from TASK  where URL = ?", Task.class, url);
-                            if ( task!=null ) {
-                                System.out.println("Brand: " + brandInfo.getName1() + " exist!");
-                                brandInfo.setFlag("X");
-                                SQLExecutor.update(brandInfo);
-                                continue;
-                            }
-
-                            System.out.println("Brand: " + brandInfo.getName1() + " run...");
-
-                            task = new Task();
-
-                            task.setUrl(url);
-                            task.setTitle(brandInfo.getName1() + " " + ( brandInfo.getName2()==null ? "" : brandInfo.getName2() ));
-                            task.setStatus("init");
-
-
-
-                            try {
-                                HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(url, false);
-                                if ( htmlCache!=null && htmlCache.getHtml()!=null ) {
-
-                                    Document document = Jsoup.parse(htmlCache.getHtml());
-
-                                    task.setTitle(document.title());
-
-                                    Element cpz = document.selectFirst("font.cpz");
-                                    Element total = document.selectFirst("font.total");
-                                    System.out.println("产品组: " + cpz.text() + "; 产品: " + total.text());
-
-                                    task.setProductnum(Integer.parseInt(cpz.text()));
-                                    task.setSkunum(Integer.parseInt(total.text()));
-
-                                    int pageCur = 0;
-                                    int pageTotal = 0;
-                                    Elements labels = document.select("div.pagination > label");
-                                    if ( labels.size()==2 ) {
-                                        pageCur = Integer.parseInt(labels.get(0).text());
-                                        pageTotal = Integer.parseInt(labels.get(1).text());
-                                    }
-
-                                    System.out.println("当前页: " + pageCur);
-                                    System.out.println("总页数: " + pageTotal);
-
-                                    task.setPagenum(pageTotal);
-
-
-                                    task.setTitle(document.title());
-                                    task.setUpdatetime(Calendar.getInstance().getTime());
-
-
-                                    try {
-                                        SQLExecutor.insert(task);
-                                        taskTable.getItems().add(0, task);
-
-                                        ItemSupplement.loadSearchItems(task);
-
-                                        taskQueue.put(task);
-                                        brandInfo.setFlag("X");
-                                        SQLExecutor.update(brandInfo);
-                                    } catch (Exception e) {
-                                        System.out.println("[Task]" +brandInfo.getName1() + "任务生成失败");
-                                    }
-
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-
-
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        break;
-                    }
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-
         Task task = taskQueue.poll();
         if ( task==null ) {
             return;
         }
 
-        task.setStatus("正在爬取...");
+
+        int pageNum = task.getPagenum();
+        if ( pageNum > 0 ) {
+            for (int i = 1; i <= pageNum; i++) {
+               int count = SQLExecutor.intQuery("select count(1) from  SEARCHITEM where TASKID = ? and  PAGENUM = ?", task.getId(), i);
+               if ( count > 0 ) {
+                   continue;
+               }
+
+                String html = HttpUtils.get("https://i-list.jd.com/list.html?cat=14065,14113,14115&page=" + i, "");
+
+
+                Document doc = Jsoup.parse(html);
+
+                System.out.println(doc.selectFirst("div.f-pager .fp-text i"));
+                System.out.println(doc.selectFirst("div.f-result-sum span.num"));
+
+                Elements items = doc.select("div#plist li.gl-item div.j-sku-item");
+
+
+                int xh = 1;
+                for (Element item : items) {
+                    System.out.println(item.selectFirst("div.p-name em").text());
+
+                    System.out.print(item.attr("data-sku"));
+                    System.out.print("\t" + item.attr("venderid"));
+                    System.out.print("\t" + item.attr("jdzy_shop_id"));
+                    System.out.println("\t" + item.attr("brand_id"));
+
+                    String url = item.selectFirst("div.p-name a").attr("href");
+                    if ( url.startsWith("//") ) {
+                        url = "https:" + url;
+                    }
+
+                    System.out.println(item.selectFirst("div.p-price"));
+
+                    SearchItem searchItem = new SearchItem();
+                    searchItem.setId(task.getId() + "-" + i + "-" + xh);
+                    searchItem.setTaskid(task.getId());
+                    searchItem.setPagenum(i);
+                    searchItem.setXh(xh++);
+                    searchItem.setCode(item.attr("data-sku"));
+                    searchItem.setUrl(url);
+                    searchItem.setTitle(item.selectFirst("div.p-name em").text());
+                    searchItem.setSkunum(1);
+                    searchItem.setActual(0);
+
+                    SQLExecutor.insert(searchItem);
+                }
+
+            }
+        }
+
+
+
 
         System.out.println("爬取任务: " + task.getTitle());
 
@@ -433,7 +391,7 @@ public class FXMLCrawlerController {
                 SQLExecutor.insert(task);
                 taskTable.getItems().add(0, task);
                 taskTable.getSelectionModel().select(task);
-                ItemSupplement.loadSearchItems(task);
+                //ItemSupplement.loadSearchItems(task);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -460,6 +418,7 @@ public class FXMLCrawlerController {
             controller.setDialogStage(dialogStage);
             controller.bindTask(task);
             dialogStage.setMaximized(true);
+            controller.setStartPage("https://imall.jd.com/");
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
 

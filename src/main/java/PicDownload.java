@@ -1,6 +1,7 @@
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.ShelvesItem;
+import com.gavel.utils.MD5Utils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,7 +25,12 @@ public class PicDownload {
                 System.out.print( "\r[" + Math.ceil(i*100/items.size()) + "%]" + i + ". " + item.getItemCode() + " " + item.getCmTitle());
 
 
-                HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, "https://www.grainger.cn/u-" + item.getItemCode() + ".html");
+
+                String id = MD5Utils.md5Hex("https://www.grainger.cn/u-" + item.getItemCode() + ".html");
+                String suffix =  id.substring(id.length()-1);
+                HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
+
+               // HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, "https://www.grainger.cn/u-" + item.getItemCode() + ".html");
                 if ( cache==null ) {
                     System.out.println(" htmlCache is null \n");
                     continue;

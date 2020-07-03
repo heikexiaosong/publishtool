@@ -1,6 +1,7 @@
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Item;
+import com.gavel.utils.MD5Utils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -23,8 +24,10 @@ public class DetailPicDownload {
                 Item item = items.get(i);
                 System.out.print( "\r" + i + ". " + item.getCode());
 
+                String id = MD5Utils.md5Hex(item.getUrl());
+                String suffix =  id.substring(id.length()-1);
+                HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
 
-                HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, item.getUrl());
                 if ( cache==null ) {
                     System.out.println(" htmlCache is null \n");
                     continue;

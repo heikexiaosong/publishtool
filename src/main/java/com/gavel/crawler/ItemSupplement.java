@@ -2,11 +2,9 @@ package com.gavel.crawler;
 
 import com.gavel.HttpUtils;
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.HtmlCache;
-import com.gavel.entity.Item;
-import com.gavel.entity.SearchItem;
-import com.gavel.entity.Task;
+import com.gavel.entity.*;
 import com.gavel.proxy.HttpProxyClient;
+import com.gavel.utils.MD5Utils;
 import okhttp3.OkHttpClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -75,7 +73,10 @@ public class ItemSupplement {
 
                 Document doc = null;
 
-                HtmlCache cache = SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? ", HtmlCache.class, searchItem.getUrl());
+                String id = MD5Utils.md5Hex(searchItem.getUrl());
+                String suffix =  id.substring(id.length()-1);
+                HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
+
 
                 if ( cache != null ) {
                     doc = Jsoup.parse(cache.getHtml());
@@ -165,7 +166,7 @@ public class ItemSupplement {
                 pageUrl = task.getUrl() + "&page=" + pageCur;
             }
 
-            HtmlCache cache = null;
+            PHtmlCache cache = null;
             int times = 0;
             while ( cache==null &&  times < 10 ) {
                 OkHttpClient client = HttpProxyClient.getInstance().defaultClient();
@@ -175,7 +176,8 @@ public class ItemSupplement {
 
                 try {
                     String html =  HttpUtils.get(pageUrl, client);
-                    cache = new HtmlCache();
+                    cache = new PHtmlCache();
+                    cache.setId(MD5Utils.md5Hex(pageUrl.trim()));
                     cache.setUrl(pageUrl.trim());
                     cache.setHtml(html);
                     cache.setContentlen(html.length());
@@ -190,7 +192,7 @@ public class ItemSupplement {
             if ( cache!=null  ) {
                 cache.setUpdatetime(Calendar.getInstance().getTime());
                 try {
-                    SQLExecutor.insert(cache);
+                    SQLExecutor.insert(cache, cache.getId().substring(cache.getId().length()-1));
                 } catch (Exception e) {
                     System.out.println("[insert]SQLExecutor: " + e.getMessage());
                 }

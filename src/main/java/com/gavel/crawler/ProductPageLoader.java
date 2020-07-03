@@ -3,8 +3,10 @@ package com.gavel.crawler;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Item;
+import com.gavel.entity.PHtmlCache;
 import com.gavel.entity.SearchItem;
 import com.gavel.grainger.StringUtils;
+import com.gavel.utils.MD5Utils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -66,7 +68,13 @@ public class ProductPageLoader {
             if ( cache != null ) {
                 if ( cache.getUpdatetime()==null ) {
                     cache.setUpdatetime(Calendar.getInstance().getTime());
-                    SQLExecutor.insert(cache);
+                    PHtmlCache _cache = new PHtmlCache();
+                    _cache.setId(MD5Utils.md5Hex(cache.getUrl().trim()));
+                    _cache.setUrl(cache.getUrl().trim());
+                    _cache.setHtml(cache.getHtml());
+                    _cache.setContentlen(cache.getContentlen());
+
+                    SQLExecutor.insert(_cache, _cache.getId().substring(_cache.getId().length()-1));
                 }
 
                 doc = Jsoup.parse(cache.getHtml());
@@ -123,7 +131,14 @@ public class ProductPageLoader {
                         }
                         if ( skuCache.getUpdatetime()==null ) {
                             skuCache.setUpdatetime(Calendar.getInstance().getTime());
-                            SQLExecutor.insert(skuCache);
+
+                            PHtmlCache _cache = new PHtmlCache();
+                            _cache.setId(MD5Utils.md5Hex(skuCache.getUrl().trim()));
+                            _cache.setUrl(skuCache.getUrl().trim());
+                            _cache.setHtml(skuCache.getHtml());
+                            _cache.setContentlen(skuCache.getContentlen());
+
+                            SQLExecutor.insert(_cache, _cache.getId().substring(_cache.getId().length()-1));
                         }
                     } catch (Exception e) {
                         System.out.println("\t" + sku.child(0).attr("title") + ": " + e.getMessage());

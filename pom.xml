@@ -211,7 +211,7 @@
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
 							<mainClass>
-								AlertHtmlCache
+								com.gavel.CrawlerApp
                             </mainClass>
 						</manifest>
 						<manifestEntries>

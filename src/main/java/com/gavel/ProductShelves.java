@@ -11,6 +11,7 @@ import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.CatetoryBrandSelector;
 import com.gavel.shelves.suning.SuningCatetoryBrandSelector;
 import com.gavel.utils.ImageLoader;
+import com.gavel.utils.MD5Utils;
 import com.google.gson.Gson;
 import com.suning.api.SuningResponse;
 import com.suning.api.entity.item.NPicAddRequest;
@@ -131,8 +132,10 @@ public class ProductShelves {
 
 
     public static HtmlCache loadHtmlPage(String url, String params) throws Exception {
+        String id = MD5Utils.md5Hex(url);
+        String suffix =  id.substring(id.length()-1);
+        HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
 
-        HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, url);
         if ( cache == null ) {
             StringBuilder urlBuilder = new StringBuilder(url.trim());
             if ( params!=null && params.trim().length() > 0 ){

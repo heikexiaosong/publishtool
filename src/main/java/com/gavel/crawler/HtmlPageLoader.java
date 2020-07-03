@@ -4,6 +4,7 @@ import com.gavel.HttpUtils;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
 import com.gavel.proxy.HttpProxyClient;
+import com.gavel.utils.MD5Utils;
 import com.gavel.utils.StringUtils;
 import okhttp3.OkHttpClient;
 import org.jsoup.Jsoup;
@@ -25,7 +26,10 @@ public class HtmlPageLoader {
 
     public HtmlCache loadHtmlPage(String url, String params) throws Exception {
 
-        HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, url);
+        String id = MD5Utils.md5Hex(url);
+        String suffix =  id.substring(id.length()-1);
+
+        HtmlCache cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
         if ( cache == null ) {
             cache = DriverHtmlLoader.getInstance().loadHtmlPage(url);
             if ( cache!=null && cache.getUpdatetime()==null ) {
@@ -55,7 +59,9 @@ public class HtmlPageLoader {
         HtmlCache cache = null;
         if ( useCache ) {
             try {
-                cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, url);
+                String id = MD5Utils.md5Hex(url);
+                String suffix =  id.substring(id.length()-1);
+                cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
             } catch (Exception e) {
                 System.out.println("[executeQueryBean]SQLExecutor: " + url);
             }
@@ -91,7 +97,9 @@ public class HtmlPageLoader {
         HtmlCache cache = null;
         if ( useCache ) {
             try {
-                cache =  SQLExecutor.executeQueryBean("select * from htmlcache  where url = ? limit 1 ", HtmlCache.class, url);
+                String id = MD5Utils.md5Hex(url);
+                String suffix =  id.substring(id.length()-1);
+                cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
             } catch (Exception e) {
                 System.out.println("[executeQueryBean]SQLExecutor: " + e.getMessage());
             }

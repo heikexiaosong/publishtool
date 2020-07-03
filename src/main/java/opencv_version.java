@@ -3,6 +3,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 class opencv_version {
@@ -11,54 +12,29 @@ class opencv_version {
 
   public static void main(String[] args) {
 
-    if ((1==args.length) && (0==args[0].compareTo("--build"))) {
 
-        System.out.println(Core.getBuildInformation());
-    } else
-    if ((1==args.length) && (0==args[0].compareTo("--help"))) {
+      System.out.println(Core.getBuildInformation());
 
-        System.out.println("\t--build\n\t\tprint complete build info");
-        System.out.println("\t--help\n\t\tprint this help");
-    } else {
+      for (int i = 1; i < 5; i++) {
+          Mat src = Imgcodecs.imread("E:\\pic\\2017070738.jpg", Imgcodecs.IMREAD_UNCHANGED);
 
-        System.out.println("Welcome to OpenCV " + Core.VERSION);
-    }
+          System.out.println("width: " + src.width());
+          System.out.println("height: " + src.height());
+          System.out.println("depth: " + src.depth());
 
+          if ( src.width()!=800 || src.height()!=800 ) {
+              Imgproc.resize(src, src, new Size(800, 800));
+          }
 
-      Mat pic = Imgcodecs.imread("D:\\pics\\src.jpg", Imgcodecs.IMREAD_UNCHANGED);
+          System.out.println("[" + (src.width()-i) + ", " + ( src.height()-i) + "]" + Arrays.toString(src.get(src.width()-i, src.height()-i)));
 
-      Mat logo_org = Imgcodecs.imread("D:\\pics\\jingsu.png", Imgcodecs.IMREAD_UNCHANGED);
+          Imgproc.putText(src, Integer.toString(i), new Point(src.width()-20, src.height()-10), 0, 1.0, new Scalar(220,220,220));
 
-
-      Mat src  = convertTo4ChannelAndReleaseOld(pic);
-
-
-      Mat logo = logo_org.clone();
-
-      Imgproc.resize(logo_org, logo, new Size(220, 110));
-
-      Imgcodecs.imwrite("D:\\pics\\jingsu_1.png", logo);
+          Imgproc.circle(src, new Point(src.width()-i, src.height()-i),  2, new Scalar(238, 238, 238));
+          Imgcodecs.imwrite("E:\\pic\\2017070738_" + i + ".jpg", src);
+      }
 
 
-      byte[] data1 = new byte[src.rows() * src.cols() * (int) (src.elemSize())];
-      src.get(0, 0, data1);
-
-
-      Mat roi = new Mat(src, new Range(logo.width(), src.height()));
-
-
-
-      System.out.println(src.channels());
-      System.out.println(logo.channels());
-
-
-      Mat mix = roi.clone();
-      double alpha = 0.75;  //设置的人物原图的权重（透明度）
-      double beta = 1.0-alpha;  //用来叠加的背景的权重
-
-      Core.addWeighted(roi, alpha, logo, beta, 0, mix);
-
-      Imgcodecs.imwrite("D:\\pics\\src_mask.png", mix);
 
 
   }

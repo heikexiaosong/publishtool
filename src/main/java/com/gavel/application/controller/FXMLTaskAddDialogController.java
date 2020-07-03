@@ -1,5 +1,6 @@
 package com.gavel.application.controller;
 
+import com.gavel.HttpUtils;
 import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Task;
@@ -45,6 +46,12 @@ public class FXMLTaskAddDialogController {
         return okClicked;
     }
 
+    public void setStartPage(final String url) {
+        if ( url!=null && url.length() > 0 ) {
+            webView.getEngine().load(url);
+        }
+    }
+
     @FXML
     private void initialize() {
 
@@ -66,45 +73,92 @@ public class FXMLTaskAddDialogController {
 
         // TODO
         String url = webView.getEngine().getLocation();
-        try {
-            HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(url, false);
-            if ( htmlCache!=null && htmlCache.getHtml()!=null ) {
 
-                Document document = Jsoup.parse(htmlCache.getHtml());
+        if ( url.contains("jd.com") ) {
 
-                task.setTitle(document.title());
+            String html = HttpUtils.get(url, "");
+            Document document = Jsoup.parse(html);
 
-                Element cpz = document.selectFirst("font.cpz");
-                Element total = document.selectFirst("font.total");
-                System.out.println("产品组: " + cpz.text() + "; 产品: " + total.text());
+            System.out.println(document.selectFirst("div.f-pager .fp-text i"));
+            System.out.println(document.selectFirst("div.f-result-sum span.num"));
 
-                task.setProductnum(Integer.parseInt(cpz.text()));
-                task.setSkunum(Integer.parseInt(total.text()));
+            Elements items = document.select("div#plist li.gl-item div.j-sku-item");
 
-                int pageCur = 0;
-                int pageTotal = 0;
-                Elements labels = document.select("div.pagination > label");
-                if ( labels.size()==2 ) {
-                    pageCur = Integer.parseInt(labels.get(0).text());
-                    pageTotal = Integer.parseInt(labels.get(1).text());
-                }
+            for (Element item : items) {
+                System.out.println(item.selectFirst("div.p-name em").text());
 
-                System.out.println("当前页: " + pageCur);
-                System.out.println("总页数: " + pageTotal);
+                System.out.print(item.attr("data-sku"));
+                System.out.print("\t" + item.attr("venderid"));
+                System.out.print("\t" + item.attr("jdzy_shop_id"));
+                System.out.println("\t" + item.attr("brand_id"));
 
-                task.setPagenum(pageTotal);
-
-
-                task.setTitle(document.title());
-                task.setUrl(url);
-                task.setStatus(Task.Status.INIT);
-                task.setUpdatetime(Calendar.getInstance().getTime());
-
+                System.out.println(item.selectFirst("div.p-price"));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
+
+
+            task.setTitle(document.title());
+
+            Element total = document.selectFirst("div.f-result-sum span.num");
+            System.out.println("产品: " + total.text());
+
+            task.setProductnum(0);
+            task.setSkunum(Integer.parseInt(total.text()));
+
+            int pageCur = Integer.parseInt(document.selectFirst("div.f-pager .fp-text b").text());
+            int pageTotal = Integer.parseInt(document.selectFirst("div.f-pager .fp-text i").text());
+
+
+            System.out.println("当前页: " + pageCur);
+            System.out.println("总页数: " + pageTotal);
+
+            task.setPagenum(pageTotal);
+
+            task.setUrl(url);
+            task.setStatus(Task.Status.READY);
+            task.setType("JD");
+            task.setUpdatetime(Calendar.getInstance().getTime());
+
+        } else {
+            try {
+                HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(url, false);
+                if ( htmlCache!=null && htmlCache.getHtml()!=null ) {
+
+                    Document document = Jsoup.parse(htmlCache.getHtml());
+
+                    task.setTitle(document.title());
+
+                    Element cpz = document.selectFirst("font.cpz");
+                    Element total = document.selectFirst("font.total");
+                    System.out.println("产品组: " + cpz.text() + "; 产品: " + total.text());
+
+                    task.setProductnum(Integer.parseInt(cpz.text()));
+                    task.setSkunum(Integer.parseInt(total.text()));
+
+                    int pageCur = 0;
+                    int pageTotal = 0;
+                    Elements labels = document.select("div.pagination > label");
+                    if ( labels.size()==2 ) {
+                        pageCur = Integer.parseInt(labels.get(0).text());
+                        pageTotal = Integer.parseInt(labels.get(1).text());
+                    }
+
+                    System.out.println("当前页: " + pageCur);
+                    System.out.println("总页数: " + pageTotal);
+
+                    task.setPagenum(pageTotal);
+
+
+                    task.setTitle(document.title());
+                    task.setUrl(url);
+                    task.setStatus(Task.Status.INIT);
+                    task.setUpdatetime(Calendar.getInstance().getTime());
+
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         okClicked = true;
         dialogStage.close();
