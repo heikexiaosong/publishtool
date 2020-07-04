@@ -84,6 +84,17 @@ public class DriverHtmlLoader {
         return cache;
     }
 
+    public String loadHtml(String url) {
+        driver.navigate().to(url);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        String content = driver.getPageSource();
+        return content;
+    }
+
     public void quit() {
         driver.close();
         driver.quit();

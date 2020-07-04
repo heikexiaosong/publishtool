@@ -177,7 +177,7 @@ public class FXMLCrawlerController {
 
         if ( taskQueue.isEmpty() ) {
             try {
-                List<Task> tasks = SQLExecutor.executeQueryBeanList("select * from TASK   order by UPDATETIME desc", Task.class);
+                List<Task> tasks = SQLExecutor.executeQueryBeanList("select * from TASK  where STATUS is null or STATUS <> 'success' order by UPDATETIME desc", Task.class);
                 System.out.println("未完成Task: " + taskQueue.size());
                 if ( tasks!=null && tasks.size()>0 ) {
                     for (Task task : tasks) {
@@ -316,6 +316,8 @@ public class FXMLCrawlerController {
             return;
         }
 
+        boolean complete = true;
+
         int total = searchItemList.size();
         for (int i = 0; i < total; i++) {
             boolean success = true;
@@ -334,6 +336,7 @@ public class FXMLCrawlerController {
                         searchItem.setRemarks("预期: " + searchItem.getSkunum() + "; 实际: " + (skus==null ? 0: skus.size()));
                         System.out.println("\t...... 预期: " + searchItem.getSkunum() + "; 实际: " + (skus==null ? 0: skus.size()) );
                         success = false;
+                        complete = false;
                     }
 
                 } else {
@@ -345,6 +348,7 @@ public class FXMLCrawlerController {
                         searchItem.setRemarks("");
                         System.out.println("\t...... load failed!");
                         success = false;
+                        complete = false;
                     }
                 }
 
@@ -361,9 +365,10 @@ public class FXMLCrawlerController {
             }
         }
 
-
-        task.setStatus("success");
-        SQLExecutor.update(task);
+        if ( complete ) {
+            task.setStatus("success");
+            SQLExecutor.update(task);
+        }
         System.out.println("爬取任务[" + task.getTitle() + "]完成一轮.");
     }
 
