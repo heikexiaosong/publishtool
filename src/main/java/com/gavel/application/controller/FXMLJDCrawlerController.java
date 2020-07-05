@@ -244,6 +244,7 @@ public class FXMLJDCrawlerController {
                         searchItem.setTitle(item.selectFirst("div.p-name em").text());
                         searchItem.setSkunum(1);
                         searchItem.setActual(0);
+                        searchItem.setType("u");
 
                         SQLExecutor.insert(searchItem);
 
@@ -293,7 +294,9 @@ public class FXMLJDCrawlerController {
                     item = new Item();
 
                     item.setCode(searchItem.getCode());
+                    item.setProductcode(searchItem.getCode());
                     item.setName(searchItem.getTitle());
+                    item.setProductname(searchItem.getTitle());
                     item.setType("JD");
                     item.setUrl(searchItem.getUrl());
 
@@ -355,13 +358,6 @@ public class FXMLJDCrawlerController {
                 }
 
                 SQLExecutor.update(searchItem);
-                if ( !success ) {
-                    try {
-                        Thread.sleep(3000);
-                    } catch (Exception e) {
-
-                    }
-                }
             } catch (Exception e) {
 
             }

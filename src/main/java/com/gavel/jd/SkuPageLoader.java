@@ -56,7 +56,10 @@ public class SkuPageLoader {
         }
 
 
+
+
         String html = DriverHtmlLoader.getInstance().loadHtml(searchItem.getUrl());
+        Thread.sleep(5000);
         if (com.gavel.utils.StringUtils.isNotBlank(html)) {
             try {
                 parseSku(searchItem.getCode(), html, item);
@@ -112,11 +115,16 @@ public class SkuPageLoader {
 
         crumb.select("div.sep").remove();
 
+
+        skuItem.setCategory(crumb.children().get(2).text());
+        skuItem.setCategoryname(crumb.children().get(2).text());
+
         String categoryName = crumb.children().get(0).text() + "|" + crumb.children().get(1).text() + "|" + crumb.children().get(2).text();
-        skuItem.setCategoryname(categoryName);
+        skuItem.setCategorydesc(categoryName);
 
         String brandName = crumb.children().get(3).text();
         skuItem.setBrandname(brandName);
+        skuItem.setBrand(brandName);
 
         skuItem.setName(crumb.children().get(4).text());
 
@@ -134,24 +142,92 @@ public class SkuPageLoader {
         System.out.println(itemInfo.select("div.sku-name").text());
         System.out.println(itemInfo.select("div.news #p-ad").text());
 
+
+        Element detail = doc.selectFirst("div#detail");
+
+        System.out.println(detail.html());
+        if ( detail!=null ) {
+            Element parameter = detail.selectFirst("div.p-parameter");
+
+            Element brand = parameter.selectFirst("ul#parameter-brand a");
+            System.out.println(brand.text());
+
+            Elements parameter2 = parameter.select("ul.parameter2  li");
+            for (Element element : parameter2) {
+                System.out.println(element.text());
+            }
+
+
+            Element itemdetail = detail.selectFirst("div.item-detail");
+            if ( itemdetail!=null ) {
+                System.out.println(itemdetail.text());
+            }
+
+
+            // 规格与包装
+            Element ptableItem = detail.selectFirst("div.Ptable-item dl");
+            if ( ptableItem!=null ) {
+                System.out.println(ptableItem.text());
+            }
+
+
+            // package-list
+            Element packagelist = detail.selectFirst("div.package-list");
+            if ( packagelist!=null ) {
+                System.out.println(packagelist.text());
+            }
+
+
+
+        }
+
+
         return skuItem;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
-        String html = HttpUtils.get("https://i-list.jd.com/list.html?cat=14065,15394", "");
-        if (com.gavel.utils.StringUtils.isNotBlank(html)) {
+        String code = "100002801803";
 
-            Document doc = Jsoup.parse(html);
+        String url = "https://i-item.jd.com/" + code + ".html";
 
-            Elements brands = doc.select("ul#brandsArea li");
+        String id = MD5Utils.md5Hex(url);
+        String suffix =  id.substring(id.length()-1);
 
-            for (Element brand : brands) {
-                System.out.println(brand.outerHtml());
-                System.out.println(brand.attr("id"));
-                System.out.println(brand.selectFirst("a").attr("title"));
-                System.out.println(brand.selectFirst("a").attr("href"));
+        Item item = null;
+        PHtmlCache cache = SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", PHtmlCache.class, id);
+        if ( cache!=null ) {
+            try {
+                item = parseSku(code, cache.getHtml(), null);
+                System.out.println("Load From Cache");
+            } catch (Exception e) {
+                SQLExecutor.execute("delete from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? ", id);
+                cache = null;
             }
         }
+
+        if ( item==null ) {
+            String html = HttpUtils.get(url, "");
+            if (com.gavel.utils.StringUtils.isNotBlank(html)) {
+
+                try {
+                    item = parseSku(code, html, null);
+                    PHtmlCache _cache = new PHtmlCache();
+                    _cache.setId(MD5Utils.md5Hex(url.trim()));
+                    _cache.setUrl(url.trim());
+                    _cache.setHtml(html);
+                    _cache.setContentlen(html.length());
+                    _cache.setUpdatetime(Calendar.getInstance().getTime());
+                    SQLExecutor.insert(_cache, _cache.getId().substring(_cache.getId().length()-1));
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+
+
+
     }
 }

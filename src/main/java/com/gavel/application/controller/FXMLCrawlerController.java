@@ -3,7 +3,7 @@ package com.gavel.application.controller;
 
 import com.gavel.application.DataPagination;
 import com.gavel.application.MainApp;
-import com.gavel.crawler.HtmlPageLoader;
+import com.gavel.crawler.DriverHtmlLoader;
 import com.gavel.crawler.ItemSupplement;
 import com.gavel.crawler.ProductPageLoader;
 import com.gavel.crawler.SkuPageLoader;
@@ -220,14 +220,41 @@ public class FXMLCrawlerController {
 
 
                             try {
-                                HtmlCache htmlCache = HtmlPageLoader.getInstance().loadHtmlPage(url, false);
+                                HtmlCache htmlCache = DriverHtmlLoader.getInstance().loadHtmlPage(url);
                                 if ( htmlCache!=null && htmlCache.getHtml()!=null ) {
 
                                     Document document = Jsoup.parse(htmlCache.getHtml());
-
                                     task.setTitle(document.title());
 
+                                    Elements wrappers = document.select("div.wrapper h3");
+                                    if ( wrappers!=null ) {
+                                        if ( "暂无商品".equalsIgnoreCase(wrappers.text()) ){
+                                            try {
+                                                task.setStatus("success");
+                                                task.setPagenum(0);
+                                                task.setProductnum(0);
+                                                task.setSkunum(0);
+                                                task.setUpdatetime(Calendar.getInstance().getTime());
+
+                                                SQLExecutor.insert(task);
+                                                taskTable.getItems().add(0, task);
+
+                                                brandInfo.setFlag("X");
+                                                SQLExecutor.update(brandInfo);
+                                            } catch (Exception e) {
+                                                System.out.println("[Task]" +brandInfo.getName1() + "任务生成失败");
+                                            }
+
+                                            return;
+                                        }
+                                    }
+
+
+
                                     Element cpz = document.selectFirst("font.cpz");
+                                    if ( cpz==null ) {
+                                        continue;
+                                    }
                                     Element total = document.selectFirst("font.total");
                                     System.out.println("产品组: " + cpz.text() + "; 产品: " + total.text());
 

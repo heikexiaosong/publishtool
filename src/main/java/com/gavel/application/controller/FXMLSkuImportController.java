@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class FXMLSkuImportController {
 
@@ -142,13 +140,30 @@ public class FXMLSkuImportController {
 
                     @Override
                     protected String call() throws Exception {
-                        Map<String, List<Item>> productMap = datas.stream().collect(Collectors.groupingBy(Item::getProductcode));
                         for (int i = 0; i < datas.size(); i++) {
                             Item item = datas.get(i);
 
                             ShelvesItem shelvesItem = null;
+
+
                             try {
-                                shelvesItem = ShelvesItemParser.parse(item);
+                                if ( "JD".equalsIgnoreCase(item.getType())) {
+                                    shelvesItem = new ShelvesItem();
+
+                                    shelvesItem.setSkuCode(item.getCode());
+
+                                    shelvesItem.setCategoryCode(item.getCategory());
+                                    shelvesItem.setCategoryname(item.getCategoryname());
+
+                                    shelvesItem.setItemCode(item.getCode());
+                                    shelvesItem.setProductName(item.getName());
+
+                                    //shelvesItem.setModel(model);
+                                    //shelvesItem.setDelivery(attrs.get(4).text());
+                                    shelvesItem.setCmTitle(item.getName());
+                                } else {
+                                    shelvesItem = ShelvesItemParser.parse(item);
+                                }
                                 items.add(shelvesItem);
                                 System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getCode() +"]解析成功: ");
                             } catch (Exception e) {
@@ -219,7 +234,7 @@ public class FXMLSkuImportController {
        String  taskId = task.getId();
 
         try {
-            List<Item> items = SQLExecutor.executeQueryBeanList(" select item.* from item left join searchitem on searchitem.CODE = item.CODE where TYPE = 'u' and TASKID = ? ", Item.class,  taskId);
+            List<Item> items = SQLExecutor.executeQueryBeanList(" select item.* from item left join searchitem on searchitem.CODE = item.CODE where searchitem.TYPE = 'u' and TASKID = ? ", Item.class,  taskId);
             System.out.println("u");
             if ( items!=null ) {
                 datas.addAll(items);
@@ -229,7 +244,7 @@ public class FXMLSkuImportController {
         }
 
         try {
-            List<Item> items = SQLExecutor.executeQueryBeanList(" select item.* from item left join searchitem on searchitem.CODE = item.PRODUCTCODE where TYPE = 'g' and TASKID = ? ", Item.class,  taskId);
+            List<Item> items = SQLExecutor.executeQueryBeanList(" select item.* from item left join searchitem on searchitem.CODE = item.PRODUCTCODE where searchitem.TYPE = 'g' and TASKID = ? ", Item.class,  taskId);
             System.out.println("g");
             if ( items!=null ) {
                 datas.addAll(items);
