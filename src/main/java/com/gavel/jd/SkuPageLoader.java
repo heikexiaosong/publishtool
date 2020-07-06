@@ -3,7 +3,6 @@ package com.gavel.jd;
 import com.gavel.HttpUtils;
 import com.gavel.crawler.DriverHtmlLoader;
 import com.gavel.database.SQLExecutor;
-import com.gavel.entity.HtmlCache;
 import com.gavel.entity.Item;
 import com.gavel.entity.PHtmlCache;
 import com.gavel.entity.SearchItem;
@@ -14,8 +13,14 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.Calendar;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SkuPageLoader {
+
+    private static final Pattern DETAIL_IMAGE = Pattern.compile("background-image:url(.*);");
+
+    private static final Pattern PIC_IMAGE = Pattern.compile("360buyimg.com/n(\\d*)/");
 
     private static final SkuPageLoader loader = new SkuPageLoader();
 
@@ -44,7 +49,7 @@ public class SkuPageLoader {
         String id = MD5Utils.md5Hex(searchItem.getUrl());
         String suffix =  id.substring(id.length()-1);
 
-        HtmlCache cache = SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
+        PHtmlCache cache = SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", PHtmlCache.class, id);
         if ( cache!=null ) {
             try {
                 parseSku(searchItem.getCode(), cache.getHtml(), item);
@@ -88,6 +93,53 @@ public class SkuPageLoader {
         return item;
     }
 
+    public String loadPage(String code) throws Exception {
+        if ( code==null || com.gavel.utils.StringUtils.isBlank(code)) {
+            System.out.println("SearchItem is null");
+            return null;
+        }
+
+        String url = "https://i-item.jd.com/" + code + ".html";
+        String id = MD5Utils.md5Hex(url);
+        String suffix =  id.substring(id.length()-1);
+
+        PHtmlCache cache = SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", PHtmlCache.class, id);
+        if ( cache!=null ) {
+            try {
+                parseSku(code, cache.getHtml(), null);
+                return cache.getHtml();
+            } catch (Exception e) {
+                System.out.println("[Delete Cache][" + url + "]: " + e.getMessage());
+                SQLExecutor.execute("delete from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? ", id);
+            }
+        }
+
+
+
+
+        String html = DriverHtmlLoader.getInstance().loadHtml(url);
+        Thread.sleep(5000);
+        if (com.gavel.utils.StringUtils.isNotBlank(html)) {
+            try {
+                parseSku(code, html, null);
+
+                PHtmlCache _cache = new PHtmlCache();
+                _cache.setId(MD5Utils.md5Hex(url.trim()));
+                _cache.setUrl(url.trim());
+                _cache.setHtml(html);
+                _cache.setContentlen(html.length());
+                _cache.setUpdatetime(Calendar.getInstance().getTime());
+                SQLExecutor.insert(_cache, _cache.getId().substring(_cache.getId().length()-1));
+
+                return html;
+            } catch (Exception e) {
+                System.out.println("[" + url + "]: " + e.getMessage());
+            }
+        }
+
+        return null;
+    }
+
     private static Item parseSku(String code, String html, Item skuItem) throws Exception {
 
         if ( code==null || code.trim().length()==0 ) {
@@ -126,68 +178,44 @@ public class SkuPageLoader {
         skuItem.setBrandname(brandName);
         skuItem.setBrand(brandName);
 
-        skuItem.setName(crumb.children().get(4).text());
+        skuItem.setSubname(crumb.children().get(4).text());
 
 
         // 图片
         Elements imgs = doc.select("div#spec-list li>img");
         for (Element img : imgs) {
-            System.out.println(img.attr("src") + "\t" + img.attr("data-url"));
+
+            String text = img.attr("src");
+            if ( text.startsWith("//") ) {
+                text = "https:" + text;
+            }
+
+            Matcher mat = PIC_IMAGE.matcher(text);
+            if (mat.find()){
+                System.out.println(mat.group(1) + "; " + mat.start() + "->" + mat.end());
+                text = text.substring(0,  mat.start()) + "360buyimg.com/n12/" + text.substring(mat.end());
+            }
+
+            System.out.println(text);
+
         }
         System.out.println("Images: " + imgs.size());
 
         //
 
         Element itemInfo = doc.selectFirst("div.itemInfo-wrap");
-        System.out.println(itemInfo.select("div.sku-name").text());
-        System.out.println(itemInfo.select("div.news #p-ad").text());
-
-
-        Element detail = doc.selectFirst("div#detail");
-
-        System.out.println(detail.html());
-        if ( detail!=null ) {
-            Element parameter = detail.selectFirst("div.p-parameter");
-
-            Element brand = parameter.selectFirst("ul#parameter-brand a");
-            System.out.println(brand.text());
-
-            Elements parameter2 = parameter.select("ul.parameter2  li");
-            for (Element element : parameter2) {
-                System.out.println(element.text());
-            }
-
-
-            Element itemdetail = detail.selectFirst("div.item-detail");
-            if ( itemdetail!=null ) {
-                System.out.println(itemdetail.text());
-            }
-
-
-            // 规格与包装
-            Element ptableItem = detail.selectFirst("div.Ptable-item dl");
-            if ( ptableItem!=null ) {
-                System.out.println(ptableItem.text());
-            }
-
-
-            // package-list
-            Element packagelist = detail.selectFirst("div.package-list");
-            if ( packagelist!=null ) {
-                System.out.println(packagelist.text());
-            }
-
-
-
+        if ( itemInfo!=null && itemInfo.select("div.sku-name")!=null ) {
+            skuItem.setName(itemInfo.select("div.sku-name").text());
         }
 
+        //System.out.println(itemInfo.select("div.news #p-ad").text());
 
         return skuItem;
     }
 
     public static void main(String[] args) throws Exception {
 
-        String code = "100002801803";
+        String code = "100005484334";
 
         String url = "https://i-item.jd.com/" + code + ".html";
 

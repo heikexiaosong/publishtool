@@ -95,6 +95,9 @@ public class ShelvesItem {
     @FieldMeta(name = "DEST", title = "替换目标")
     private String dest;
 
+    @FieldMeta(name = "TYPE", title = "类型")
+    private String type;
+
     public String getId() {
         return id.get();
     }
@@ -357,5 +360,13 @@ public class ShelvesItem {
 
     public void setDest(String dest) {
         this.dest = dest;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

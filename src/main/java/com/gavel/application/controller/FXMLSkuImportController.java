@@ -155,12 +155,19 @@ public class FXMLSkuImportController {
                                     shelvesItem.setCategoryCode(item.getCategory());
                                     shelvesItem.setCategoryname(item.getCategoryname());
 
+                                    shelvesItem.setBrandCode(item.getBrand());
+                                    shelvesItem.setBrandname(item.getBrandname());
+
                                     shelvesItem.setItemCode(item.getCode());
                                     shelvesItem.setProductName(item.getName());
 
-                                    //shelvesItem.setModel(model);
+                                    shelvesItem.setModel(item.getCode());
                                     //shelvesItem.setDelivery(attrs.get(4).text());
                                     shelvesItem.setCmTitle(item.getName());
+
+                                    shelvesItem.setType(item.getType());
+                                    shelvesItem.setSellingPoints(item.getSubname());
+
                                 } else {
                                     shelvesItem = ShelvesItemParser.parse(item);
                                 }

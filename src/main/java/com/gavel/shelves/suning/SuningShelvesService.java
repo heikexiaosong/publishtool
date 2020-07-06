@@ -3,6 +3,7 @@ package com.gavel.shelves.suning;
 import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.ShelvesItem;
+import com.gavel.jd.SkuPageLoader;
 import com.gavel.shelves.*;
 import com.gavel.utils.StringUtils;
 import com.google.common.io.Files;
@@ -12,6 +13,10 @@ import com.suning.api.entity.selfmarket.ApplyAddRequest;
 import com.suning.api.entity.selfmarket.ApplyAddResponse;
 import com.suning.api.exception.SuningApiException;
 import org.apache.commons.codec.binary.Base64;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.opencv.core.Core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +25,15 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SuningShelvesService implements ShelvesService {
+
+
+    private static final Pattern DETAIL_IMAGE = Pattern.compile("background-image:url(.*);");
+
+    private static final Pattern PIC_IMAGE = Pattern.compile("360buyimg.com/n(\\d*)/");
 
 
     static {
@@ -59,11 +71,22 @@ public class SuningShelvesService implements ShelvesService {
         }
     }
 
+
+    /**
+     * 固安捷商品上架
+     * @param item
+     * @throws Exception
+     */
     @Override
     public void shelves(ShelvesItem item) throws Exception {
 
         if ( item==null ) {
            throw new Exception("Item 不能为空");
+        }
+
+        if ( "JD".equalsIgnoreCase(item.getType()) ) {
+            shelvesJDSku(item);
+            return;
         }
 
         String category = StringUtils.trim(item.getMappingcategorycode());
@@ -267,6 +290,334 @@ public class SuningShelvesService implements ShelvesService {
         }
     }
 
+    /**
+     * JD商品上架
+     * @param item
+     * @throws Exception
+     */
+    public void shelvesJDSku(ShelvesItem item) throws Exception {
+
+        if ( item==null ) {
+            throw new Exception("Item 不能为空");
+        }
+
+        String category = StringUtils.trim(item.getMappingcategorycode());
+        String brand = StringUtils.trim(item.getMappingbrandcode());
+
+        if ( StringUtils.isBlank(category)|| StringUtils.isBlank(brand) ) {
+            CatetoryBrand catetoryBrand =  catetoryBrandSelector.selectCatetoryBrand(item.getCategoryCode(), item.getBrandCode());
+            if (  StringUtils.isBlank(category) ) {
+                item.setMappingcategorycode(catetoryBrand.getCategoryCode());
+                item.setMappingcategoryname(catetoryBrand.getCategory());
+                category = catetoryBrand.getCategoryCode();
+            }
+
+            if ( StringUtils.isBlank(brand) ) {
+                item.setMappingbrandcode(catetoryBrand.getBrandCode());
+                item.setMappingbrandname(catetoryBrand.getBrandZh());
+                brand = catetoryBrand.getBrandCode();
+            }
+        }
+
+        if ( StringUtils.isBlank(item.getMappingcategorycode()) ) {
+            throw new Exception("[Item: " + item.getItemCode() + "]上架类目没有设置");
+        }
+
+        if ( StringUtils.isBlank(item.getMappingbrandcode()) ) {
+            throw new Exception("[Item: " + item.getItemCode() + "]上架品牌没有设置");
+        }
+
+        ApplyAddRequest request = new ApplyAddRequest();
+
+        request.setCategoryCode(category);  // 类目编码
+        request.setBrandCode(brand);        // 品牌编码
+        request.setItemCode(item.getItemCode()); // 供应商商品编码
+        request.setProductName(item.getCmTitle());
+        request.setCmTitle(item.getCmTitle());         // 商品标题
+
+
+
+        Map<String, String> _attrs = new HashMap<String, String>();
+        /**
+         * 长度 => {"categoryCode":"R9008653","supplierCode":"10148425","paraTemplateCode":"basic","paraTemplateDesc":"基本参数模板","parCode":"LAENG","parName":"长度","parType":"3","parUnit":"毫米","isMust":"X","options":"null","parOption":[]}
+         * 宽度 => {"categoryCode":"R9008653","supplierCode":"10148425","paraTemplateCode":"basic","paraTemplateDesc":"基本参数模板","parCode":"BREIT","parName":"宽度","parType":"3","parUnit":"毫米","isMust":"X","options":"null","parOption":[]}
+         * 高度 => {"categoryCode":"R9008653","supplierCode":"10148425","paraTemplateCode":"basic","paraTemplateDesc":"基本参数模板","parCode":"HOEHE","parName":"高度","parType":"3","parUnit":"毫米","isMust":"X","options":"null","parOption":[]}
+         */
+
+        // 商品属性设置
+        ParameterLoader parameterLoader = new SuningParameterLoader(_attrs);
+        List<ParameterLoader.Parameter> parameters = parameterLoader.loadParameters(category);
+
+        List<ApplyAddRequest.Pars> parsList =new ArrayList<ApplyAddRequest.Pars>();
+        for (ParameterLoader.Parameter parameter : parameters) {
+            ApplyAddRequest.Pars pars= new ApplyAddRequest.Pars();
+            pars.setParCode(parameter.code());
+            if ( "cmModel".equalsIgnoreCase(parameter.code()) || "001360".equalsIgnoreCase(parameter.code()) ) {
+                pars.setParValue(item.getModel());
+            } else {
+                pars.setParValue(parameter.value());
+            }
+
+            parsList.add(pars);
+        }
+        request.setPars(parsList);
+
+
+        /**
+         * packingList	String	N
+         * packingListName	String	N	电脑	    装箱清单名单
+         * packingListQty	String	N	1	    装箱清单名单数量
+         */
+        List<ApplyAddRequest.PackingList> packingList = new ArrayList<>();
+        ApplyAddRequest.PackingList packingList1 = new ApplyAddRequest.PackingList();
+        packingList1.setPackingListName("主产品");
+        packingList1.setPackingListQty("1");
+        packingList.add(packingList1);
+        request.setPackingList(packingList);
+
+
+
+        String html = null;
+        try {
+            html =  SkuPageLoader.getInstance().loadPage(item.getSkuCode());
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        if ( html==null || html.trim().length()==0 ) {
+            throw new Exception("[Item: " + item.getItemCode() + "]获取sku页面信息失败");
+        }
+
+
+
+
+        List<String> picUrls = new ArrayList<>();
+        List<String> columnValues = new ArrayList<>();
+        List<String> detailUrls = new ArrayList<>();
+        /// ================
+
+        Document doc = Jsoup.parse(html);
+
+        Element crumb = doc.selectFirst("div#crumb-wrap .crumb");
+        if ( crumb==null ) {
+            throw new Exception("Html内容有异常");
+        }
+
+        crumb.select("div.sep").remove();
+
+        request.setSellingPoints(item.getSellingPoints()==null ? crumb.children().get(4).text(): item.getSellingPoints() ); // 商品卖点
+
+
+        // 图片
+        Elements imgs = doc.select("div#spec-list li>img");
+        for (Element img : imgs) {
+
+            String text = img.attr("src");
+            if ( text.startsWith("//") ) {
+                text = "https:" + text;
+            }
+
+            Matcher mat = PIC_IMAGE.matcher(text);
+            if (mat.find()){
+                System.out.println(mat.group(1) + "; " + mat.start() + "->" + mat.end());
+                text = text.substring(0,  mat.start()) + "360buyimg.com/n12/" + text.substring(mat.end());
+            }
+
+            picUrls.add(text);
+            System.out.println(text);
+
+        }
+        System.out.println("Images: " + imgs.size());
+
+
+
+        Element detail = doc.selectFirst("div#detail");
+
+        // System.out.println(detail.html());
+        if ( detail!=null ) {
+            Element parameter = detail.selectFirst("div.p-parameter");
+
+//            Element brand = parameter.selectFirst("ul#parameter-brand a");
+//            System.out.println(brand.text());
+
+            Elements parameter2 = parameter.select("ul.parameter2  li");
+            for (Element element : parameter2) {
+                if ( element.text().startsWith("商品编号") ) {
+                    System.out.println(element.text() + " ... X");
+                } else {
+                    System.out.println(element.text());
+                    columnValues.add(element.text());
+                }
+            }
+
+
+            Element itemdetail = detail.selectFirst("div.item-detail");
+            if ( itemdetail!=null ) {
+                System.out.println(itemdetail.text());
+
+                columnValues.add(itemdetail.text());
+            }
+
+
+            // 规格与包装
+            Element ptableItem = detail.selectFirst("div.Ptable-item dl");
+            if ( ptableItem!=null ) {
+                String line = "";
+                for (Element element : ptableItem.children()) {
+                    if ( element.is("dd") ) {
+                        System.out.println(element.text());
+                        line = line + element.text();
+                        columnValues.add(line);
+                    } else {
+                        System.out.print(element.text() + ": ");
+                        line = element.text() + ": ";
+                    }
+                }
+
+            }
+
+
+            // package-list
+            Element packagelist = detail.selectFirst("div.package-list");
+            if ( packagelist!=null ) {
+                System.out.println(packagelist.text());
+                columnValues.add(packagelist.text());
+            }
+
+
+            //
+            Element detailcontent = detail.selectFirst("div#J-detail-content style");
+            if ( detailcontent!=null ) {
+                System.out.println(detailcontent.html());
+                Matcher mat = DETAIL_IMAGE.matcher(detailcontent.html());
+                while(mat.find()){
+                    String text = mat.group(1);
+                    if ( text.startsWith("(") ) {
+                        text = text.substring(1);
+                    }
+                    if ( text.endsWith(")") ) {
+                        text = text.substring(0, text.length()-1);
+                    }
+                    if ( text.startsWith("//") ) {
+                        text = "https:" + text;
+                    }
+                    System.out.println(text);
+                    detailUrls.add(text);
+                }
+            }
+        }
+
+        ///
+
+
+
+
+        // 商品图片 urlA~urlE
+        List<ApplyAddRequest.SupplierImgUrl> supplierImgUrls = new ArrayList<>();
+        request.setSupplierImgUrl(supplierImgUrls);
+        ApplyAddRequest.SupplierImgUrl supplierImgUrl = new ApplyAddRequest.SupplierImgUrl();
+        supplierImgUrls.add(supplierImgUrl);
+
+        List<ShelvesItemParser.Pic> images = ShelvesItemParser.getImages(item.getSkuCode(), picUrls, defaultImage, logoImage);
+        for (ShelvesItemParser.Pic image : images) {
+            System.out.println("Image: " + image.getUrl());
+        }
+
+        if ( images.size() >= 1 ) {
+            supplierImgUrl.setUrlA(images.get(0).getUrl());
+        }
+        if ( images.size() >= 2 ) {
+            supplierImgUrl.setUrlB(images.get(1).getUrl());
+        }
+        if ( images.size() >= 3 ) {
+            supplierImgUrl.setUrlC(images.get(2).getUrl());
+        }
+
+        if ( images.size() >= 4 ) {
+            supplierImgUrl.setUrlD(images.get(3).getUrl());
+        }
+        if ( images.size() >= 5 ) {
+            supplierImgUrl.setUrlE(images.get(4).getUrl());
+        }
+
+        List<ParameterLoader.Parameter> commonParameters = parameterLoader.loadCommonParameters(category);
+        // 含有通子码 需要添加子型号
+        if ( commonParameters!=null && commonParameters.size() > 0 ) {
+
+            List<ApplyAddRequest.ChildItem> childItems = new ArrayList<>();
+            request.setChildItem(childItems);
+
+            ApplyAddRequest.ChildItem childItem = new ApplyAddRequest.ChildItem();
+            childItems.add(childItem);
+            childItem.setBarcode("0000000000000");
+
+            if ( images==null || images.size() ==0) {
+                throw  new Exception("[通子码商品]缺少商品图片");
+            }
+            //
+
+            if ( images.size() > 0 ) {
+                childItem.setSupplierImgAUrl(images.get(0).getUrl());
+            }
+
+            List<ApplyAddRequest.ParsX> parsX = new ArrayList<>();
+            childItem.setParsX(parsX);
+
+            for (ParameterLoader.Parameter commonParameter : commonParameters) {
+                ApplyAddRequest.ParsX parx = new ApplyAddRequest.ParsX();
+                parx.setParCodeX(commonParameter.code());
+                parx.setParValueX(commonParameter.value());
+                parsX.add(parx);
+            }
+        }
+
+
+        /**
+         * 商家商品介绍，UTF-8格式。将html内容的txt文本文件读取为字节数组,然后base64加密，去除空格回车后作为字段，传输时所涉及的图片不得使用外部url。允许写入CSS（禁止引用外部CSS）不支持JS。
+         */
+
+        String introduction = item.getIntroduction();
+        try {
+            if ( StringUtils.isBlank(introduction)) {
+                introduction = buildIntroduction(item.getSkuCode(), moq, detailUrls, columnValues);
+                item.setIntroduction(introduction);
+            }
+        } catch (Exception e) {
+            System.out.println("[" + item.getItemCode() + "]生成商品详情异常: " + e.getMessage());
+        }
+
+        request.setIntroduction(introduction); // 商品介绍
+
+        if ( StringUtils.isNotBlank(item.getSrc()) ) {
+            byte[] datas = Base64.decodeBase64(introduction.getBytes("UTF8"));
+            String _introduction = new String(datas, "UTF8");
+            _introduction = _introduction.replace(item.getSrc(), item.getDest());
+            request.setIntroduction(Base64.encodeBase64String(_introduction.getBytes("UTF8"))); // 商品介绍
+        }
+
+
+        //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
+        request.setCheckParam(true);
+
+        try {
+            ApplyAddResponse response = APPConfig.getInstance().client().excute(request);
+            logger.info("ApplyAddResponse: " + response.getBody());
+            SuningResponse.SnError error = response.getSnerror();
+            if ( error!=null ) {
+                StringBuilder content =  new StringBuilder("请求报文: \n");
+                content.append(request.getResParams()).append("\n\n");
+                content.append("响应报文:\n");
+                content.append(new Gson().toJson(response)).append("\n");
+                Files.write(content.toString().getBytes(), new File("report" + File.separator + item.getItemCode() + ".err"));
+                throw buildException(error.getErrorCode(), error.getErrorMsg());
+            } else {
+                System.out.println(new Gson().toJson(response.getSnbody().getAddApply()));
+            }
+        } catch (SuningApiException e) {
+            logger.error("[Item: " + item.getItemCode() + "]Exception: " + e.getMessage());
+            throw e;
+        }
+    }
+
     private static Exception buildException(String errorCode, String errorMsg){
 
 
@@ -461,6 +812,99 @@ public class SuningShelvesService implements ShelvesService {
             return new Exception("亮点词首位不能为空");
         }
         return new Exception(errorCode);
+    }
+
+
+    public static String buildIntroduction(String skuCode, int moq, List<String> detailUrls, List<String> columnValues) throws Exception {
+
+        Map<String, String> detailImageMap = new HashMap<>();
+        for (String picUrl : detailUrls) {
+            String picSuningUrl = ShelvesItemParser.uploadDetailImage(picUrl);
+            if (com.gavel.utils.StringUtils.isNotBlank(picSuningUrl)) {
+                detailImageMap.put(picUrl, picSuningUrl);
+            }
+        }
+
+
+        StringBuilder detail = new StringBuilder();
+//        if ( _price > 0 && _price < moq ) {
+//            detail.append("<div class=\"box\">");
+//            detail.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\">" +
+//                    "<span>商品起定量</span><span style=\"color:red;\">(请按起订量拍，否则无法发货)</span></div>");
+//
+//
+//            detail.append(" <span style=\"color:red;\">起订量： ").append( (int)Math.ceil(100/_price)).append(unit).append("</span><br>");
+//
+//            if ( number.contains(unit) ) {
+//                detail.append(" 包装数量： ").append(number).append("<br>");
+//            } else {
+//                detail.append(" 包装数量： ").append(number).append("/").append(unit).append("<br>");
+//            }
+//
+//            detail.append("</div>");
+//        }
+
+        detail.append("<div class=\"box\">");
+
+
+        detail.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品规格</div>");
+
+
+        //detail.append("•").append("制造商型号： ").append(model).append("<br>");
+         //= new HashMap<>();
+
+        for (String columnValue : columnValues) {
+            detail.append("•").append(columnValue);
+            detail.append("<br>");
+        }
+//        for (String key : columnValues.keySet()) {
+//            detail.append("•").append(key).append(": ").append(columnValues.get(key));
+//            detail.append("<br>");
+//        }
+
+        detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品描述</div>");
+        //detail.append(proDetailTit.html());
+
+        System.out.println("详情图片: " + detailImageMap.size());
+        if ( detailUrls.size() > 0 ) {
+            detail.append("<br>");
+            for (String picUrl : detailUrls) {
+                String picSuningUrl = detailImageMap.get(picUrl);
+                if (com.gavel.utils.StringUtils.isNotBlank(picSuningUrl)) {
+                    detail.append("<img alt=\"\" src=\"" + picSuningUrl + "\">");
+                    detail.append("<br>");
+                }
+            }
+        }
+        detail.append("</div>");
+
+
+
+//        List<String> picUrls = new ArrayList<>();
+//        if ( images!=null && images.size() > 0 ) {
+//            for (ShelvesItemParser.Pic image : cc) {
+//                if ( !image.isIscreate() &&  com.gavel.utils.StringUtils.isNotBlank(image.getUrl()) ){
+//                    picUrls.add(image.getUrl());
+//                }
+//            }
+//
+//        }
+
+
+//        detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品图片</div>");
+//        if ( picUrls.size() > 0 ) {
+//            for (String picUrl : picUrls) {
+//                detail.append("<p><img alt=\"\" src=\"" + picUrl + "\" class=\"product\"></p>");
+//            }
+//        }
+        detail.append("<p><img alt=\"\" src=\"https://uimgproxy.suning.cn/uimg1/sop/commodity/MhdqxYCAnkWz57dhaZS4PQ.jpg\" class=\"product\"></p>");
+        detail.append("</div>");
+
+
+
+        System.out.println("Detail: " + detail.toString());
+
+        return Base64.encodeBase64String(detail.toString().getBytes("UTF8"));
     }
 
 

@@ -353,6 +353,11 @@ public class ShelvesItemParser {
             if ( url.equalsIgnoreCase("https://www.grainger.cn/Content/images/hp_np.png") ) {
                 _image = url.replace("https://www.grainger.cn/", "").replace("/", File.separator).trim();
             }
+
+            if ( _image.indexOf("360buyimg.com") > -1 ) {
+                _image = _image.substring( _image.indexOf("360buyimg.com") + "360buyimg.com".length());
+            }
+
             image = new ImageCache();
             image.setId(id);
             image.setUrl(url.trim());
@@ -618,6 +623,110 @@ public class ShelvesItemParser {
             return iscreate;
         }
     }
+
+
+    public static List<ShelvesItemParser.Pic> getImages(String skuCode, List<String> picUrls, String defaultImage, BufferedImage logoImage){
+        List<Pic> images = new ArrayList<>();
+        try {
+            System.out.println("产品图片: " + picUrls.size());
+            for (String picUrl : picUrls) {
+                System.out.println(picUrl);
+            }
+
+            if ( picUrls.size() ==0 ) {
+                String picSuningUrl =  uploadLocalImage(defaultImage);
+                if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
+                    images.add(new Pic(picSuningUrl, true));
+                }
+                return images;
+            }
+
+            for (String picUrl : picUrls) {
+                String picSuningUrl = uploadImageWithoutDownload(picUrl, images.size(), logoImage);
+                if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
+                    images.add(new Pic(picSuningUrl, false));
+                } else {
+                    picSuningUrl = uploadImage(picUrl, images.size(), logoImage);
+                    if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
+                        images.add(new Pic(picSuningUrl, false));
+                    }
+                }
+            }
+
+            if ( images==null || images.size()==0) {
+                String picSuningUrl =  uploadLocalImage(defaultImage);
+                if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
+                    images.add(new Pic(picSuningUrl, true));
+                }
+                return images;
+            }
+
+            String pic1 = images.get(0).getUrl();
+            while ( images.size() < 5 ) {
+
+                String localFilePath =  skuCode + "_" + images.size() + ".png";
+                File imageFile = new File("images_tmp", localFilePath);
+                if ( !imageFile.getParentFile().exists() ) {
+                    imageFile.getParentFile().mkdirs();
+                }
+
+                if ( !imageFile.exists() ) {
+                    HttpUtils.download(pic1, imageFile.getAbsolutePath());
+                }
+
+                System.out.println(localFilePath);
+                Mat src = Imgcodecs.imread(imageFile.getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED);
+                if ( src.width()!=800 || src.height()!=800 ) {
+                    Imgproc.resize(src, src, new Size(800, 800));
+                }
+                Imgproc.putText(src, Integer.toString(images.size()), new Point(src.width()-20, src.height()-10), 0, 1.0, new Scalar(220,220,220));
+                //Imgproc.circle(src, new Point(src.width()-images.size(), src.height()-images.size()),  2, new Scalar(238, 238, 238));
+                Imgcodecs.imwrite(imageFile.getAbsolutePath(), src);
+
+
+                String picFile = imageFile.getAbsolutePath();
+                if ( logoImage!=null ) {
+                    String outputFile =  imageFile.getParent() + File.separator + "mask_" + imageFile.getName();
+                    try {
+                        // ImageIO读取图片
+                        BufferedImage pic = ImageIO.read( new File(localFilePath));
+                        Thumbnails.of(pic)
+                                // 设置图片大小
+                                .size(pic.getWidth(), pic.getHeight())
+                                // 加水印 参数：1.水印位置 2.水印图片 3.不透明度0.0-1.0
+                                .watermark(Positions.TOP_LEFT, logoImage, 0.9f)
+                                // 输出到文件
+                                .toFile(outputFile);
+                        picFile = outputFile;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                String picUrl = null;
+                {
+                    NPicAddRequest request = new NPicAddRequest();
+                    request.setPicFileData(picFile);
+                    try {
+                        NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
+                        SuningResponse.SnError error = response.getSnerror();
+                        if ( error!=null ) {
+                            System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                        } else {
+                            picUrl = response.getSnbody().getAddNPic().getPicUrl();
+                            images.add(new Pic(picUrl, true));
+                        }
+                    } catch (SuningApiException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return images;
+    }
+
 
     public static List<ShelvesItemParser.Pic> getImages(String skuCode, String defaultImage, BufferedImage logoImage){
         List<Pic> images = new ArrayList<>();
