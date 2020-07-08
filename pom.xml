@@ -211,7 +211,7 @@
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib/</classpathPrefix>
 							<mainClass>
-								com.gavel.CrawlerApp
+								com.gavel.application.MainApp
                             </mainClass>
 						</manifest>
 						<manifestEntries>

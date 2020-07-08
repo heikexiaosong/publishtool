@@ -618,45 +618,78 @@ public class FXMLShelvesController {
      * @param actionEvent
      */
     public void handleImportSkuPerson(ActionEvent actionEvent) {
+        List<Task> importTasks = new ArrayList<>();
+        boolean okClicked = showTaskSelectedDialog(importTasks);
+        if ( okClicked && importTasks.size()>0 ) {
+            List<ShelvesItem> items = new ArrayList<>();
+            okClicked = showShelvesItemImportDialog(items, importTasks.get(0));
+            if (okClicked) {
 
-        List<ShelvesItem> items = new ArrayList<>();
-        boolean okClicked = showShelvesItemImportDialog(items);
-        if (okClicked) {
+                SuningCatetoryBrandSelector catetoryBrandSelector = new SuningCatetoryBrandSelector();
 
-            SuningCatetoryBrandSelector catetoryBrandSelector = new SuningCatetoryBrandSelector();
-
-            ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
-            System.out.println("SKU: " + items.size());
+                ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
+                System.out.println("SKU: " + items.size());
 
 
-            int total = items.size();
-            for (int i = 0; i < items.size(); i++) {
-                ShelvesItem item = items.get(i);
+                int total = items.size();
+                for (int i = 0; i < items.size(); i++) {
+                    ShelvesItem item = items.get(i);
 
-                item.setTaskid(taskSelected.getId());
-                item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
+                    item.setTaskid(taskSelected.getId());
+                    item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
 
-                CatetoryBrand catetoryBrand = catetoryBrandSelector.selectCatetoryBrand(item.getCategoryCode(), item.getBrandCode());
-                if ( catetoryBrand!=null ) {
-                    item.setMappingbrandcode(catetoryBrand.getBrandCode());
-                    item.setMappingbrandname(catetoryBrand.getBrandZh());
-                    item.setMappingcategorycode(catetoryBrand.getCategoryCode());
-                    item.setMappingcategoryname(catetoryBrand.getCategory());
-                }
+                    CatetoryBrand catetoryBrand = catetoryBrandSelector.selectCatetoryBrand(item.getCategoryCode(), item.getBrandCode());
+                    if ( catetoryBrand!=null ) {
+                        item.setMappingbrandcode(catetoryBrand.getBrandCode());
+                        item.setMappingbrandname(catetoryBrand.getBrandZh());
+                        item.setMappingcategorycode(catetoryBrand.getCategoryCode());
+                        item.setMappingcategoryname(catetoryBrand.getCategory());
+                    }
 
-                try {
-                    SQLExecutor.insert(item);
-                    itemList.getItems().add(item);
-                    System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入成功: ");
-                } catch (Exception e) {
-                    System.out.println("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入失败: " + e.getMessage() );
+                    try {
+                        SQLExecutor.insert(item);
+                        itemList.getItems().add(item);
+                        System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入成功: ");
+                    } catch (Exception e) {
+                        System.out.println("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入失败: " + e.getMessage() );
+                    }
                 }
             }
         }
-
     }
 
-    private boolean showShelvesItemImportDialog(List<ShelvesItem> shelvesItems) {
+    private boolean showTaskSelectedDialog(List<Task> importTasks) {
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/TaskSelectedDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("选择上架商品");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(stage());
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            FXMLTaskSelectedController controller = loader.getController();
+            controller.setDialogStage(dialogStage);
+            controller.bindItems(importTasks);
+            controller.setSingleSelected(true);
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    private boolean showShelvesItemImportDialog(List<ShelvesItem> shelvesItems, Task task) {
         try {
             // Load the fxml file and create a new stage for the popup dialog.
             FXMLLoader loader = new FXMLLoader();
@@ -674,7 +707,7 @@ public class FXMLShelvesController {
             // Set the person into the controller.
             FXMLSkuImportController controller = loader.getController();
             controller.setDialogStage(dialogStage);
-            controller.bindItems(shelvesItems);
+            controller.bindItems(shelvesItems, task.getId());
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
 

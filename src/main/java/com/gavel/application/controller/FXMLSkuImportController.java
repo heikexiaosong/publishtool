@@ -7,6 +7,7 @@ import com.gavel.entity.Item;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.entity.Task;
 import com.gavel.shelves.ShelvesItemParser;
+import com.gavel.utils.StringUtils;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Service;
@@ -53,6 +54,8 @@ public class FXMLSkuImportController {
     private List<ShelvesItem> items = new ArrayList<>();
 
     private List<Item> datas = new ArrayList<>();
+
+    private String  taskId;
 
 
 
@@ -123,8 +126,12 @@ public class FXMLSkuImportController {
     }
 
 
-    public void bindItems(List<ShelvesItem> _shelvesItems) {
+    public void bindItems(List<ShelvesItem> _shelvesItems, String  _taskId) {
         items = _shelvesItems;
+        this.taskId = _taskId;
+        if (StringUtils.isNotBlank(taskId)) {
+            load();
+        }
     }
 
     @FXML
@@ -238,8 +245,12 @@ public class FXMLSkuImportController {
             return;
         }
 
-       String  taskId = task.getId();
+        taskId = task.getId();
 
+        load();
+    }
+
+    private void load(){
         try {
             List<Item> items = SQLExecutor.executeQueryBeanList(" select item.* from item left join searchitem on searchitem.CODE = item.CODE where searchitem.TYPE = 'u' and TASKID = ? ", Item.class,  taskId);
             System.out.println("u");
@@ -269,6 +280,5 @@ public class FXMLSkuImportController {
             skuList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
             return skuList;
         });
-
     }
 }

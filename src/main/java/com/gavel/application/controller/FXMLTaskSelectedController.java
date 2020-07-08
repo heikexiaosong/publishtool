@@ -3,6 +3,7 @@ package com.gavel.application.controller;
 import com.gavel.application.IDCell;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Task;
+import com.gavel.utils.StringUtils;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -52,6 +53,8 @@ public class FXMLTaskSelectedController {
 
     private  List<Task> bindTasks = null;
 
+    private boolean singleSelected = false;
+
 
     @FXML
     private void initialize() {
@@ -95,6 +98,15 @@ public class FXMLTaskSelectedController {
     private void updateStatus(Task newValue) {
 
         newValue.setSelected(!newValue.isSelected());
+
+        if ( newValue.isSelected() ) {
+            for (Task task : skuList.getItems()) {
+                if ( task.getId().equalsIgnoreCase(newValue.getId()) ) {
+                    continue;
+                }
+                task.setSelected(false);
+            }
+        }
     }
 
     public void setDialogStage(Stage dialogStage) {
@@ -129,7 +141,32 @@ public class FXMLTaskSelectedController {
         this.bindTasks = _task;
     }
 
+    public void setSingleSelected(boolean singleSelected) {
+        this.singleSelected = singleSelected;
+    }
+
     public void handleSearchAction(ActionEvent actionEvent) {
+
+         String _keyword = keyword.getText();
+        items = Collections.EMPTY_LIST;
+         if (StringUtils.isBlank(_keyword)) {
+             try {
+                 items = SQLExecutor.executeQueryBeanList("select * from TASK where STATUS = 'success' order by UPDATETIME desc ", Task.class);
+             } catch (Exception e) {
+                 e.printStackTrace();
+                 items = Collections.EMPTY_LIST;
+             }
+         } else {
+             try {
+                 items = SQLExecutor.executeQueryBeanList("select * from TASK where STATUS = 'success' and TITLE like ?  order by UPDATETIME desc ", Task.class, "%" + _keyword.trim() + "%");
+             } catch (Exception e) {
+                 e.printStackTrace();
+                 items = Collections.EMPTY_LIST;
+             }
+         }
+
+        skuList.setItems(FXCollections.observableList(items));
+
 
     }
 }
