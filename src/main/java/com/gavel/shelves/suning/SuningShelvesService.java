@@ -513,8 +513,13 @@ public class SuningShelvesService implements ShelvesService {
         Elements detailImgs = detail.select("div#J-detail-content img");
         if ( detailImgs!=null ) {
             for (Element detailImg : detailImgs) {
-                System.out.println(detailImg.attr("src"));
-                detailUrls.add(detailImg.attr("src"));
+
+                String src = detailImg.attr("src");
+                if ( src==null || src.trim().length()==0 ) {
+                    src = detailImg.attr("data-lazyload");
+                }
+                System.out.println(src);
+                detailUrls.add(src);
             }
         }
 
@@ -938,8 +943,8 @@ public class SuningShelvesService implements ShelvesService {
         ShelvesItem shelvesItem = null;
 
         try {
-            shelvesItem = SQLExecutor.executeQueryBean("select * from SHELVESITEM where TASKID =? and SKUCODE = ? ", ShelvesItem.class, "1590027322458", "5G8354");
-            suningShelvesService.shelves(shelvesItem);
+            shelvesItem = SQLExecutor.executeQueryBean("select * from SHELVESITEM where TASKID =? and SKUCODE = ? ", ShelvesItem.class, "1593958053079", "15265522094");
+            suningShelvesService.shelvesJDSku(shelvesItem);
         } catch (Exception e) {
             e.printStackTrace();
         }

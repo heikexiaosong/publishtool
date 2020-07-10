@@ -298,7 +298,11 @@ public class SkuPageLoader {
             Elements detailImgs = detail.select("div#J-detail-content img");
             if ( detailImgs!=null ) {
                 for (Element detailImg : detailImgs) {
-                    System.out.println(detailImg.attr("src"));
+                    String src = detailImg.attr("src");
+                    if ( src==null || src.trim().length()==0 ) {
+                        src = detailImg.attr("data-lazyload");
+                    }
+                    System.out.println(src);
                 }
             }
 
@@ -315,7 +319,7 @@ public class SkuPageLoader {
 
     public static void main(String[] args) throws Exception {
 
-        String code = "1787140640";
+        String code = "41864693164";
 
         String url = "https://i-item.jd.com/" + code + ".html";
 

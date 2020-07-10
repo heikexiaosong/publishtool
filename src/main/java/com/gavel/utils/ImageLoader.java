@@ -126,6 +126,10 @@ public class ImageLoader {
             image = url.replace("https://www.grainger.cn/", "").replace("/", File.separator).trim();
         }
 
+        if ( image.indexOf("360buyimg.com") > -1 ) {
+            image = image.substring( image.indexOf("360buyimg.com") + "360buyimg.com".length());
+        }
+
         File imageFile = new File(PICS_DIR + File.separator + image);
         if ( !imageFile.getParentFile().exists() ) {
             imageFile.getParentFile().mkdirs();
