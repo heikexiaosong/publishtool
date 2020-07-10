@@ -43,7 +43,7 @@ public class DriverHtmlLoader {
         HashMap<String, Object> chromePrefs = new HashMap<>();
         chromePrefs.put("profile.managed_default_content_settings.images", 2);
         chromePrefs.put("permissions.default.stylesheet", 2);
-        chromePrefs.put("javascript", 2);
+        //chromePrefs.put("javascript", 2);
         options.setExperimentalOption("prefs", chromePrefs);
 
         driver = new ChromeDriver(options);
@@ -87,7 +87,7 @@ public class DriverHtmlLoader {
     public String loadHtml(String url) {
         driver.navigate().to(url);
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

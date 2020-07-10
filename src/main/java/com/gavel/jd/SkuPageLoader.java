@@ -1,6 +1,5 @@
 package com.gavel.jd;
 
-import com.gavel.HttpUtils;
 import com.gavel.crawler.DriverHtmlLoader;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Item;
@@ -210,12 +209,113 @@ public class SkuPageLoader {
 
         //System.out.println(itemInfo.select("div.news #p-ad").text());
 
+
+        Element detail = doc.selectFirst("div#detail");
+
+        // System.out.println(detail.html());
+        if ( detail!=null ) {
+            Element parameter = detail.selectFirst("div.p-parameter");
+
+//            Element brand = parameter.selectFirst("ul#parameter-brand a");
+//            System.out.println(brand.text());
+
+            Elements parameter2 = parameter.select("ul.parameter2  li");
+            for (Element element : parameter2) {
+                if ( element.text().startsWith("商品编号") || element.text().startsWith("店铺") ) {
+                    System.out.println(element.text() + " ... X");
+                } else {
+                    System.out.println(element.text());
+                    //columnValues.add(element.text());
+                }
+            }
+
+
+            Element itemdetail = detail.selectFirst("div.item-detail");
+            if ( itemdetail!=null ) {
+                System.out.println(itemdetail.text());
+
+             //   columnValues.add(itemdetail.text());
+            }
+
+
+            // 规格与包装
+            Element ptableItem = detail.selectFirst("div.Ptable-item dl");
+            if ( ptableItem!=null ) {
+                String line = "";
+                for (Element element : ptableItem.children()) {
+                    if ( element.is("dd") ) {
+
+                        line = line + element.text();
+                        System.out.println(line);
+                        //columnValues.add(line);
+
+                    } else {
+                        System.out.print(element.text() + ": ");
+                        line = element.text() + ": ";
+                    }
+                }
+
+            }
+
+
+            // package-list
+            Element packagelist = detail.selectFirst("div.package-list");
+            if ( packagelist!=null ) {
+
+                //columnValues.add(packagelist.text());
+                if ( packagelist.text().contains("暂无") ) {
+
+                    System.out.println(packagelist.text() + ".....X");
+                } else {
+                    System.out.println(packagelist.text());
+
+                }
+            }
+
+
+            //
+            Element detailcontent = detail.selectFirst("div#J-detail-content style");
+            if ( detailcontent!=null ) {
+                System.out.println(detailcontent.html());
+                Matcher mat = DETAIL_IMAGE.matcher(detailcontent.html());
+                while(mat.find()){
+                    String text = mat.group(1);
+                    if ( text.startsWith("(") ) {
+                        text = text.substring(1);
+                    }
+                    if ( text.endsWith(")") ) {
+                        text = text.substring(0, text.length()-1);
+                    }
+                    if ( text.startsWith("//") ) {
+                        text = "https:" + text;
+                    }
+                    System.out.println(text);
+                    //detailUrls.add(text);
+                }
+            }
+
+
+            Elements detailImgs = detail.select("div#J-detail-content img");
+            if ( detailImgs!=null ) {
+                for (Element detailImg : detailImgs) {
+                    System.out.println(detailImg.attr("src"));
+                }
+            }
+
+            Elements detailTexts = detail.select("div#J-detail-content div p");
+            if ( detailTexts!=null ) {
+                for (Element detailText : detailTexts) {
+                    System.out.println(detailText.text());
+                }
+            }
+        }
+
         return skuItem;
     }
 
     public static void main(String[] args) throws Exception {
 
-        String code = "100005484334";
+        String code = "1787140640";
 
         String url = "https://i-item.jd.com/" + code + ".html";
 
@@ -235,7 +335,7 @@ public class SkuPageLoader {
         }
 
         if ( item==null ) {
-            String html = HttpUtils.get(url, "");
+            String html = DriverHtmlLoader.getInstance().loadHtml(url);
             if (com.gavel.utils.StringUtils.isNotBlank(html)) {
 
                 try {

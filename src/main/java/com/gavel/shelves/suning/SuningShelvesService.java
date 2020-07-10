@@ -441,7 +441,7 @@ public class SuningShelvesService implements ShelvesService {
 
             Elements parameter2 = parameter.select("ul.parameter2  li");
             for (Element element : parameter2) {
-                if ( element.text().startsWith("商品编号") ) {
+                if ( element.text().startsWith("商品编号")  || element.text().startsWith("店铺") ) {
                     System.out.println(element.text() + " ... X");
                 } else {
                     System.out.println(element.text());
@@ -479,8 +479,12 @@ public class SuningShelvesService implements ShelvesService {
             // package-list
             Element packagelist = detail.selectFirst("div.package-list");
             if ( packagelist!=null ) {
-                System.out.println(packagelist.text());
-                columnValues.add(packagelist.text());
+                if ( packagelist.text().contains("暂无") ) {
+                    System.out.println(packagelist.text() + ".....X");
+                } else {
+                    System.out.println(packagelist.text());
+                    columnValues.add(packagelist.text());
+                }
             }
 
 
@@ -503,6 +507,21 @@ public class SuningShelvesService implements ShelvesService {
                     System.out.println(text);
                     detailUrls.add(text);
                 }
+            }
+        }
+
+        Elements detailImgs = detail.select("div#J-detail-content img");
+        if ( detailImgs!=null ) {
+            for (Element detailImg : detailImgs) {
+                System.out.println(detailImg.attr("src"));
+                detailUrls.add(detailImg.attr("src"));
+            }
+        }
+
+        Elements detailTexts = detail.select("div#J-detail-content div p");
+        if ( detailTexts!=null ) {
+            for (Element detailText : detailTexts) {
+                columnValues.add(detailText.text());
             }
         }
 
