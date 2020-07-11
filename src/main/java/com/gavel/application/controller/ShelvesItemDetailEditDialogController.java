@@ -107,7 +107,7 @@ public class ShelvesItemDetailEditDialogController {
             selectedItem.setItemCode(itemCode.getText().trim());
             selectedItem.setProductName(productName.getText().trim());
             selectedItem.setCmTitle(cmTitle.getText().trim());
-            selectedItem.setSellingPoints(sellingPoints.getText().trim());
+            selectedItem.setSellingPoints(sellingPoints.getText()==null?"":sellingPoints.getText().trim());
         }
 
         // TODO

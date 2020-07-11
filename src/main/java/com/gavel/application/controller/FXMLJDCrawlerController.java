@@ -202,6 +202,7 @@ public class FXMLJDCrawlerController {
         while ( pageCur <= pageTotal ) {
             int count = SQLExecutor.intQuery("select count(1) from  SEARCHITEM where TASKID = ? and  PAGENUM = ?", task.getId(), pageCur);
             if ( count > 0 ) {
+                pageCur++;
                 continue;
             }
 
