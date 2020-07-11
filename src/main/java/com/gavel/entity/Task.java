@@ -66,6 +66,12 @@ public class Task {
     @FieldMeta(name = "TYPE", title = "类型", length = 20)
     private final StringProperty type = new SimpleStringProperty();
 
+    @FieldMeta(name = "BRAND", title = "品牌", length = 50)
+    private final StringProperty brand = new SimpleStringProperty();
+
+    @FieldMeta(name = "CATEGORY", title = "类目", length = 30)
+    private final StringProperty category = new SimpleStringProperty();
+
 
     public Task() {
         id.set(String.valueOf(System.currentTimeMillis()));
@@ -173,5 +179,29 @@ public class Task {
 
     public void setType(String type) {
         this.type.set(type);
+    }
+
+    public String getBrand() {
+        return brand.get();
+    }
+
+    public StringProperty brandProperty() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand.set(brand);
+    }
+
+    public String getCategory() {
+        return category.get();
+    }
+
+    public StringProperty categoryProperty() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category.set(category);
     }
 }

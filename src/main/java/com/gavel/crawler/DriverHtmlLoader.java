@@ -85,7 +85,8 @@ public class DriverHtmlLoader {
     }
 
     public String loadHtml(String url) {
-        driver.navigate().to(url);
+        System.out.println("URL: " + url.replace(" ", "%20"));
+        driver.navigate().to(url.replace(" ", "%20"));
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {

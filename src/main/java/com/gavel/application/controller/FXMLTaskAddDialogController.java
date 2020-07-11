@@ -100,10 +100,18 @@ public class FXMLTaskAddDialogController {
             task.setTitle(document.title());
 
             Element total = document.selectFirst("div.f-result-sum span.num");
+            if ( total==null ) {
+                total = document.selectFirst("span.fp-total b");
+
+            }
             System.out.println("产品: " + total.text());
 
             task.setProductnum(0);
-            task.setSkunum(Integer.parseInt(total.text()));
+            try {
+                task.setSkunum(Integer.parseInt(total.text()));
+            } catch (Exception e){
+                e.printStackTrace();
+            }
 
             int pageCur = Integer.parseInt(document.selectFirst("div.f-pager .fp-text b").text());
             int pageTotal = Integer.parseInt(document.selectFirst("div.f-pager .fp-text i").text());

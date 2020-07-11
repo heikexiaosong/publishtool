@@ -4,7 +4,6 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.opencv.core.Core;
 
 import java.io.IOException;
 
@@ -12,9 +11,6 @@ public class JDCrawlerApp extends Application {
 
     private Stage primaryStage;
 
-    static {
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-    }
     /**
      * Constructor
      */
