@@ -17,6 +17,7 @@ import com.gavel.utils.StringUtils;
 import com.google.common.io.Files;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
@@ -112,6 +113,15 @@ public class FXMLShelvesController {
     private TableColumn<ShelvesItem, String> msgCol;
 
     @FXML
+    private TableColumn<ShelvesItem, String> priceCol;
+    @FXML
+    private TableColumn<ShelvesItem, String> ownCol;
+    @FXML
+    private TableColumn<ShelvesItem, String> shopCol;
+    @FXML
+    private TableColumn<ShelvesItem, String> stockCol;
+
+    @FXML
     private CheckBox curPage;
 
     @FXML
@@ -166,6 +176,12 @@ public class FXMLShelvesController {
         categorynameCol.setCellValueFactory(cellData -> cellData.getValue().mappingcategorynameProperty());
         statusCol.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
         msgCol.setCellValueFactory(cellData -> cellData.getValue().messageProperty());
+
+        priceCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getPrice())));
+        ownCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOwn()));
+        shopCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getShop()));
+        stockCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStock()));
+
 
         title.setCellValueFactory(cellData -> cellData.getValue().titleProperty());
         skunum.setCellValueFactory(new PropertyValueFactory<>("skunum"));

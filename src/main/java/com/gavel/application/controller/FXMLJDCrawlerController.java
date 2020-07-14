@@ -200,7 +200,7 @@ public class FXMLJDCrawlerController {
         int pageTotal = 1;
 
         while ( pageCur <= pageTotal ) {
-            int count = SQLExecutor.intQuery("select count(1) from  SEARCHITEM where TASKID = ? and  PAGENUM = ?", task.getId(), pageCur);
+            int count = SQLExecutor.intQuery("select count(1) from  SEARCHITEM where TASKID = ? and  PAGENUM = ?", task.getId(), pageCur*2 - 1);
             if ( count > 0 ) {
                 pageCur++;
                 continue;
@@ -279,6 +279,19 @@ public class FXMLJDCrawlerController {
 
                     searchItem.setOwn(own);
 
+
+
+                    Element shopname = item.selectFirst("a.hd-shopname");
+                    if ( shopname!=null ) {
+                        searchItem.setShop(shopname.text());
+                    }
+
+
+                    Element stock = item.selectFirst("div.p-stock");
+                    if ( stock!=null ) {
+                        searchItem.setStock(stock.text());
+                    }
+
                     SQLExecutor.insert(searchItem);
 
                     searchItems.add(searchItem);
@@ -337,6 +350,8 @@ public class FXMLJDCrawlerController {
                 item.setBrand(task.getBrand());
                 item.setBrandname(task.getBrand());
                 item.setOwn(searchItem.getOwn());
+                item.setShop(searchItem.getShop());
+                item.setStock(searchItem.getStock());
 
                 JsonObject priceObj = pricesMap.get("J_" + searchItem.getCode());
                 if ( priceObj!=null && priceObj.has("p") ) {
@@ -346,7 +361,7 @@ public class FXMLJDCrawlerController {
                 SQLExecutor.insert(item);
 
             }
-            pageCur = pageCur*2 + 1;
+            pageCur++;
         }
 
 

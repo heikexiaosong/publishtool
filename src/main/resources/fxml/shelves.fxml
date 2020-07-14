@@ -162,6 +162,10 @@
                                                 <TableColumn fx:id="brandnameCol" prefWidth="100.0" text="上架品牌" />
                                                 <TableColumn fx:id="categorynameCol" prefWidth="100.0" text="上架类目" />
                                                 <TableColumn fx:id="statusCol" prefWidth="75.0" text="状态" />
+                                                <TableColumn fx:id="priceCol" prefWidth="75.0" text="价格" />
+                                                <TableColumn fx:id="ownCol" prefWidth="75.0" text="自营" />
+                                                <TableColumn fx:id="shopCol" prefWidth="100.0" text="店铺名称" />
+                                                <TableColumn fx:id="stockCol" prefWidth="75.0" text="库存" />
                                                 <TableColumn fx:id="graingercategorynameCol" prefWidth="100.0" text="固安捷类目" />
                                                 <TableColumn fx:id="graingerbrandnameCol" prefWidth="100.0" text="固安捷品牌" />
                                                 <TableColumn fx:id="msgCol" prefWidth="400.0" text="提示" />

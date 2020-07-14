@@ -67,6 +67,12 @@ public class Item {
     @FieldMeta(name = "OWN", title = "自营")
     private String own;
 
+    @FieldMeta(name = "SHOP", title = "店铺")
+    private String shop;
+
+    @FieldMeta(name = "STOCK", title = "库存")
+    private String stock;
+
     public String getProductcode() {
         return productcode;
     }
@@ -185,5 +191,21 @@ public class Item {
 
     public void setOwn(String own) {
         this.own = own;
+    }
+
+    public String getShop() {
+        return shop;
+    }
+
+    public void setShop(String shop) {
+        this.shop = shop;
+    }
+
+    public String getStock() {
+        return stock;
+    }
+
+    public void setStock(String stock) {
+        this.stock = stock;
     }
 }

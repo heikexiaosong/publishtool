@@ -91,7 +91,10 @@ public class DriverHtmlLoader {
     public String loadHtml(String url, long millis) {
         System.out.println("URL: " + url.replace(" ", "%20"));
         driver.navigate().to(url.replace(" ", "%20"));
+
         try {
+            Thread.sleep(1000);
+            ((JavascriptExecutor) driver).executeScript("window.scrollTo(0,document.body.scrollHeight)");
             Thread.sleep(millis);
         } catch (InterruptedException e) {
             e.printStackTrace();

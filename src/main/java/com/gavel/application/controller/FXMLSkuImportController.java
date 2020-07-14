@@ -1,14 +1,14 @@
 package com.gavel.application.controller;
 
-import com.gavel.application.DataPagination;
 import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Item;
 import com.gavel.entity.ShelvesItem;
-import com.gavel.entity.Task;
 import com.gavel.shelves.ShelvesItemParser;
 import com.gavel.utils.StringUtils;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Service;
 import javafx.event.ActionEvent;
@@ -19,17 +19,14 @@ import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import javafx.util.StringConverter;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class FXMLSkuImportController {
 
     @FXML
-    private ComboBox<Task> taskid;
+    private ComboBox<String> shop;
 
 
     @FXML
@@ -44,9 +41,23 @@ public class FXMLSkuImportController {
     private TableColumn<Item, String> brandnameCol;
     @FXML
     private TableColumn<Item, String> categorynameCol;
+    @FXML
+    private TableColumn<Item, String> priceCol;
+    @FXML
+    private TableColumn<Item, String> ownCol;
+    @FXML
+    private TableColumn<Item, String> shopCol;
+    @FXML
+    private TableColumn<Item, String> stockCol;
 
     @FXML
-    private Pagination pagination;
+    private TextField min;
+
+    @FXML
+    private TextField max;
+
+    @FXML
+    private CheckBox own;
 
     private Stage dialogStage;
     private boolean okClicked = false;
@@ -67,54 +78,107 @@ public class FXMLSkuImportController {
         nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
         brandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandname()));
         categorynameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCategoryname()));
+        priceCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getPrice())));
+        ownCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getOwn()));
+        shopCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getShop()));
+        stockCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStock()));
 
+        shop.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> onShopChange());
 
-        initTaskcombox();
+        initShopcombox();
 
-        DataPagination dataPagination = new DataPagination(items, 30);
-        pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
-        pagination.setPageFactory(pageIndex -> {
-            skuList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
-            return skuList;
+        skuList.setItems(FXCollections.observableList(datas));
+
+        min.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                System.out.println("当前字符数为：" + min.getText());
+                onShopChange();
+            }
+        });
+
+        max.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                System.out.println("当前字符数为：" + max.getText());
+                onShopChange();
+            }
         });
 
     }
 
-    // 初始化任务列表
-    private void initTaskcombox() {
-        List<Task> taskList = null;
-        try {
-            taskList = SQLExecutor.executeQueryBeanList("select * from TASK", Task.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            taskList = Collections.EMPTY_LIST;
+    private void onShopChange() {
+
+        String _shop = shop.getSelectionModel().getSelectedItem();
+
+        float min_price = 0;
+        float max_price = Float.MAX_VALUE;
+
+        boolean _own = own.isSelected();
+
+        String _min =  min.getText();
+        String _max =  max.getText();
+        if ( _min!=null && _min.trim().length() > 0 ) {
+            try {
+                min_price = Float.parseFloat(_min);
+            } catch (Exception e) {
+
+            }
         }
-        taskid.setItems(FXCollections.observableArrayList(taskList));
 
+        if ( _max!=null && _max.trim().length() > 0 ) {
+            try {
+                max_price = Float.parseFloat(_max);
+            } catch (Exception e) {
 
-        taskid.setConverter(new StringConverter<Task>(){
-            @Override
-            public String toString(Task object) {
-                return object == null ? null : object.getTitle();
             }
-            @Override
-            public Task fromString(String string) {
-                return taskid.getItems().stream().filter(i -> i.getTitle().equals(string)).findAny().orElse(null);
+        }
+
+        final List<Item> filterItems = new ArrayList<>();
+
+        if ( _shop==null || _shop.trim().length()==0 ) {
+            filterItems.addAll(datas);
+        } else {
+            for (Item data : datas) {
+                if ( _shop.equalsIgnoreCase(data.getShop())  ) {
+                    filterItems.add(data);
+                }
+            }
+        }
+
+
+        Iterator<Item> it = filterItems.iterator();
+        while ( it.hasNext() ) {
+            Item item = it.next();
+            if ( item.getPrice() < min_price || item.getPrice() > max_price ) {
+                it.remove();
             }
 
-        });
-
-        taskid.setCellFactory(lv -> new ListCell<Task>() {
-
-            @Override
-            protected void updateItem(Task item, boolean empty) {
-                super.updateItem(item, empty);
-
-                // use full text in list cell (list popup)
-                setText(item == null ? null : item.getTitle());
+            if ( _own && "N".equalsIgnoreCase(item.getOwn()) ) {
+                it.remove();
             }
+        }
 
-        });
+
+        skuList.setItems(FXCollections.observableList(filterItems));
+    }
+
+    // 初始化任务列表
+    private void initShopcombox() {
+
+        Set<String>  shops = new HashSet<>();
+
+        if ( datas==null || datas.size()==0 ) {
+            shop.setItems(FXCollections.observableArrayList(shops));
+        }
+
+        shops.add("");
+        for (Item item : datas) {
+            shops.add(item.getShop());
+        }
+
+        shop.setItems(FXCollections.observableArrayList(shops));
+
     }
 
     public void setDialogStage(Stage dialogStage) {
@@ -147,8 +211,9 @@ public class FXMLSkuImportController {
 
                     @Override
                     protected String call() throws Exception {
-                        for (int i = 0; i < datas.size(); i++) {
-                            Item item = datas.get(i);
+
+                        for (int i = 0; i < skuList.getItems().size(); i++) {
+                            Item item = skuList.getItems().get(i);
 
                             ShelvesItem shelvesItem = null;
 
@@ -174,6 +239,16 @@ public class FXMLSkuImportController {
 
                                     shelvesItem.setType(item.getType());
                                     shelvesItem.setSellingPoints(item.getSubname());
+
+                                    shelvesItem.setPrice(item.getPrice());
+                                    shelvesItem.setShop(item.getShop());
+                                    shelvesItem.setStock(item.getStock());
+                                    shelvesItem.setOwn(item.getOwn());
+
+                                    shelvesItem.setSellingPoints(item.getSubname());
+                                    if ( shelvesItem.getSellingPoints()==null || shelvesItem.getSellingPoints().trim().length()==0 ) {
+                                        shelvesItem.setSellingPoints(item.getName());
+                                    }
 
                                 } else {
                                     shelvesItem = ShelvesItemParser.parse(item);
@@ -240,12 +315,6 @@ public class FXMLSkuImportController {
         datas.clear();
         skuList.setItems(FXCollections.observableArrayList());
 
-        Task task = taskid.getSelectionModel().getSelectedItem();
-        if ( task==null ) {
-            return;
-        }
-
-        taskId = task.getId();
 
         load();
     }
@@ -271,14 +340,14 @@ public class FXMLSkuImportController {
             e.printStackTrace();
         }
 
+        skuList.setItems(FXCollections.observableList(datas));
 
-        DataPagination dataPagination = new DataPagination(datas, 30);
+        initShopcombox();
+    }
 
-        pagination.pageCountProperty().bindBidirectional(dataPagination.totalPageProperty());
+    public void handleOwnCheck(ActionEvent actionEvent) {
 
-        pagination.setPageFactory(pageIndex -> {
-            skuList.setItems(FXCollections.observableList(dataPagination.getCurrentPageDataList(pageIndex)));
-            return skuList;
-        });
+        onShopChange();
+
     }
 }

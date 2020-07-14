@@ -117,7 +117,6 @@ public class SkuPageLoader {
 
 
         String html = DriverHtmlLoader.getInstance().loadHtml(url);
-        Thread.sleep(5000);
         if (com.gavel.utils.StringUtils.isNotBlank(html)) {
             try {
                 parseSku(code, html, null);
@@ -319,7 +318,7 @@ public class SkuPageLoader {
 
     public static void main(String[] args) throws Exception {
 
-        String code = "41864693164";
+        String code = "66413083807";
 
         String url = "https://i-item.jd.com/" + code + ".html";
 

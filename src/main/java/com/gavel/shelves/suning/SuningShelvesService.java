@@ -460,19 +460,24 @@ public class SuningShelvesService implements ShelvesService {
 
             // 规格与包装
             Element ptableItem = detail.selectFirst("div.Ptable-item dl");
+            String line = "";
             if ( ptableItem!=null ) {
-                String line = "";
+
                 for (Element element : ptableItem.children()) {
                     if ( element.is("dd") ) {
                         System.out.println(element.text());
                         line = line + element.text();
                         columnValues.add(line);
+                        line = null;
                     } else {
                         System.out.print(element.text() + ": ");
                         line = element.text() + ": ";
                     }
                 }
 
+            }
+            if ( line!=null && line.trim().length() > 0 ) {
+                columnValues.add(line);
             }
 
 
@@ -517,6 +522,9 @@ public class SuningShelvesService implements ShelvesService {
                 String src = detailImg.attr("src");
                 if ( src==null || src.trim().length()==0 ) {
                     src = detailImg.attr("data-lazyload");
+                }
+                if ( src.startsWith("//") ) {
+                    src = "https:" + src;
                 }
                 System.out.println(src);
                 detailUrls.add(src);

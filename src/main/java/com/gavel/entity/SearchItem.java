@@ -52,12 +52,32 @@ public class SearchItem {
 
     private String own = "N";
 
+    private String shop = "";
+
+    private String stock = "";
+
     public String getOwn() {
         return own;
     }
 
     public void setOwn(String own) {
         this.own = own;
+    }
+
+    public String getShop() {
+        return shop;
+    }
+
+    public void setShop(String shop) {
+        this.shop = shop;
+    }
+
+    public String getStock() {
+        return stock;
+    }
+
+    public void setStock(String stock) {
+        this.stock = stock;
     }
 
     public String getId() {

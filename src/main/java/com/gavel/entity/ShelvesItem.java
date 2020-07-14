@@ -98,6 +98,20 @@ public class ShelvesItem {
     @FieldMeta(name = "TYPE", title = "类型")
     private String type;
 
+
+
+    @FieldMeta(name = "PRICE", title = "价格")
+    private float price;
+
+    @FieldMeta(name = "OWN", title = "自营")
+    private final StringProperty own= new SimpleStringProperty();
+
+    @FieldMeta(name = "SHOP", title = "店铺")
+    private final StringProperty shop= new SimpleStringProperty();
+
+    @FieldMeta(name = "STOCK", title = "库存")
+    private final StringProperty stock= new SimpleStringProperty();
+
     public String getId() {
         return id.get();
     }
@@ -368,5 +382,49 @@ public class ShelvesItem {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public float getPrice() {
+        return price;
+    }
+
+    public void setPrice(float price) {
+        this.price = price;
+    }
+
+    public String getOwn() {
+        return own.get();
+    }
+
+    public StringProperty ownProperty() {
+        return own;
+    }
+
+    public void setOwn(String own) {
+        this.own.set(own);
+    }
+
+    public String getShop() {
+        return shop.get();
+    }
+
+    public StringProperty shopProperty() {
+        return shop;
+    }
+
+    public void setShop(String shop) {
+        this.shop.set(shop);
+    }
+
+    public String getStock() {
+        return stock.get();
+    }
+
+    public StringProperty stockProperty() {
+        return stock;
+    }
+
+    public void setStock(String stock) {
+        this.stock.set(stock);
     }
 }
