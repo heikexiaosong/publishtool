@@ -402,9 +402,17 @@ public class SuningShelvesService implements ShelvesService {
             throw new Exception("Html内容有异常");
         }
 
+        Element ellipsis = crumb.selectFirst("div.ellipsis");
+
         crumb.select("div.sep").remove();
 
-        request.setSellingPoints(item.getSellingPoints()==null ? crumb.children().get(4).text(): item.getSellingPoints() ); // 商品卖点
+        String sellPoint = (ellipsis==null ?  item.getSellingPoints() : ellipsis.text());
+        if ( sellPoint!=null && sellPoint.length() > 45 ) {
+            sellPoint = sellPoint.substring(0, 45);
+        }
+
+        request.setSellingPoints(sellPoint); // 商品卖点
+        System.out.println("商品卖点: " + request.getSellingPoints());
 
 
         // 图片

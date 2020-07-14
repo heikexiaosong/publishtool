@@ -163,6 +163,8 @@ public class SkuPageLoader {
             throw new Exception("[" + url + "]Html内容有异常");
         }
 
+        Element ellipsis = crumb.selectFirst("div.ellipsis");
+
         crumb.select("div.sep").remove();
 
 
