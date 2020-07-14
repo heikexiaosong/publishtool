@@ -64,6 +64,9 @@ public class Item {
     @FieldMeta(name = "TYPE", title = "类别")
     private String type;
 
+    @FieldMeta(name = "OWN", title = "自营")
+    private String own;
+
     public String getProductcode() {
         return productcode;
     }
@@ -174,5 +177,13 @@ public class Item {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getOwn() {
+        return own;
+    }
+
+    public void setOwn(String own) {
+        this.own = own;
     }
 }

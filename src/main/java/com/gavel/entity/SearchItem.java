@@ -50,7 +50,15 @@ public class SearchItem {
     @FieldMeta(name = "REMARKS", title = "备注", length = 1024)
     private String remarks;
 
+    private String own = "N";
 
+    public String getOwn() {
+        return own;
+    }
+
+    public void setOwn(String own) {
+        this.own = own;
+    }
 
     public String getId() {
         return id;

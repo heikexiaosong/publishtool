@@ -1,8 +1,7 @@
 package com.gavel.application.controller;
 
-import com.gavel.HttpUtils;
 import com.gavel.application.IDCell;
-import com.gavel.database.SQLExecutor;
+import com.gavel.crawler.DriverHtmlLoader;
 import com.gavel.entity.Task;
 import com.gavel.utils.StringUtils;
 import javafx.beans.property.BooleanProperty;
@@ -21,7 +20,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class FXMLBrandTaskSelectedController {
@@ -87,16 +85,6 @@ public class FXMLBrandTaskSelectedController {
         skuList.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> updateStatus(newValue));
 
-        try {
-            items = SQLExecutor.executeQueryBeanList("select * from TASK where STATUS = 'success' order by UPDATETIME desc ", Task.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            items = Collections.EMPTY_LIST;
-        }
-
-
-
-
         skuList.setItems(FXCollections.observableList(items));
     }
 
@@ -144,30 +132,24 @@ public class FXMLBrandTaskSelectedController {
     public void handleSearchAction(ActionEvent actionEvent) {
 
          String _keyword = keyword.getText();
-         items = Collections.EMPTY_LIST;
          if (StringUtils.isBlank(_keyword)) {
-             try {
-                 items = SQLExecutor.executeQueryBeanList("select * from TASK where STATUS = 'success' order by UPDATETIME desc ", Task.class);
-             } catch (Exception e) {
-                 e.printStackTrace();
-                 items = Collections.EMPTY_LIST;
-             }
-         } else {
-             try {
-                 items = SQLExecutor.executeQueryBeanList("select * from TASK where STATUS = 'success' and TITLE like ?  order by UPDATETIME desc ", Task.class, "%" + _keyword.trim() + "%");
-             } catch (Exception e) {
-                 e.printStackTrace();
-                 items = Collections.EMPTY_LIST;
-             }
+             skuList.setItems(FXCollections.observableList(items));
+             return;
          }
 
-        skuList.setItems(FXCollections.observableList(items));
 
+         List<Task> filterItems = new ArrayList<>();
+        for (Task item : items) {
+            if ( item.getTitle().contains(_keyword.trim()) ) {
+                filterItems.add(item);
+            }
+        }
 
+        skuList.setItems(FXCollections.observableList(filterItems));
     }
 
     public void setPage(String url) {
-        String html =  HttpUtils.get(url, "");
+        String html =  DriverHtmlLoader.getInstance().loadHtml(url, 10000);
         Document doc = Jsoup.parse(html);
 
 
@@ -182,25 +164,34 @@ public class FXMLBrandTaskSelectedController {
 
         long cur = System.currentTimeMillis();
         Elements brands = doc.select("ul#brandsArea li a");
+        if ( brands==null ||  brands.size() == 0 ) {
+            brands = doc.select("div.s-brand ul.J_valueList li a");
+        }
         if ( brands!=null && brands.size()>0 ) {
             items = new ArrayList<>();
             for (Element brand : brands) {
                 Task _task = new Task();
                 _task.setId(String.valueOf(cur++));
                 _task.setTitle(brand.attr("title"));
-                _task.setUrl("https://i-list.jd.com" + brand.attr("href"));
-
                 String href = brand.attr("href");
-                String query = href.split("\\?")[1];
-                String[] params = query.split("&");
-                if ( params!=null && params.length > 0 ) {
-                    for (String param : params) {
-                        if ( param.startsWith("ev=") ) {
-                            _task.setUrl(url + "&" + param);
-                            break;
+                if ( href.startsWith("search") ) {
+                    _task.setUrl(url.substring(0, url.indexOf("jd.com") + 7) + brand.attr("href"));
+                } else {
+                    String query = href.split("\\?")[1];
+                    String[] params = query.split("&");
+                    if ( params!=null && params.length > 0 ) {
+                        for (String param : params) {
+                            if ( param.startsWith("ev=") ) {
+                                _task.setUrl(url + "&" + param);
+                                break;
+                            }
                         }
                     }
                 }
+
+
+//                String href = brand.attr("href");
+
 
                 _task.setBrand(brand.attr("title"));
                 _task.setCategory(cate);

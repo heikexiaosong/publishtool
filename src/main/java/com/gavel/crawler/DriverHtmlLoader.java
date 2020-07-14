@@ -41,14 +41,14 @@ public class DriverHtmlLoader {
         options.setPageLoadStrategy(PageLoadStrategy.EAGER);
 
         HashMap<String, Object> chromePrefs = new HashMap<>();
-        chromePrefs.put("profile.managed_default_content_settings.images", 2);
-        chromePrefs.put("permissions.default.stylesheet", 2);
+        //chromePrefs.put("profile.managed_default_content_settings.images", 2);
+        //chromePrefs.put("permissions.default.stylesheet", 2);
         //chromePrefs.put("javascript", 2);
         options.setExperimentalOption("prefs", chromePrefs);
 
         driver = new ChromeDriver(options);
 
-        driver.get("https://www.grainger.cn/");
+        //driver.get("https://www.grainger.cn/");
     }
 
     public HtmlCache loadHtmlPage(String url) {
@@ -85,10 +85,14 @@ public class DriverHtmlLoader {
     }
 
     public String loadHtml(String url) {
+        return loadHtml(url, 3000);
+    }
+
+    public String loadHtml(String url, long millis) {
         System.out.println("URL: " + url.replace(" ", "%20"));
         driver.navigate().to(url.replace(" ", "%20"));
         try {
-            Thread.sleep(3000);
+            Thread.sleep(millis);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

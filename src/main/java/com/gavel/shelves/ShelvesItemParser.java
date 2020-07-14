@@ -11,6 +11,7 @@ import com.gavel.entity.ShelvesItem;
 import com.gavel.grainger.StringUtils;
 import com.gavel.utils.ImageLoader;
 import com.gavel.utils.MD5Utils;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.suning.api.SuningResponse;
 import com.suning.api.entity.item.NPicAddRequest;
@@ -274,6 +275,8 @@ public class ShelvesItemParser {
         localFilePath = localFilePath.replace(".jpg", ".png");
         Imgcodecs.imwrite(localFilePath, src);
 
+        System.out.println("Local: " + localFilePath);
+
 
         String picUrl = null;
         if ( logoImage!=null ) {
@@ -371,6 +374,7 @@ public class ShelvesItemParser {
         }
 
         if (  com.gavel.utils.StringUtils.isNotBlank(image.getPicurl()) && logoImage==null ) {
+            System.out.println("Local: " + image.getPicurl());
             return image.getPicurl();
         }
 
@@ -393,10 +397,10 @@ public class ShelvesItemParser {
             tempfile.getParentFile().mkdirs();
         }
 
-        System.out.println(localFilePath);
-
         localFilePath = localFilePath.replace(".jpg", ".png");
         Imgcodecs.imwrite(localFilePath, src);
+
+        System.out.println("Local: " + localFilePath);
 
 
         if ( logoImage!=null ) {
@@ -797,16 +801,22 @@ public class ShelvesItemParser {
             while ( images.size() < 5 ) {
 
                 String localFilePath =  skuCode + "_" + images.size() + ".png";
-                File imageFile = new File("images_tmp", localFilePath);
+                File imageFile = new File("images_tmp" + File.separator + skuCode, localFilePath);
                 if ( !imageFile.getParentFile().exists() ) {
                     imageFile.getParentFile().mkdirs();
                 }
 
-                if ( !imageFile.exists() ) {
-                    HttpUtils.download(pic1, imageFile.getAbsolutePath());
+                if ( imageFile.exists() ) {
+                    imageFile.delete();
                 }
 
-                System.out.println(localFilePath);
+                String picPath = loadLocalImageFile(pic1);
+                System.out.println("[" + (images.size()+1) + "]Load Local: " + picPath);
+                if ( picPath==null ) {
+                    continue;
+                }
+                Files.copy(new File(picPath), imageFile);
+
                 Mat src = Imgcodecs.imread(imageFile.getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED);
                 if ( src.width()!=800 || src.height()!=800 ) {
                     Imgproc.resize(src, src, new Size(800, 800));
@@ -1147,10 +1157,45 @@ public class ShelvesItemParser {
 
     public static void main(String[] args) throws Exception {
 
-        APPConfig.getInstance().getShopinfo();
+        System.out.println(loadLocalImageFile("http://uimgproxy.suning.cn/uimg1/sop/commodity/ehw3ZPygWjnqvGu34WO5YA.png"));
+    }
 
-        Map<String, String> attrs = parseAttrs("12W1544");
-        System.out.println("dd");
+
+    /**
+     * 获取本地图片文件路径
+     *
+     * @param url
+     * @return
+     */
+    private static String loadLocalImageFile(String url) {
+        if ( url==null || url.trim().length()==0 ) {
+            return null;
+        }
+
+        String image = url.replace("http://uimgproxy.suning.cn", "").replace("/", File.separator).trim();
+
+        File imageFile = new File(ImageLoader.PICS_COMPLETE_DIR + File.separator + image);
+        if (  imageFile.exists() ) {
+            return imageFile.getAbsolutePath();
+        }
+
+        imageFile = new File(ImageLoader.PICS_DIR + File.separator + image);
+        if (  imageFile.exists() ) {
+            return imageFile.getAbsolutePath();
+        }
+
+        if ( !imageFile.getParentFile().exists() ) {
+            imageFile.getParentFile().mkdirs();
+        }
+
+        try {
+            HttpUtils.download(url, imageFile.getAbsolutePath());
+            return imageFile.getAbsolutePath();
+        } catch (Exception e) {
+            System.out.println("[" + url + "]" + e.getMessage());
+        }
+
+        return null;
     }
 
 }

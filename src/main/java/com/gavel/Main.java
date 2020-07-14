@@ -12,6 +12,14 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
+        String url = "https://search.jd.com/Search?keyword=%E5%8A%9E%E5%85%AC%E8%80%97%E6%9D%90&enc=utf-8&wq=%E5%8A%9E%E5%85%AC%E8%80%97%E6%9D%90&pvid=553ec3093a9e42529b6d2420d07a4ef8";
+
+        System.out.println(url.substring(0, url.indexOf("jd.com") + 7));
+
+        if ( 1==1 ) {
+            return;
+        }
+
 
        List<Itemparameter> items = SQLExecutor.executeQueryBeanList("select * from ITEMPARAMETER where id is null ", Itemparameter.class);
 

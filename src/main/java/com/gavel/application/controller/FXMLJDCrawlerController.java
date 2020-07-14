@@ -213,7 +213,10 @@ public class FXMLJDCrawlerController {
             pageCur = Integer.parseInt(doc.selectFirst("div.f-pager .fp-text b").text());
             pageTotal = Integer.parseInt(doc.selectFirst("div.f-pager .fp-text i").text());
 
-            Elements items = doc.select("div#plist li.gl-item div.j-sku-item");
+            Elements items = doc.select("div#plist li.gl-item");
+            if ( items==null || items.size()==0 ) {
+                items = doc.select("div#J_goodsList li.gl-item");
+            }
 
 
             List<SearchItem> searchItems = new ArrayList<>();
@@ -227,24 +230,28 @@ public class FXMLJDCrawlerController {
                 for (Element item : items) {
 
 
-                    boolean check = false;
+                    String own = "N";
                     Elements icons = item.select("div.J-pro-icons i");
                     if ( icons!=null && icons.size() > 0 ) {
                         for (Element icon : icons) {
                             if ( "自营".equalsIgnoreCase(icon.text()) ) {
-                                check = true;
+                                own = "Y";
                                 break;
                             }
                         }
                     }
-                    if ( !check ) {
-                        System.out.println("[" + pageCur + "][" + xh + "][店铺]" + item.selectFirst("div.p-name em").text());
-                        continue;
+
+                    icons = item.select("div.p-icons i");
+                    if ( icons!=null && icons.size() > 0 ) {
+                        for (Element icon : icons) {
+                            if ( "自营".equalsIgnoreCase(icon.text()) ) {
+                                own = "Y";
+                                break;
+                            }
+                        }
                     }
 
-
-
-                    System.out.println("[" + pageCur + "][" + xh +"][自营]" + item.selectFirst("div.p-name em").text());
+                    System.out.println("[" + pageCur + "][" + xh +"]" + item.selectFirst("div.p-name em").text() + "\t" + own);
 
                     System.out.print(item.attr("data-sku"));
                     System.out.print("\t" + item.attr("venderid"));
@@ -269,6 +276,8 @@ public class FXMLJDCrawlerController {
                     searchItem.setSkunum(1);
                     searchItem.setActual(0);
                     searchItem.setType("u");
+
+                    searchItem.setOwn(own);
 
                     SQLExecutor.insert(searchItem);
 
@@ -327,6 +336,7 @@ public class FXMLJDCrawlerController {
                 item.setCategoryname(task.getCategory());
                 item.setBrand(task.getBrand());
                 item.setBrandname(task.getBrand());
+                item.setOwn(searchItem.getOwn());
 
                 JsonObject priceObj = pricesMap.get("J_" + searchItem.getCode());
                 if ( priceObj!=null && priceObj.has("p") ) {
@@ -336,6 +346,7 @@ public class FXMLJDCrawlerController {
                 SQLExecutor.insert(item);
 
             }
+            pageCur = pageCur*2 + 1;
         }
 
 
@@ -498,7 +509,7 @@ public class FXMLJDCrawlerController {
             controller.setDialogStage(dialogStage);
             controller.bindTask(task);
             dialogStage.setMaximized(true);
-            controller.setStartPage("https://imall.jd.com/");
+            controller.setStartPage("https://www.jd.com/");
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
 
