@@ -50,6 +50,16 @@ public class HtmlPageLoader {
         return loadHtmlPage(url, useCache, false);
     }
 
+    public HtmlCache loadJDPage(String skuCode, boolean useCache) throws Exception {
+
+        if (StringUtils.isBlank(skuCode)) {
+            return null;
+        }
+
+        String url = "https://item.jd.com/" + skuCode.trim() + ".html";
+        return loadHtmlPage(url, useCache, false);
+    }
+
     public HtmlCache loadHtmlPage(String url, boolean useCache) throws Exception {
 
         return loadHtmlPage(url, useCache, false);
@@ -145,6 +155,6 @@ public class HtmlPageLoader {
     }
 
     public static void main(String[] args) throws Exception {
-        getInstance().loadHtmlPage("https://www.grainger.cn/u-10H5595.html11", true);
+        getInstance().loadHtmlPage("https://item.jd.com/65280974820.html", true);
     }
 }

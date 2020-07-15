@@ -1163,110 +1163,191 @@ public class FXMLShelvesController {
                         for (int i = 1; i <= items.size(); i++) {
                             ShelvesItem item = items.get(i-1);
 
-                            HtmlCache cache = HtmlPageLoader.getInstance().loadGraingerPage(item.getSkuCode(), true);
-                            if ( cache == null ) {
-                                throw new Exception("[SKU: " + item.getSkuCode() + "]htmlCache未找到");
+
+                            if ( "JD".equalsIgnoreCase(item.getType()) ) {
+
+                                HtmlCache cache = HtmlPageLoader.getInstance().loadJDPage(item.getSkuCode(), true);
+                                if ( cache == null ) {
+                                    throw new Exception("[SKU: " + item.getSkuCode() + "]htmlCache未找到");
+                                }
+                                try {
+
+                                    Document doc = Jsoup.parse(cache.getHtml());
+
+                                    Element crumb = doc.selectFirst("div#crumb-wrap .crumb");
+                                    if ( crumb==null ) {
+                                        throw new Exception("[" + item.getSkuCode() + "]Html内容有异常");
+                                    }
+
+                                    crumb.select("div.sep").remove();
+
+                                    Elements elements = crumb.select("div.item");
+
+
+                                    // 4级类目 + 产品组ID + ID
+                                    Element c1 = elements.get(0);
+                                    Element c2 = elements.get(1);
+                                    Element c3 = elements.get(2);
+                                    Element c4 = elements.get(3);
+                                    Element c5 = elements.get(4);
+
+                                    writer.write(escape(c1.text()) + ",");
+                                    writer.write(escape(c1.text()) + ",");
+                                    writer.write(escape(c2.text()) + ",");
+                                    writer.write(escape(c2.text()) + ",");
+                                    writer.write(escape(c3.text()) + ",");
+                                    writer.write(escape(c3.text()) + ",");
+                                    writer.write(escape(c4.text()) + ",");
+                                    writer.write(escape(c4.text()) + ",");
+                                    writer.write(escape(c5.text()) + ",");
+                                    writer.write(escape(c5.text()) + ",");
+                                    writer.write( item.getSkuCode() + ",");
+                                    writer.write(item.getCmTitle() + ",");
+
+
+
+                                    // 标题前 品牌
+                                    String model = item.getSkuCode();
+                                    Elements parameters = doc.select("ul.p-parameter-list li");
+                                    for (Element parameter : parameters) {
+                                        if ( parameter.text().contains("货号：") ) {
+                                            model = parameter.attr("title");
+                                            if ( model==null && model.trim().length()==0 ) {
+                                                model = parameter.text().replace("货号：", "");
+                                            }
+                                        }
+                                    }
+
+
+
+                                    writer.write(escape(model) + ",");
+
+                                    writer.write(escape(c4.text()) + "," + escape(c4.text()) + ",");
+
+                                    writer.write(item.getPrice() + ", ,");
+
+                                    writer.write(cache.getUrl());
+                                    writer.newLine();
+
+                                    writer.flush();
+                                    System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]解析成功: ");
+                                } catch (Exception e) {
+                                    System.out.println("\r[" + i + "/" + total + "][Item: " + item.getSkuCode() +"]解析失败: " + e.getMessage());
+                                } finally {
+                                    updateProgress(i, total);
+                                    updateValue("["+ i +"/" + total  + "]导出文件: "  + file.getAbsolutePath());
+
+                                }
+                            } else {
+
+                                HtmlCache cache = HtmlPageLoader.getInstance().loadGraingerPage(item.getSkuCode(), true);
+                                if ( cache == null ) {
+                                    throw new Exception("[SKU: " + item.getSkuCode() + "]htmlCache未找到");
+                                }
+                                try {
+
+                                    Document doc = Jsoup.parse(cache.getHtml());
+
+                                    Element err = doc.selectFirst("div.err-notice");
+                                    if ( err!=null ) {
+                                        throw new Exception("[" + cache.getUrl() + "]页面未找到");
+                                    }
+
+                                    // 品牌 + 标题
+                                    Element proDetailCon = doc.selectFirst("div.proDetailCon");
+                                    if ( proDetailCon==null ) {
+                                        throw new Exception("[" + cache.getUrl() + "]Html内容有异常: " + doc.title());
+                                    }
+
+
+                                    // 4级类目 + 产品组ID + ID
+                                    Elements elements = doc.select("div.crumbs  a");
+                                    Element c1 = elements.get(1);
+                                    Element c2 = elements.get(2);
+                                    Element c3 = elements.get(3);
+                                    Element c4 = elements.get(4);
+                                    Element c5 = elements.get(5);
+                                    Element c6 = elements.get(6);
+
+
+                                    writer.write(com.gavel.grainger.StringUtils.getCode(c1.attr("href")) + ",");
+                                    writer.write(escape(c1.text()) + ",");
+                                    writer.write(com.gavel.grainger.StringUtils.getCode(c2.attr("href")) + ",");
+                                    writer.write(escape(c2.text()) + ",");
+                                    writer.write(com.gavel.grainger.StringUtils.getCode(c3.attr("href")) + ",");
+                                    writer.write(escape(c3.text()) + ",");
+                                    writer.write(com.gavel.grainger.StringUtils.getCode(c4.attr("href")) + ",");
+                                    writer.write(escape(c4.text()) + ",");
+                                    writer.write(com.gavel.grainger.StringUtils.getCode(c5.attr("href")) + ",");
+                                    writer.write(escape(c5.text()) + ",");
+                                    writer.write(com.gavel.grainger.StringUtils.getCode(c6.attr("href")) + ",");
+                                    writer.write(escape(item.getCmTitle()) + ",");
+
+
+
+                                    // 标题前 品牌
+                                    String brand1 =  proDetailCon.selectFirst("h3 > span > a").html();
+
+                                    Element price = doc.selectFirst("div.price");
+                                    price.remove();
+
+
+                                    Elements fonts = proDetailCon.select("div font");
+                                    String brand = fonts.get(1).text();
+                                    String model = fonts.get(2).text();
+
+
+
+                                    writer.write(escape(model) + ",");
+
+                                    /**
+                                     * 订 货 号：5W8061
+                                     * 品   牌：霍尼韦尔 Honeywell
+                                     * 制造商型号： SHSL00202-42
+                                     * 包装内件数：1双
+                                     * 预计发货日： 停止销售
+                                     *
+
+                                     String code = fonts.get(0).text();
+                                     String brand = fonts.get(1).text();
+                                     String model = fonts.get(2).text();
+                                     String number = fonts.get(3).text();
+                                     String fahuori = fonts.get(4).text();
+                                     */
+
+                                    if ( brand1.trim().equalsIgnoreCase(brand.trim()) ) {
+                                        writer.write(escape(brand1.trim()) + ",");
+                                        writer.write(escape(brand.trim()) + ",");
+                                    } else {
+                                        writer.write(escape(brand1.trim()) + ",");
+                                        writer.write(escape(brand.replace(brand1, "").trim()) + ",");
+                                    }
+
+
+                                    Elements prices = price.select("b");
+                                    if ( prices.size()==1 ) {
+                                        writer.write(prices.get(0).text().replace(",", "").replace("¥", "").trim() + ", ,");
+
+                                    } else  if ( prices.size()==2 )  {
+                                        writer.write(prices.get(0).text().replace(",", "").replace("¥", "").trim() + ", " + prices.get(1).text().replace(",", "").replace("¥", "").trim() + ",");
+                                    }
+
+                                    writer.write(cache.getUrl());
+                                    writer.newLine();
+
+                                    writer.flush();
+                                    System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]解析成功: ");
+                                } catch (Exception e) {
+                                    System.out.println("\r[" + i + "/" + total + "][Item: " + item.getSkuCode() +"]解析失败: " + e.getMessage());
+                                } finally {
+                                    updateProgress(i, total);
+                                    updateValue("["+ i +"/" + total  + "]导出文件: "  + file.getAbsolutePath());
+
+                                }
+
                             }
-                            try {
-
-                                Document doc = Jsoup.parse(cache.getHtml());
-
-                                Element err = doc.selectFirst("div.err-notice");
-                                if ( err!=null ) {
-                                    throw new Exception("[" + cache.getUrl() + "]页面未找到");
-                                }
-
-                                // 品牌 + 标题
-                                Element proDetailCon = doc.selectFirst("div.proDetailCon");
-                                if ( proDetailCon==null ) {
-                                    throw new Exception("[" + cache.getUrl() + "]Html内容有异常: " + doc.title());
-                                }
 
 
-                                // 4级类目 + 产品组ID + ID
-                                Elements elements = doc.select("div.crumbs  a");
-                                Element c1 = elements.get(1);
-                                Element c2 = elements.get(2);
-                                Element c3 = elements.get(3);
-                                Element c4 = elements.get(4);
-                                Element c5 = elements.get(5);
-                                Element c6 = elements.get(6);
-
-
-                                writer.write(com.gavel.grainger.StringUtils.getCode(c1.attr("href")) + ",");
-                                writer.write(escape(c1.text()) + ",");
-                                writer.write(com.gavel.grainger.StringUtils.getCode(c2.attr("href")) + ",");
-                                writer.write(escape(c2.text()) + ",");
-                                writer.write(com.gavel.grainger.StringUtils.getCode(c3.attr("href")) + ",");
-                                writer.write(escape(c3.text()) + ",");
-                                writer.write(com.gavel.grainger.StringUtils.getCode(c4.attr("href")) + ",");
-                                writer.write(escape(c4.text()) + ",");
-                                writer.write(com.gavel.grainger.StringUtils.getCode(c5.attr("href")) + ",");
-                                writer.write(escape(c5.text()) + ",");
-                                writer.write(com.gavel.grainger.StringUtils.getCode(c6.attr("href")) + ",");
-                                writer.write(escape(item.getCmTitle()) + ",");
-
-
-
-                                // 标题前 品牌
-                                String brand1 =  proDetailCon.selectFirst("h3 > span > a").html();
-
-                                Element price = doc.selectFirst("div.price");
-                                price.remove();
-
-
-                                Elements fonts = proDetailCon.select("div font");
-                                String brand = fonts.get(1).text();
-                                String model = fonts.get(2).text();
-
-
-
-                                writer.write(escape(model) + ",");
-
-                                /**
-                                 * 订 货 号：5W8061
-                                 * 品   牌：霍尼韦尔 Honeywell
-                                 * 制造商型号： SHSL00202-42
-                                 * 包装内件数：1双
-                                 * 预计发货日： 停止销售
-                                 *
-
-                                 String code = fonts.get(0).text();
-                                 String brand = fonts.get(1).text();
-                                 String model = fonts.get(2).text();
-                                 String number = fonts.get(3).text();
-                                 String fahuori = fonts.get(4).text();
-                                 */
-
-                                if ( brand1.trim().equalsIgnoreCase(brand.trim()) ) {
-                                    writer.write(escape(brand1.trim()) + ",");
-                                    writer.write(escape(brand.trim()) + ",");
-                                } else {
-                                    writer.write(escape(brand1.trim()) + ",");
-                                    writer.write(escape(brand.replace(brand1, "").trim()) + ",");
-                                }
-
-
-                                Elements prices = price.select("b");
-                                if ( prices.size()==1 ) {
-                                    writer.write(prices.get(0).text().replace(",", "").replace("¥", "").trim() + ", ,");
-
-                                } else  if ( prices.size()==2 )  {
-                                    writer.write(prices.get(0).text().replace(",", "").replace("¥", "").trim() + ", " + prices.get(1).text().replace(",", "").replace("¥", "").trim() + ",");
-                                }
-
-                                writer.write(cache.getUrl());
-                                writer.newLine();
-
-                                writer.flush();
-                                System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]解析成功: ");
-                            } catch (Exception e) {
-                                System.out.println("\r[" + i + "/" + total + "][Item: " + item.getSkuCode() +"]解析失败: " + e.getMessage());
-                            } finally {
-                                updateProgress(i, total);
-                                updateValue("["+ i +"/" + total  + "]导出文件: "  + file.getAbsolutePath());
-
-                            }
                         }
                         writer.close();
 

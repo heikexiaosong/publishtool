@@ -2,6 +2,7 @@ package com.gavel.shelves.suning;
 
 import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
+import com.gavel.entity.Item;
 import com.gavel.entity.ShelvesItem;
 import com.gavel.jd.SkuPageLoader;
 import com.gavel.shelves.*;
@@ -379,7 +380,12 @@ public class SuningShelvesService implements ShelvesService {
 
         String html = null;
         try {
-            html =  SkuPageLoader.getInstance().loadPage(item.getSkuCode());
+            Item _item = SQLExecutor.executeQueryBean("select * from ITEM where CODE = ? ", Item.class, item.getSkuCode());
+            if ( _item!=null && _item.getUrl()!=null ) {
+                html =  SkuPageLoader.getInstance().loadPage(item.getSkuCode(), _item.getUrl());
+            } else {
+                html =  SkuPageLoader.getInstance().loadPage(item.getSkuCode());
+            }
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
@@ -431,7 +437,7 @@ public class SuningShelvesService implements ShelvesService {
             }
 
             picUrls.add(text);
-            System.out.println(text);
+            System.out.println("主图: " +  text);
 
         }
         System.out.println("Images: " + imgs.size());
@@ -504,7 +510,6 @@ public class SuningShelvesService implements ShelvesService {
             //
             Element detailcontent = detail.selectFirst("div#J-detail-content style");
             if ( detailcontent!=null ) {
-                System.out.println(detailcontent.html());
                 Matcher mat = DETAIL_IMAGE.matcher(detailcontent.html());
                 while(mat.find()){
                     String text = mat.group(1);
@@ -517,7 +522,7 @@ public class SuningShelvesService implements ShelvesService {
                     if ( text.startsWith("//") ) {
                         text = "https:" + text;
                     }
-                    System.out.println(text);
+                    System.out.println("style image: " + text);
                     detailUrls.add(text);
                 }
             }
@@ -528,13 +533,13 @@ public class SuningShelvesService implements ShelvesService {
             for (Element detailImg : detailImgs) {
 
                 String src = detailImg.attr("src");
-                if ( src==null || src.trim().length()==0 ) {
+                if ( src==null || src.trim().length()==0 ||  src.endsWith("blank.gif") ) {
                     src = detailImg.attr("data-lazyload");
                 }
                 if ( src.startsWith("//") ) {
                     src = "https:" + src;
                 }
-                System.out.println(src);
+                System.out.println("J-detail-content img: " + src);
                 detailUrls.add(src);
             }
         }

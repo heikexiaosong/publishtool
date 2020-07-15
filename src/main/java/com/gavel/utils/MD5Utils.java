@@ -26,8 +26,7 @@ public class MD5Utils {
 
 
     public static void main(String[] args) {
-        String password = md5Hex("admin");
-        System.out.println(password.equalsIgnoreCase(md5Hex("admin")));
+        System.out.println(md5Hex("https://i-item.jd.com/65280974820.html"));
     }
 
 }

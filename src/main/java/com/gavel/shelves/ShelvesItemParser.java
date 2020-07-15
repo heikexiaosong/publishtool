@@ -267,6 +267,10 @@ public class ShelvesItemParser {
         String localFilePath = ImageLoader.PICS_DIR + File.separator + image.getFilepath();
 
         Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
+        if ( src.width()<=50 || src.height()<=50 ) {
+           return null;
+        }
+
         if ( src.width()!=800 || src.height()!=800 ) {
             Imgproc.resize(src, src, new Size(800, 800));
         }
@@ -352,15 +356,7 @@ public class ShelvesItemParser {
         ImageCache image =  SQLExecutor.executeQueryBean("select * from image  where id = ? ", ImageCache.class, id);
 
         if ( image==null ) {
-            String _image = url.replace("https://static.grainger.cn/", "").replace("/", File.separator).trim();
-            if ( url.equalsIgnoreCase("https://www.grainger.cn/Content/images/hp_np.png") ) {
-                _image = url.replace("https://www.grainger.cn/", "").replace("/", File.separator).trim();
-            }
-
-            if ( _image.indexOf("360buyimg.com") > -1 ) {
-                _image = _image.substring( _image.indexOf("360buyimg.com") + "360buyimg.com".length());
-            }
-
+            String _image = ImageLoader.getPath(url);
             image = new ImageCache();
             image.setId(id);
             image.setUrl(url.trim());
@@ -374,7 +370,7 @@ public class ShelvesItemParser {
         }
 
         if (  com.gavel.utils.StringUtils.isNotBlank(image.getPicurl()) && logoImage==null ) {
-            System.out.println("Local: " + image.getPicurl());
+            System.out.println("[" + image.getFilepath() + "]: " + image.getPicurl());
             return image.getPicurl();
         }
 
@@ -387,6 +383,13 @@ public class ShelvesItemParser {
 
 
         Mat src = Imgcodecs.imread(localFilePath, Imgcodecs.IMREAD_UNCHANGED);
+        if ( src.width()<=50 || src.height()<=50 ) {
+            return picUrl;
+        }
+
+        if ( src.width()!=800 || src.height()!=800 ) {
+            Imgproc.resize(src, src, new Size(800, 800));
+        }
 
         Imgproc.circle(src, new Point(src.width()-size, src.height()-size),  2, new Scalar(238, 238, 238));
 
@@ -632,7 +635,7 @@ public class ShelvesItemParser {
     public static List<ShelvesItemParser.Pic> getImages(String skuCode, List<String> picUrls, String defaultImage, BufferedImage logoImage){
         List<Pic> images = new ArrayList<>();
         try {
-            System.out.println("产品图片: " + picUrls.size());
+            System.out.println("产品主图: " + picUrls.size());
             for (String picUrl : picUrls) {
                 System.out.println(picUrl);
             }
@@ -654,6 +657,9 @@ public class ShelvesItemParser {
                     if ( picSuningUrl!=null && picSuningUrl.trim().length() > 0 ) {
                         images.add(new Pic(picSuningUrl, false));
                     }
+                }
+                if ( images.size() >= 5 ) {
+                    break;
                 }
             }
 
@@ -890,6 +896,7 @@ public class ShelvesItemParser {
         }
 
         if ( image.getPicurl()!=null && image.getPicurl().trim().length() > 0 ) {
+            System.out.println("[Local]" + image.getFilepath());
             return image.getPicurl();
         }
 
@@ -1155,11 +1162,6 @@ public class ShelvesItemParser {
 
 
 
-    public static void main(String[] args) throws Exception {
-
-        System.out.println(loadLocalImageFile("http://uimgproxy.suning.cn/uimg1/sop/commodity/ehw3ZPygWjnqvGu34WO5YA.png"));
-    }
-
 
     /**
      * 获取本地图片文件路径
@@ -1197,5 +1199,13 @@ public class ShelvesItemParser {
 
         return null;
     }
+
+    public static void main(String[] args) throws Exception {
+
+        Mat src = Imgcodecs.imread("e:\\_A1hmFHelzvbhzjZXvssoQ.png", Imgcodecs.IMREAD_UNCHANGED);
+
+        System.out.println(loadLocalImageFile("http://uimgproxy.suning.cn/uimg1/sop/commodity/ehw3ZPygWjnqvGu34WO5YA.png"));
+    }
+
 
 }

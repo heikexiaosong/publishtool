@@ -14,6 +14,30 @@ public class ImageLoader {
     public static final String PICS_COMPLETE_DIR = "E:\\images_complete";
     public static final String PICS_TEMP_DIR = "D:\\images\\temp";
 
+    public static String getPath(String url) {
+        if ( url==null || url.trim().length()==0 ) {
+            return null;
+        }
+
+        if ( url.indexOf("360buyimg.com") > -1 ) {
+            url = url.substring( url.indexOf("360buyimg.com") + 13);
+        }
+
+        if ( url.indexOf("grainger.cn") > -1 ) {
+            url = url.substring( url.indexOf("grainger.cn") + 11);
+        }
+
+        if ( url.indexOf("suning.cn") > -1 ) {
+            url = url.substring( url.indexOf("suning.cn") + 9);
+        }
+
+        if ( url!=null ) {
+            url = url.replace('/', File.separatorChar).trim();
+        }
+
+        return url;
+    }
+
 
     public static ImageCache loadIamge(String url) throws Exception {
        return loadIamge(url, PICS_DIR);
@@ -40,15 +64,7 @@ public class ImageLoader {
         }
 
         try {
-            String image = url.replace("https://static.grainger.cn/", "").replace("/", File.separator).trim();
-
-            if ( url.equalsIgnoreCase("https://www.grainger.cn/Content/images/hp_np.png") ) {
-                image = url.replace("https://www.grainger.cn/", "").replace("/", File.separator).trim();
-            }
-
-            if ( image.indexOf("360buyimg.com") > -1 ) {
-                image = image.substring( image.indexOf("360buyimg.com") + "360buyimg.com".length());
-            }
+            String image = getPath(url);
 
             File imageFile = new File(_dir + File.separator + image);
             if ( !imageFile.getParentFile().exists() ) {
@@ -59,28 +75,24 @@ public class ImageLoader {
             try {
                 HttpUtils.download(url, imageFile.getAbsolutePath());
                 cache.setFilepath(image);
+
+                if ( cache == null ){
+                    cache = new ImageCache();
+                    cache.setId(id);
+                    cache.setUrl(url.trim());
+                    cache.setFilepath(image);
+                    cache.setUpdatetime(Calendar.getInstance().getTime());
+                    SQLExecutor.insert(cache);
+                } else {
+                    cache.setUrl(url.trim());
+                    cache.setFilepath(image);
+                    cache.setUpdatetime(Calendar.getInstance().getTime());
+                    SQLExecutor.update(cache);
+                }
+                return cache;
             } catch (Exception e) {
                 System.out.println("[" + url + "]" + e.getMessage());
             }
-
-
-            if ( cache == null ){
-                cache = new ImageCache();
-                cache.setId(id);
-                cache.setUrl(url.trim());
-                cache.setFilepath(image);
-                cache.setUpdatetime(Calendar.getInstance().getTime());
-                SQLExecutor.insert(cache);
-                return cache;
-            } else {
-                cache.setUrl(url.trim());
-                cache.setFilepath(image);
-                cache.setUpdatetime(Calendar.getInstance().getTime());
-                SQLExecutor.update(cache);
-                return cache;
-            }
-
-
 
         } catch (Exception e) {
             System.out.println("下载图片错误: " + e.getMessage());
@@ -115,29 +127,26 @@ public class ImageLoader {
         if ( StringUtils.isNotBlank(cache.getFilepath()) ){
             File image = new File(PICS_DIR, cache.getFilepath());
             if ( image.exists() ) {
-                System.out.println("[" + url + "]Load: " + image.getAbsolutePath());
+                System.out.println("[" + url + "]Local Load: " + image.getAbsolutePath());
                 return cache;
             }
         }
         cache.setFilepath(null);
 
-        String image = url.replace("https://static.grainger.cn/", "").replace("/", File.separator).trim();
-        if ( url.equalsIgnoreCase("https://www.grainger.cn/Content/images/hp_np.png") ) {
-            image = url.replace("https://www.grainger.cn/", "").replace("/", File.separator).trim();
-        }
-
-        if ( image.indexOf("360buyimg.com") > -1 ) {
-            image = image.substring( image.indexOf("360buyimg.com") + "360buyimg.com".length());
-        }
-
-        File imageFile = new File(PICS_DIR + File.separator + image);
+        String image = getPath(url);
+        File imageFile = new File(PICS_DIR, image);
         if ( !imageFile.getParentFile().exists() ) {
             imageFile.getParentFile().mkdirs();
         }
 
         try {
             HttpUtils.download(url, imageFile.getAbsolutePath());
-            cache.setFilepath(image);
+            if ( imageFile.exists() && imageFile.length() > 9999 ) {
+                cache.setFilepath(image);
+                System.out.println("[" + url + "]Network Load: " + imageFile.getAbsolutePath());
+            } else {
+                imageFile.delete();
+            }
         } catch (Exception e) {
             System.out.println("[" + url + "]" + e.getMessage());
         }
@@ -152,7 +161,12 @@ public class ImageLoader {
     }
 
     public static void main(String[] args) throws Exception {
-        loadOrginialIamge("https://static.grainger.cn/pis/CPG/%E9%85%8D%E7%BA%BF%E7%9B%92%E6%96%B9%E5%90%91.jpg");
+
+        System.out.println(getPath("https://img11.360buyimg.com/n12/jfs/t1/67085/22/1843/236942/5d034956E8a8b7f5a/94da50542cae2941.jpg"));
+
+        System.out.println(getPath("https://static.grainger.cn/pis/CPG/%E9%85%8D%E7%BA%BF%E7%9B%92%E6%96%B9%E5%90%91.jpg"));
+
+        loadOrginialIamge("http://uimgproxy.suning.cn/uimg1/sop/commodity/_A1hmFHelzvbhzjZXvssoQ.png");
     }
 
 }

@@ -11,6 +11,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.File;
 import java.util.Calendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -99,6 +100,16 @@ public class SkuPageLoader {
         }
 
         String url = "https://i-item.jd.com/" + code + ".html";
+
+        return loadPage(code, url);
+    }
+
+    public String loadPage(String code, String url) throws Exception {
+        if ( url==null || com.gavel.utils.StringUtils.isBlank(url)) {
+            System.out.println("url is null");
+            return null;
+        }
+
         String id = MD5Utils.md5Hex(url);
         String suffix =  id.substring(id.length()-1);
 
@@ -300,7 +311,7 @@ public class SkuPageLoader {
             if ( detailImgs!=null ) {
                 for (Element detailImg : detailImgs) {
                     String src = detailImg.attr("src");
-                    if ( src==null || src.trim().length()==0 ) {
+                    if ( src==null || src.trim().length()==0 || "//misc.360buyimg.com/lib/img/e/blank.gif".equalsIgnoreCase(src) ) {
                         src = detailImg.attr("data-lazyload");
                     }
                     System.out.println(src);
@@ -320,7 +331,9 @@ public class SkuPageLoader {
 
     public static void main(String[] args) throws Exception {
 
-        String code = "66413083807";
+        System.out.println(new File("e:\\_A1hmFHelzvbhzjZXvssoQ.png").length());
+
+        String code = "65280974820";
 
         String url = "https://i-item.jd.com/" + code + ".html";
 
