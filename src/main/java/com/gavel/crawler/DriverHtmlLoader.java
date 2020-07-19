@@ -1,12 +1,17 @@
 package com.gavel.crawler;
 
 import com.gavel.entity.HtmlCache;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.util.HashMap;
 import java.util.regex.Pattern;
@@ -89,12 +94,34 @@ public class DriverHtmlLoader {
     }
 
     public String loadHtml(String url, long millis) {
+        return loadHtml(url, millis, true);
+    }
+
+    public String loadHtml(String url, long millis, boolean scrollTo) {
         System.out.println("URL: " + url.replace(" ", "%20"));
         driver.navigate().to(url.replace(" ", "%20"));
 
         try {
             Thread.sleep(1000);
-            ((JavascriptExecutor) driver).executeScript("window.scrollTo(0,document.body.scrollHeight)");
+            if ( scrollTo ) {
+                ((JavascriptExecutor) driver).executeScript("window.scrollTo(0,document.body.scrollHeight)");
+            }
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        String content = driver.getPageSource();
+        return content;
+    }
+
+    public String loadHtml(String url, long millis, By by) {
+        System.out.println("URL: " + url.replace(" ", "%20"));
+        driver.navigate().to(url.replace(" ", "%20"));
+
+        try {
+            Thread.sleep(1000);
+            WebDriverWait wait = new WebDriverWait(driver, 15);
+            wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(by));
             Thread.sleep(millis);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -109,6 +136,42 @@ public class DriverHtmlLoader {
     }
 
     public static void main(String[] args) {
-        getInstance().loadHtmlPage("https://www.grainger.cn/g-384478.html", true);
+
+        By by = By.xpath("span.p-price .price");
+
+        getInstance().loadHtml("https://item.jd.com/100008751036.html", 1000, by);
+    }
+
+    public String loadPriceHtml(String url) {
+
+
+        System.out.println("URL: " + url.replace(" ", "%20"));
+        driver.navigate().to(url.replace(" ", "%20"));
+
+        try {
+
+            int cnt = 0;
+            while ( cnt < 10 ) {
+                Document doc = Jsoup.parse(driver.getPageSource());
+
+                String priceStr = null;
+                Element price = doc.selectFirst("span.p-price .price");
+                if ( price!=null ) {
+                    priceStr = price.text();
+                    if ( priceStr!=null && priceStr.trim().length()>0 ) {
+                        break;
+                    }
+                }
+
+                Thread.sleep(1000);
+                cnt++;
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        String content = driver.getPageSource();
+        return content;
+
+
     }
 }

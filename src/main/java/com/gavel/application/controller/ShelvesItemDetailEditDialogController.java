@@ -54,7 +54,7 @@ public class ShelvesItemDetailEditDialogController {
     private TextArea cmTitle;
 
     @FXML
-    private TextField sellingPoints;
+    private TextArea sellingPoints;
 
     @FXML
     private TextField categoryCode;

@@ -201,7 +201,7 @@ public class FXMLSkuImportController {
     @FXML
     private void handleOk() {
 
-        final  int total = datas.size();
+
 
         Service<String> service = new Service<String>() {
 
@@ -211,7 +211,7 @@ public class FXMLSkuImportController {
 
                     @Override
                     protected String call() throws Exception {
-
+                        final  int total = skuList.getItems().size();
                         for (int i = 0; i < skuList.getItems().size(); i++) {
                             Item item = skuList.getItems().get(i);
 
@@ -262,7 +262,10 @@ public class FXMLSkuImportController {
                                 updateValue(""+ i +"/" + total);
                             }
                         }
-                        return null;
+
+                        updateProgress(total, total);
+
+                        return "解析完成, 请点击确定或者取消";
                     };
                 };
             }

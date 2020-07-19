@@ -1,9 +1,12 @@
 package com.gavel.application;
 
+import com.gavel.crawler.DriverHtmlLoader;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.opencv.core.Core;
 
 import java.io.IOException;
@@ -20,6 +23,13 @@ public class CrawlerApp extends Application {
      */
     public CrawlerApp() {
         // Add some sample data
+
+        Runtime.getRuntime().addShutdownHook(new Thread(){
+            @Override
+            public void run() {
+                DriverHtmlLoader.getInstance().quit();
+            }
+        });
     }
 
 
@@ -29,6 +39,13 @@ public class CrawlerApp extends Application {
         this.primaryStage.setTitle("京苏商品上架工具");
 
         initRootLayout();
+
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                System.exit(0);
+            }
+        });
     }
 
     /**

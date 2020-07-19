@@ -1,5 +1,6 @@
 package com.gavel.application.controller;
 
+import com.gavel.HttpUtils;
 import com.gavel.application.DataPagination;
 import com.gavel.application.IDCell;
 import com.gavel.application.MainApp;
@@ -15,6 +16,10 @@ import com.gavel.shelves.suning.SuningShelvesService;
 import com.gavel.utils.MD5Utils;
 import com.gavel.utils.StringUtils;
 import com.google.common.io.Files;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -26,8 +31,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -36,11 +44,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class FXMLShelvesController {
@@ -66,6 +76,9 @@ public class FXMLShelvesController {
     private Label remarkField;
 
     @FXML
+    private Label picdirField;
+
+    @FXML
     private Label pic;
 
     @FXML
@@ -86,6 +99,9 @@ public class FXMLShelvesController {
     @FXML
     private Label moqLabel;
 
+    @FXML
+    private TextField keyword;
+
     // 产品SKU列表
     @FXML
     private TableView<ShelvesItem> itemList;
@@ -97,6 +113,8 @@ public class FXMLShelvesController {
     private TableColumn<ShelvesItem, String> codeCol;
     @FXML
     private TableColumn<ShelvesItem, String> cmTitleCol;
+    @FXML
+    private TableColumn<ShelvesItem, String> cmTitleLenCol;
     @FXML
     private TableColumn<ShelvesItem, String> deliveryCol;
     @FXML
@@ -169,6 +187,7 @@ public class FXMLShelvesController {
         noCol.setCellFactory(new IDCell<>());
         deliveryCol.setCellValueFactory(cellData -> cellData.getValue().deliveryProperty());
         cmTitleCol.setCellValueFactory(cellData -> cellData.getValue().cmTitleProperty());
+        cmTitleLenCol.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(cellData.getValue().getCmTitle().length())));
         codeCol.setCellValueFactory(cellData -> cellData.getValue().itemCodeProperty());
         graingerbrandnameCol.setCellValueFactory(cellData -> cellData.getValue().brandnameProperty());
         graingercategorynameCol.setCellValueFactory(cellData -> cellData.getValue().categorynameProperty());
@@ -190,9 +209,13 @@ public class FXMLShelvesController {
         taskTable.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> showShelvesDetails(newValue));
 
-        taskTable.getItems().addAll(loadData());
+        taskTable.getItems().addAll(loadData(null));
 
         showShelvesDetails(null);
+
+        if (taskTable.getItems().size() > 0 ) {
+            taskTable.getSelectionModel().select(0);
+        }
     }
 
     private void updateSelectStatus(ShelvesItem cellValue, Boolean newValue) {
@@ -262,6 +285,9 @@ public class FXMLShelvesController {
             remarkField.setText(newValue.getRemark());
             pic.setText(newValue.getPic());
 
+            picdirField.setText(newValue.getPicdir());
+            moqLabel.setText(String.valueOf(newValue.getMoq()));
+
 
             msg.setText("");
             if (StringUtils.isNotBlank(newValue.getPic())) {
@@ -315,17 +341,28 @@ public class FXMLShelvesController {
 
     }
 
-    private List<ShelvesTask> loadData(){
+    private List<ShelvesTask> loadData(String _keyword){
 
 
         Shopinfo shopinfo = APPConfig.getInstance().getShopinfo();
 
-        try {
-            List<ShelvesTask> tasks = SQLExecutor.executeQueryBeanList("select * from SHELVESTASK where SHOPID = ? ", ShelvesTask.class, (shopinfo==null ? "" : shopinfo.getCode()));
-            return tasks;
-        } catch (Exception e) {
-            e.printStackTrace();
+        if ( _keyword==null || _keyword.trim().length()==0 ) {
+            try {
+                List<ShelvesTask> tasks = SQLExecutor.executeQueryBeanList("select * from SHELVESTASK where SHOPID = ? order by ID desc ", ShelvesTask.class, (shopinfo==null ? "" : shopinfo.getCode()));
+                return tasks;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            try {
+                List<ShelvesTask> tasks = SQLExecutor.executeQueryBeanList("select * from SHELVESTASK where TITLE like ? and SHOPID = ? order by ID desc ", ShelvesTask.class,  "%" + _keyword.trim() + "%", (shopinfo==null ? "" : shopinfo.getCode()));
+                return tasks;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+
+
 
         return Collections.EMPTY_LIST;
     }
@@ -343,8 +380,15 @@ public class FXMLShelvesController {
             //mainApp.getPersonData().add(tempPerson);
             tempShelvesTask.setShopid(APPConfig.getInstance().getShopinfo().getCode());
             try {
+                String path = "D:\\pics\\" + tempShelvesTask.getTitle() + "_" + tempShelvesTask.getId();
+                File dir = new File(path);
+                if ( !dir.exists() ) {
+                    dir.mkdirs();
+                }
+                tempShelvesTask.setPicdir(path);
+
                 SQLExecutor.insert(tempShelvesTask);
-                taskTable.getItems().add(tempShelvesTask);
+                taskTable.getItems().add(0, tempShelvesTask);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -353,6 +397,30 @@ public class FXMLShelvesController {
     }
 
     public void handleDeletePerson(ActionEvent actionEvent) {
+
+        ShelvesTask selectedTask = taskTable.getSelectionModel().getSelectedItem();
+        if ( selectedTask==null ) {
+            return;
+        }
+
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "", new ButtonType("取消", ButtonBar.ButtonData.NO), new ButtonType("确定", ButtonBar.ButtonData.YES));
+        alert.initOwner(stage());
+        alert.setTitle("删除确认");
+        alert.setHeaderText("确定删除上架任务[" + selectedTask.getTitle() +"]?");
+
+        Optional<ButtonType> _buttonType = alert.showAndWait();
+
+        if(_buttonType.get().getButtonData().equals(ButtonBar.ButtonData.YES)){
+
+            try {
+                SQLExecutor.delete(selectedTask);
+                SQLExecutor.execute("delete from SHELVESITEM where TASKID = ?", selectedTask.getId());
+                taskTable.getItems().remove(selectedTask);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
     }
 
@@ -641,35 +709,92 @@ public class FXMLShelvesController {
             okClicked = showShelvesItemImportDialog(items, importTasks.get(0));
             if (okClicked) {
 
-                SuningCatetoryBrandSelector catetoryBrandSelector = new SuningCatetoryBrandSelector();
+                final SuningCatetoryBrandSelector catetoryBrandSelector = new SuningCatetoryBrandSelector();
 
                 ShelvesTask taskSelected = taskTable.getSelectionModel().getSelectedItem();
                 System.out.println("SKU: " + items.size());
 
-
-                int total = items.size();
-                for (int i = 0; i < items.size(); i++) {
-                    ShelvesItem item = items.get(i);
-
-                    item.setTaskid(taskSelected.getId());
-                    item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
-
-                    CatetoryBrand catetoryBrand = catetoryBrandSelector.selectCatetoryBrand(item.getCategoryCode(), item.getBrandCode());
-                    if ( catetoryBrand!=null ) {
-                        item.setMappingbrandcode(catetoryBrand.getBrandCode());
-                        item.setMappingbrandname(catetoryBrand.getBrandZh());
-                        item.setMappingcategorycode(catetoryBrand.getCategoryCode());
-                        item.setMappingcategoryname(catetoryBrand.getCategory());
-                    }
-
-                    try {
-                        SQLExecutor.insert(item);
-                        itemList.getItems().add(item);
-                        System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入成功: ");
-                    } catch (Exception e) {
-                        System.out.println("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入失败: " + e.getMessage() );
-                    }
+                final String picdir = taskSelected.getPicdir();
+                File dir = new File(picdir);
+                if ( !dir.exists() ) {
+                    dir.mkdirs();
                 }
+
+                Service<String> service = new Service<String>() {
+
+                    @Override
+                    protected javafx.concurrent.Task<String> createTask() {
+                        return new javafx.concurrent.Task<String>() {
+
+                            @Override
+                            protected String call() throws Exception {
+
+
+                                int total = items.size();
+                                for (int i = 0; i < items.size(); i++) {
+                                    ShelvesItem item = items.get(i);
+
+                                    item.setTaskid(taskSelected.getId());
+                                    item.setId(MD5Utils.md5Hex(item.getTaskid() + item.getItemCode()));
+
+                                    CatetoryBrand catetoryBrand = catetoryBrandSelector.selectCatetoryBrand(item.getCategoryCode(), item.getBrandCode());
+                                    if ( catetoryBrand!=null ) {
+                                        item.setMappingbrandcode(catetoryBrand.getBrandCode());
+                                        item.setMappingbrandname(catetoryBrand.getBrandZh());
+                                        item.setMappingcategorycode(catetoryBrand.getCategoryCode());
+                                        item.setMappingcategoryname(catetoryBrand.getCategory());
+                                    }
+
+                                    try {
+                                        SQLExecutor.insert(item);
+                                        itemList.getItems().add(item);
+                                        System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入成功: ");
+                                    } catch (Exception e) {
+                                        System.out.println("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入失败: " + e.getMessage() );
+                                    }  finally {
+                                        updateProgress(i, total);
+                                        updateValue(""+ i +"/" + total);
+                                    }
+                                }
+
+                                updateProgress(total, total);
+
+                                return "导入完成";
+                            };
+                        };
+                    }
+
+                };
+
+
+                try {
+                    FXMLLoader loader = new FXMLLoader();
+                    loader.setLocation(MainApp.class.getResource("/fxml/ProgressDialog.fxml"));
+                    AnchorPane page = (AnchorPane) loader.load();
+
+                    // Create the dialog Stage.
+                    Stage _dialogStage = new Stage();
+                    _dialogStage.setTitle("进度");
+                    _dialogStage.initModality(Modality.WINDOW_MODAL);
+                    _dialogStage.initOwner(stage());
+                    _dialogStage.setScene(new Scene(page));
+
+                    // Set the person into the controller.
+                    FXMLProgressDialogController controller = loader.getController();
+                    // Show the dialog and wait until the user closes it
+                    controller.setDialogStage(_dialogStage);
+                    controller.bind(service);
+                    _dialogStage.showAndWait();
+
+                    if ( service.isRunning() ) {
+                        service.cancel();
+                        service.reset();
+                        service = null;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
             }
         }
     }
@@ -1153,12 +1278,44 @@ public class FXMLShelvesController {
                     @Override
                     protected String call() throws Exception {
 
-                        File file = new File(titleField.getText().trim() + ".csv");
+                        File file = new File("prices", titleField.getText().trim() + ".csv");
 
                         BufferedWriter writer = Files.newWriter(file, Charset.forName("GB2312"));
 
                         writer.write("一级类目ID,一级类目,二级类目ID,二级类目,三级类目ID,三级类目,四级类目ID,四级类目,五级类目ID,五级类目,SKU编码,产品标题,制造商型号,中文品牌,英文品牌,价格,促销价,URL ");
                         writer.newLine();
+
+
+
+                        Map<String, JsonObject> pricesMap = new HashMap<>();
+
+                        if ( items!=null && items.size() > 0 ) {
+
+                            StringBuilder query = new StringBuilder("https://p.3.cn/prices/mgets?type=1&area=12_988_40034_0&pdbp=0&pdtk=&pdpin=hailinking1984&pin=hailinking1984&source=list_pc_front&skuIds=");
+
+                            int cnt = 1;
+                            StringBuilder skuids = new StringBuilder();
+
+
+                            for (int i1 = 0; i1 < items.size(); i1++) {
+                                ShelvesItem searchItem = items.get(i1);
+                                skuids.append("J_").append(searchItem.getSkuCode()).append("%2C");
+                                if ( cnt++ >= 30 || i1==items.size()-1 ) {
+                                    cnt = 1;
+
+                                    System.out.println(query.toString() + skuids.toString());
+
+                                    String text = HttpUtils.get(query.toString() + skuids.toString(), "");
+                                    JsonArray arrays = new JsonParser().parse(text).getAsJsonArray();
+                                    if ( arrays!=null && arrays.size() > 0 ) {
+                                        for (JsonElement array : arrays) {
+                                            JsonObject object = (JsonObject)array;
+                                            pricesMap.put(object.get("id").toString().replace("\"", ""), object);
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
                         for (int i = 1; i <= items.size(); i++) {
                             ShelvesItem item = items.get(i-1);
@@ -1166,7 +1323,11 @@ public class FXMLShelvesController {
 
                             if ( "JD".equalsIgnoreCase(item.getType()) ) {
 
+
                                 HtmlCache cache = HtmlPageLoader.getInstance().loadJDPage(item.getSkuCode(), true);
+                                if ( cache == null ) {
+                                    cache = HtmlPageLoader.getInstance().loadJDPage(item.getSkuCode(), false);
+                                }
                                 if ( cache == null ) {
                                     throw new Exception("[SKU: " + item.getSkuCode() + "]htmlCache未找到");
                                 }
@@ -1177,6 +1338,30 @@ public class FXMLShelvesController {
                                     Element crumb = doc.selectFirst("div#crumb-wrap .crumb");
                                     if ( crumb==null ) {
                                         throw new Exception("[" + item.getSkuCode() + "]Html内容有异常");
+                                    }
+
+
+                                    String priceStr = Float.toString(item.getPrice());
+                                    String hxPriceStr = Float.toString(item.getPrice());
+                                    Element price = doc.selectFirst("span.p-price .price");
+                                    if ( price!=null ) {
+                                        priceStr = price.text();
+                                        System.out.println(price.text());
+                                    }
+
+                                    Element page_hx_price = doc.selectFirst("del#page_hx_price");
+                                    if ( page_hx_price!=null ) {
+                                        hxPriceStr = page_hx_price.text().replace(",", "").replace("￥", "");
+                                        System.out.println(hxPriceStr);
+                                    }
+
+
+                                    JsonObject priceObj = pricesMap.get("J_" + item.getSkuCode());
+                                    if ( priceObj!=null && priceObj.has("op") ) {
+                                        hxPriceStr = priceObj.get("op").toString();
+                                    }
+                                    if ( priceObj!=null && priceObj.has("p") ) {
+                                        priceStr = priceObj.get("p").toString();
                                     }
 
                                     crumb.select("div.sep").remove();
@@ -1220,11 +1405,13 @@ public class FXMLShelvesController {
 
 
 
+
+
                                     writer.write(escape(model) + ",");
 
                                     writer.write(escape(c4.text()) + "," + escape(c4.text()) + ",");
 
-                                    writer.write(item.getPrice() + ", ,");
+                                    writer.write(hxPriceStr + ", " + priceStr + ",");
 
                                     writer.write(cache.getUrl());
                                     writer.newLine();
@@ -1396,6 +1583,50 @@ public class FXMLShelvesController {
         }
 
         return res;
+    }
+
+    public void onCliccked(MouseEvent mouseEvent) {
+
+        String picdir = picdirField.getText();
+        System.out.println("picdir: " + picdir);
+        if ( picdir==null || picdir.trim().length()==0 ) {
+            return;
+        }
+
+        File dir = new File(picdir);
+        if ( !dir.exists() ) {
+            return;
+        }
+
+        try {
+            Desktop.getDesktop().browse(new File(picdir).toURI());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+//        Runtime rt = Runtime.getRuntime();
+//        Process p = null;
+//
+//        try {
+//            p = rt.exec(command ,null,new File("C:\\ffmpeg-git-670229e-win32-static\\bin"));
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
+
+    }
+
+    public void handleTaskSeach(ActionEvent actionEvent) {
+
+        taskTable.setItems(FXCollections.observableArrayList(loadData(keyword.getText())));
+
+        showShelvesDetails(null);
+        if (taskTable.getItems().size() > 0 ) {
+            taskTable.getSelectionModel().select(0);
+        }
+
+
     }
 
     public static class EditTask {

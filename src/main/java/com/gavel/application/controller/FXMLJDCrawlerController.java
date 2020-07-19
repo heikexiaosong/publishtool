@@ -97,7 +97,7 @@ public class FXMLJDCrawlerController {
     private TextField keyword;
 
 
-    private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    public static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     private BlockingQueue<Task> taskQueue = new LinkedBlockingDeque<>();
 

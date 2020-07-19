@@ -59,12 +59,12 @@ public class ShelvesTask {
     @FieldMeta(name = "BRAND_EN", title ="英文品牌名", length = 1024)
     private final StringProperty brand_en = new SimpleStringProperty();
 
-
+    @FieldMeta(name = "PICDIR", title ="图片目录", length = 1024)
+    private final StringProperty picdir = new SimpleStringProperty();
 
     public ShelvesTask() {
         setId(String.valueOf(System.currentTimeMillis()));
     }
-
 
     public String getId() {
         return id.get();
@@ -212,5 +212,17 @@ public class ShelvesTask {
 
     public void setBrand_en(String brand_en) {
         this.brand_en.set(brand_en);
+    }
+
+    public String getPicdir() {
+        return picdir.get();
+    }
+
+    public StringProperty picdirProperty() {
+        return picdir;
+    }
+
+    public void setPicdir(String picdir) {
+        this.picdir.set(picdir);
     }
 }

@@ -314,6 +314,7 @@ public class ShelvesItemParser {
                 if ( error!=null ) {
                     System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
                 } else {
+                    System.out.println(response.getSnbody());
                     picUrl = response.getSnbody().getAddNPic().getPicUrl();
                 }
             } catch (SuningApiException e) {
@@ -331,6 +332,7 @@ public class ShelvesItemParser {
                 if ( error!=null ) {
                     System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
                 } else {
+                    System.out.println(response.getSnbody());
                     picUrl = response.getSnbody().getAddNPic().getPicUrl();
                     image.setPicurl(picUrl);
                     SQLExecutor.update(image);

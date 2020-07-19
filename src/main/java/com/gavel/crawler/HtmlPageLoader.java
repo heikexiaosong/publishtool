@@ -1,12 +1,9 @@
 package com.gavel.crawler;
 
-import com.gavel.HttpUtils;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
-import com.gavel.proxy.HttpProxyClient;
 import com.gavel.utils.MD5Utils;
 import com.gavel.utils.StringUtils;
-import okhttp3.OkHttpClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -71,6 +68,7 @@ public class HtmlPageLoader {
             try {
                 String id = MD5Utils.md5Hex(url);
                 String suffix =  id.substring(id.length()-1);
+                System.out.println(url + " => " + id + " : " + suffix);
                 cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
             } catch (Exception e) {
                 System.out.println("[executeQueryBean]SQLExecutor: " + url);
@@ -135,18 +133,22 @@ public class HtmlPageLoader {
         }
 
         if ( cache == null ) {
-            OkHttpClient client = HttpProxyClient.getInstance().defaultClient();
-            if ( times > 0 ) {
-                client = HttpProxyClient.getInstance().getClient();
-            }
+
+
+//            OkHttpClient client = HttpProxyClient.getInstance().defaultClient();
+//            if ( times > 0 ) {
+//                client = HttpProxyClient.getInstance().getClient();
+//            }
 
             try {
-                String html =  HttpUtils.get(url, client);
+                //String html =  HttpUtils.get(url, client);
+
+                String html = DriverHtmlLoader.getInstance().loadHtml(url);
                 cache = new HtmlCache();
                 cache.setUrl(url.trim());
                 cache.setHtml(html);
                 cache.setContentlen(html.length());
-                HttpProxyClient.getInstance().release(client);
+                //HttpProxyClient.getInstance().release(client);
             } catch (Exception e) {
                 System.out.println("[HttpUtils]: " + e.getMessage());
             }

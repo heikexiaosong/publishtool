@@ -1,11 +1,16 @@
 package com.gavel.application;
 
+import com.gavel.crawler.DriverHtmlLoader;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.IOException;
 
@@ -21,7 +26,13 @@ public class MainApp extends Application {
      * Constructor
      */
     public MainApp() {
-        // Add some sample data
+
+        Runtime.getRuntime().addShutdownHook(new Thread(){
+            @Override
+            public void run() {
+                DriverHtmlLoader.getInstance().quit();
+            }
+        });
     }
 
 
@@ -33,6 +44,13 @@ public class MainApp extends Application {
         initRootLayout();
 
         showPersonOverview();
+
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                System.exit(0);
+            }
+        });
     }
 
     /**
@@ -78,6 +96,9 @@ public class MainApp extends Application {
     }
 
     public static void main(String[] args) {
+
+        Mat src = Imgcodecs.imread("https://uimgproxy.suning.cn/uimg1/sop/commodity/4yVoTcXdM6qgaQs7-vYpSQ.jpg", Imgcodecs.IMREAD_UNCHANGED);
+
         launch(args);
     }
 }

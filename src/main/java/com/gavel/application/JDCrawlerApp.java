@@ -1,9 +1,13 @@
 package com.gavel.application;
 
+import com.gavel.application.controller.FXMLJDCrawlerController;
+import com.gavel.crawler.DriverHtmlLoader;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 
@@ -16,6 +20,14 @@ public class JDCrawlerApp extends Application {
      */
     public JDCrawlerApp() {
         // Add some sample data
+        Runtime.getRuntime().addShutdownHook(new Thread(){
+            @Override
+            public void run() {
+                DriverHtmlLoader.getInstance().quit();
+            }
+        });
+
+        DriverHtmlLoader.getInstance().loadHtml("https://item.jd.com/68812355916.html");
     }
 
 
@@ -25,6 +37,20 @@ public class JDCrawlerApp extends Application {
         this.primaryStage.setTitle("京东商品采集工具");
 
         initRootLayout();
+
+
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+
+                FXMLJDCrawlerController.executor.shutdown();
+                if ( !FXMLJDCrawlerController.executor.isShutdown() ) {
+                    FXMLJDCrawlerController.executor.shutdownNow();
+                }
+
+                System.exit(0);
+            }
+        });
     }
 
     /**

@@ -26,7 +26,7 @@ public class MD5Utils {
 
 
     public static void main(String[] args) {
-        System.out.println(md5Hex("https://i-item.jd.com/65280974820.html"));
+        System.out.println(md5Hex("https://item.jd.com/5283992.html"));
     }
 
 }

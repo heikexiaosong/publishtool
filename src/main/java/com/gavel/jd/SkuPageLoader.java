@@ -5,13 +5,13 @@ import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Item;
 import com.gavel.entity.PHtmlCache;
 import com.gavel.entity.SearchItem;
+import com.gavel.entity.ShelvesItem;
 import com.gavel.utils.MD5Utils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.File;
 import java.util.Calendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -174,6 +174,19 @@ public class SkuPageLoader {
             throw new Exception("[" + url + "]Html内容有异常");
         }
 
+
+
+
+        Element price = doc.selectFirst("span.p-price .price");
+        System.out.println(price.text());
+
+
+        Element page_hx_price = doc.selectFirst("del#page_hx_price");
+        if ( page_hx_price!=null ) {
+            System.out.println(page_hx_price.text().replace(",", "").replace("￥", ""));
+        }
+
+
         Element ellipsis = crumb.selectFirst("div.ellipsis");
 
         crumb.select("div.sep").remove();
@@ -331,49 +344,42 @@ public class SkuPageLoader {
 
     public static void main(String[] args) throws Exception {
 
-        System.out.println(new File("e:\\_A1hmFHelzvbhzjZXvssoQ.png").length());
+        ShelvesItem item = new ShelvesItem();
+        item.setSkuCode("5283992");
+        item.setPrice(100);
 
-        String code = "65280974820";
 
-        String url = "https://i-item.jd.com/" + code + ".html";
+        String url = "https://item.jd.com/" + item.getSkuCode().trim() + ".html";
 
-        String id = MD5Utils.md5Hex(url);
-        String suffix =  id.substring(id.length()-1);
-
-        Item item = null;
-        PHtmlCache cache = SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", PHtmlCache.class, id);
-        if ( cache!=null ) {
-            try {
-                item = parseSku(code, cache.getHtml(), null);
-                System.out.println("Load From Cache");
-            } catch (Exception e) {
-                SQLExecutor.execute("delete from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? ", id);
-                cache = null;
-            }
+        String html = DriverHtmlLoader.getInstance().loadHtml(url, 6000);
+        if (html == null || html.trim().length() == 0) {
+            throw new Exception("[SKU: " + item.getSkuCode() + "]htmlCache未找到");
         }
+        try {
 
-        if ( item==null ) {
-            String html = DriverHtmlLoader.getInstance().loadHtml(url);
-            if (com.gavel.utils.StringUtils.isNotBlank(html)) {
+            Document doc = Jsoup.parse(html);
 
-                try {
-                    item = parseSku(code, html, null);
-                    PHtmlCache _cache = new PHtmlCache();
-                    _cache.setId(MD5Utils.md5Hex(url.trim()));
-                    _cache.setUrl(url.trim());
-                    _cache.setHtml(html);
-                    _cache.setContentlen(html.length());
-                    _cache.setUpdatetime(Calendar.getInstance().getTime());
-                    SQLExecutor.insert(_cache, _cache.getId().substring(_cache.getId().length()-1));
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            Element crumb = doc.selectFirst("div#crumb-wrap .crumb");
+            if (crumb == null) {
+                throw new Exception("[" + item.getSkuCode() + "]Html内容有异常");
             }
 
+
+            String priceStr = Float.toString(item.getPrice());
+            String hxPriceStr = Float.toString(item.getPrice());
+            Element price = doc.selectFirst("span.p-price .price");
+            if (price != null) {
+                priceStr = price.text();
+                System.out.println(price.text());
+            }
+
+            Element page_hx_price = doc.selectFirst("del#page_hx_price");
+            if (page_hx_price != null) {
+                hxPriceStr = page_hx_price.text().replace(",", "").replace("￥", "");
+                System.out.println(hxPriceStr);
+            }
+        } catch (Exception e) {
+
         }
-
-
-
     }
 }
