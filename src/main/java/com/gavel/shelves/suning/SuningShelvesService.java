@@ -378,17 +378,20 @@ public class SuningShelvesService implements ShelvesService {
 
 
 
+        Item _item = null;
         String html = null;
         try {
-            Item _item = SQLExecutor.executeQueryBean("select * from ITEM where CODE = ? ", Item.class, item.getSkuCode());
-            if ( _item!=null && _item.getUrl()!=null ) {
-                html =  SkuPageLoader.getInstance().loadPage(item.getSkuCode(), _item.getUrl());
-            } else {
-                html =  SkuPageLoader.getInstance().loadPage(item.getSkuCode());
-            }
+            _item = SQLExecutor.executeQueryBean("select * from ITEM where CODE = ? ", Item.class, item.getSkuCode());
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
+
+        if ( _item!=null && _item.getUrl()!=null ) {
+            html =  SkuPageLoader.getInstance().loadPage(item.getSkuCode(), _item.getUrl());
+        } else {
+            html =  SkuPageLoader.getInstance().loadPage(item.getSkuCode());
+        }
+
         if ( html==null || html.trim().length()==0 ) {
             throw new Exception("[Item: " + item.getItemCode() + "]获取sku页面信息失败");
         }
@@ -407,6 +410,36 @@ public class SuningShelvesService implements ShelvesService {
         if ( crumb==null ) {
             throw new Exception("Html内容有异常");
         }
+
+        if ( _item!= null ) {
+            float _price = _item.getPrice();
+            Element price = doc.selectFirst("span.p-price .price");
+            if ( price==null ) {
+               try {
+                   _price = Float.parseFloat(price.text());
+                   System.out.println(_price);
+               } catch (Exception e) {
+
+               }
+            }
+
+
+
+            Element page_hx_price = doc.selectFirst("del#page_hx_price");
+            if ( page_hx_price!=null ) {
+                try {
+                    _price = Float.parseFloat(page_hx_price.text().replace(",", "").replace("￥", ""));
+                    System.out.println(_price);
+                } catch (Exception e) {
+
+                }
+            }
+
+            if ( _price != _item.getPrice() ) {
+                SQLExecutor.update(_item);
+            }
+        }
+
 
         Element ellipsis = crumb.selectFirst("div.ellipsis");
 
@@ -622,10 +655,7 @@ public class SuningShelvesService implements ShelvesService {
 
         String introduction = item.getIntroduction();
         try {
-            if ( StringUtils.isBlank(introduction)) {
-                introduction = buildIntroduction(item.getSkuCode(), moq, detailUrls, columnValues);
-                item.setIntroduction(introduction);
-            }
+            introduction = buildIntroduction(item.getSkuCode(), moq, item.getPrice(), detailUrls, columnValues);
         } catch (Exception e) {
             System.out.println("[" + item.getItemCode() + "]生成商品详情异常: " + e.getMessage());
         }
@@ -860,7 +890,7 @@ public class SuningShelvesService implements ShelvesService {
     }
 
 
-    public static String buildIntroduction(String skuCode, int moq, List<String> detailUrls, List<String> columnValues) throws Exception {
+    public static String buildIntroduction(String skuCode, int moq, float _price, List<String> detailUrls, List<String> columnValues) throws Exception {
 
         Map<String, String> detailImageMap = new HashMap<>();
         for (String picUrl : detailUrls) {
@@ -872,22 +902,20 @@ public class SuningShelvesService implements ShelvesService {
 
 
         StringBuilder detail = new StringBuilder();
-//        if ( _price > 0 && _price < moq ) {
-//            detail.append("<div class=\"box\">");
-//            detail.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\">" +
-//                    "<span>商品起定量</span><span style=\"color:red;\">(请按起订量拍，否则无法发货)</span></div>");
-//
-//
-//            detail.append(" <span style=\"color:red;\">起订量： ").append( (int)Math.ceil(100/_price)).append(unit).append("</span><br>");
-//
+        if ( _price > 0 && _price < moq ) {
+            detail.append("<div class=\"box\">");
+            detail.append("<div style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\">" +
+                    "<span>商品起定量</span><span style=\"color:red;\">(请按起订量拍，否则无法发货)</span></div>");
+
+            detail.append(" <span style=\"color:red;\">起订量： ").append( (int)Math.ceil(100/_price)).append("</span><br>");
 //            if ( number.contains(unit) ) {
 //                detail.append(" 包装数量： ").append(number).append("<br>");
 //            } else {
 //                detail.append(" 包装数量： ").append(number).append("/").append(unit).append("<br>");
 //            }
-//
-//            detail.append("</div>");
-//        }
+
+            detail.append("</div>");
+        }
 
         detail.append("<div class=\"box\">");
 
