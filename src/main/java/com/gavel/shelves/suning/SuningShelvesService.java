@@ -352,7 +352,6 @@ public class SuningShelvesService implements ShelvesService {
         request.setCmTitle(item.getCmTitle());         // 商品标题
 
 
-
         Map<String, String> _attrs = new HashMap<String, String>();
         /**
          * 长度 => {"categoryCode":"R9008653","supplierCode":"10148425","paraTemplateCode":"basic","paraTemplateDesc":"基本参数模板","parCode":"LAENG","parName":"长度","parType":"3","parUnit":"毫米","isMust":"X","options":"null","parOption":[]}
@@ -455,19 +454,27 @@ public class SuningShelvesService implements ShelvesService {
             }
         }
 
-
         Element ellipsis = crumb.selectFirst("div.ellipsis");
 
         crumb.select("div.sep").remove();
 
-        String sellPoint = (ellipsis==null ?  item.getSellingPoints() : ellipsis.text());
-        if ( sellPoint!=null && sellPoint.length() > 45 ) {
-            sellPoint = sellPoint.substring(0, 45);
+        if ( item.getSellingPoints()==null || item.getSellingPoints().trim().length()<=0 ) {
+            String sellPoint = (ellipsis==null ?  item.getCmTitle() : ellipsis.text());
+            if ( sellPoint!=null && sellPoint.length() > 45 ) {
+                sellPoint = sellPoint.substring(0, 45);
+            }
+            item.setSellingPoints(sellPoint);
+
+            try {
+                SQLExecutor.update(item);
+            } catch (Exception e) {
+
+            }
+
+            System.out.println("商品卖点: " + request.getSellingPoints());
         }
 
-        request.setSellingPoints(sellPoint); // 商品卖点
-        System.out.println("商品卖点: " + request.getSellingPoints());
-
+        request.setSellingPoints(item.getSellingPoints()); // 商品卖点
 
         // 图片
         Elements imgs = doc.select("div#spec-list li>img");

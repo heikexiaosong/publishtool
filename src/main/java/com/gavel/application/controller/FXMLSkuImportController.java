@@ -238,7 +238,7 @@ public class FXMLSkuImportController {
                                     shelvesItem.setCmTitle(item.getName());
 
                                     shelvesItem.setType(item.getType());
-                                    shelvesItem.setSellingPoints(item.getSubname());
+                                    //shelvesItem.setSellingPoints(item.getSubname());
 
                                     shelvesItem.setPrice(item.getPrice());
                                     shelvesItem.setShop(item.getShop());
