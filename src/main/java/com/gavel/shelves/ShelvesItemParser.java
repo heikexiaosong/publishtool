@@ -226,22 +226,42 @@ public class ShelvesItemParser {
 
         String picUrl = null;
         {
-            NPicAddRequest request = new NPicAddRequest();
-            request.setPicFileData(localFilePath);
-            try {
-                NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
-                SuningResponse.SnError error = response.getSnerror();
-                if ( error!=null ) {
-                    System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
-                } else {
-                    picUrl = response.getSnbody().getAddNPic().getPicUrl();
-                    System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
-                    image.setPicurl(picUrl);
-                    SQLExecutor.update(image);
+            int cnt = 0;
+            while ( picUrl==null && cnt < 3 ) {
+                NPicAddRequest request = new NPicAddRequest();
+                request.setPicFileData(localFilePath);
+                try {
+                    NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
+                    SuningResponse.SnError error = response.getSnerror();
+                    if ( error!=null ) {
+                        System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                    } else {
+                        picUrl = response.getSnbody().getAddNPic().getPicUrl();
+                        System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
+                        image.setPicurl(picUrl);
+                        SQLExecutor.update(image);
+                    }
+                } catch (SuningApiException e) {
+                    e.printStackTrace();
                 }
-            } catch (SuningApiException e) {
-                e.printStackTrace();
+
+                if ( picUrl!=null && picUrl.trim().length() > 0) {
+                    try {
+                        HttpUtils.download(picUrl, "d:\\check.png");
+                        File imageFile = new File("d:\\check.png");
+                        if ( imageFile.exists() && imageFile.length() > 9999 ) {
+                            break;
+                        }
+                    } catch (Exception e) {
+                        System.out.println("[" + url + "]" + e.getMessage());
+                        picUrl = null;
+                    }
+                }
+
+
+                cnt++;
             }
+
 
         }
         return picUrl;

@@ -200,18 +200,19 @@ public class FXMLJDCrawlerController {
         int pageTotal = 1;
 
         while ( pageCur <= pageTotal ) {
-            int count = SQLExecutor.intQuery("select count(1) from  SEARCHITEM where TASKID = ? and  PAGENUM = ?", task.getId(), pageCur*2 - 1);
-            if ( count > 0 ) {
-                pageCur++;
-                continue;
-            }
 
-            String html = DriverHtmlLoader.getInstance().loadHtml(task.getUrl() + "&page=" + pageCur);
+            String html = DriverHtmlLoader.getInstance().loadHtml(task.getUrl() + "&page=" + (pageCur*2 - 1));
 
             Document doc = Jsoup.parse(html);
 
             pageCur = Integer.parseInt(doc.selectFirst("div.f-pager .fp-text b").text());
             pageTotal = Integer.parseInt(doc.selectFirst("div.f-pager .fp-text i").text());
+
+            int count = SQLExecutor.intQuery("select count(1) from  SEARCHITEM where TASKID = ? and  PAGENUM = ?", task.getId(), pageCur);
+            if ( count > 0 ) {
+                pageCur++;
+                continue;
+            }
 
             Elements items = doc.select("div#plist li.gl-item");
             if ( items==null || items.size()==0 ) {
@@ -316,7 +317,7 @@ public class FXMLJDCrawlerController {
 
                         System.out.println(query.toString() + skuids.toString());
 
-                        String text = HttpUtils.get(query.toString() + skuids.toString(), task.getUrl() + "&page=" + pageCur);
+                        String text = HttpUtils.get(query.toString() + skuids.toString(), task.getUrl() + "&page=" + (pageCur*2 - 1));
                         JsonArray arrays = new JsonParser().parse(text).getAsJsonArray();
                         if ( arrays!=null && arrays.size() > 0 ) {
                             for (JsonElement array : arrays) {

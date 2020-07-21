@@ -577,6 +577,11 @@ public class SuningShelvesService implements ShelvesService {
             }
         }
 
+        Element ssd = detail.selectFirst("div#ssd-vc-goods");
+        if ( ssd!=null ) {
+            ssd.remove();
+        }
+
         Elements detailTexts = detail.select("div#J-detail-content div p");
         if ( detailTexts!=null ) {
             for (Element detailText : detailTexts) {

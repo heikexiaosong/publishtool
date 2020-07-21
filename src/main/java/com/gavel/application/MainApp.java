@@ -9,8 +9,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.IOException;
 
@@ -96,9 +94,6 @@ public class MainApp extends Application {
     }
 
     public static void main(String[] args) {
-
-        Mat src = Imgcodecs.imread("https://uimgproxy.suning.cn/uimg1/sop/commodity/4yVoTcXdM6qgaQs7-vYpSQ.jpg", Imgcodecs.IMREAD_UNCHANGED);
-
         launch(args);
     }
 }
