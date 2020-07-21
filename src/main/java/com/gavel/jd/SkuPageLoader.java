@@ -352,7 +352,7 @@ public class SkuPageLoader {
     public static void main(String[] args) throws Exception {
 
         ShelvesItem item = new ShelvesItem();
-        item.setSkuCode("69569282804");
+        item.setSkuCode("11633217492");
         item.setPrice(100);
 
 
