@@ -425,6 +425,8 @@ public class SuningShelvesService implements ShelvesService {
             throw new Exception("Html内容有异常");
         }
 
+
+        boolean coup = false;
         if ( _item!= null ) {
             float _price = _item.getPrice();
             Element price = doc.selectFirst("span.p-price .price");
@@ -441,6 +443,7 @@ public class SuningShelvesService implements ShelvesService {
 
             Element page_hx_price = doc.selectFirst("del#page_hx_price");
             if ( page_hx_price!=null ) {
+                coup = true;
                 try {
                     _price = Float.parseFloat(page_hx_price.text().replace(",", "").replace("￥", ""));
                     System.out.println(_price);
@@ -631,7 +634,7 @@ public class SuningShelvesService implements ShelvesService {
         supplierImgUrls.add(supplierImgUrl);
 
 
-        if ( picUrls.size() > 5 ) {
+        if ( coup || picUrls.size() > 5 ) {
             picUrls.remove(0);
         }
         List<ShelvesItemParser.Pic> images = ShelvesItemParser.getImages(item.getSkuCode(), picUrls, defaultImage, logoImage);
