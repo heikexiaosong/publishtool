@@ -104,9 +104,9 @@ public class FXMLJDCrawlerController {
     @FXML
     private void initialize() {
 
-        title.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
-        url.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getUrl()));
-        status.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getStatus()));
+        title.setCellValueFactory(cellData -> cellData.getValue().titleProperty());
+        url.setCellValueFactory(cellData -> cellData.getValue().urlProperty());
+        status.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
 
 
         // Clear person details.
@@ -115,17 +115,6 @@ public class FXMLJDCrawlerController {
         // Listen for selection changes and show the person details when changed.
         taskTable.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> showTaskDetails(newValue));
-
-
-        List<Task> tasks = null;
-        try {
-            tasks = SQLExecutor.executeQueryBeanList("select * from TASK  where TYPE = 'JD'  order by UPDATETIME desc", Task.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        taskTable.setItems(FXCollections.observableArrayList(tasks));
-
 
         // 搜索结果列表
         pagenumCol.setCellValueFactory(new PropertyValueFactory<>("pagenum"));
@@ -144,9 +133,10 @@ public class FXMLJDCrawlerController {
         pagination.setMaxPageIndicatorCount(0);
 
 
+        List<Task> tasks = refresh();
 
         //
-        if (  tasks!=null ) {
+        if ( tasks!=null ) {
             for (Task task : tasks) {
                 if ( StringUtils.isBlank(task.getStatus())  || !"success".equalsIgnoreCase(task.getStatus())  ) {
                     try {
@@ -171,6 +161,31 @@ public class FXMLJDCrawlerController {
         }, 3000, 5000, TimeUnit.MILLISECONDS);
     }
 
+    private List<Task> refresh(){
+
+        Task selected =  taskTable.getSelectionModel().getSelectedItem();
+
+        List<Task> tasks = null;
+        try {
+            tasks = SQLExecutor.executeQueryBeanList("select * from TASK  where TYPE = 'JD' order by UPDATETIME desc", Task.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            tasks = Collections.EMPTY_LIST;
+        }
+
+        taskTable.setItems(FXCollections.observableArrayList(tasks));
+        if ( selected!=null ) {
+            for (Task task : taskTable.getItems()) {
+                if ( task.getId().equalsIgnoreCase(selected.getId()) ) {
+                    Platform.runLater(() -> taskTable.getSelectionModel().select(task));
+                    break;
+                }
+            }
+        }
+        return taskTable.getItems();
+
+    }
+
 
 
     private void loadSkus() throws Exception {
@@ -178,23 +193,27 @@ public class FXMLJDCrawlerController {
         System.out.println("Task: " + taskQueue.size());
 
         if ( taskQueue.isEmpty() ) {
-            try {
-                List<Task> tasks = SQLExecutor.executeQueryBeanList("select * from TASK  where TYPE = 'JD' and STATUS <> 'success'  order by UPDATETIME desc", Task.class);
-                System.out.println("未完成Task: " + taskQueue.size());
-                if ( tasks!=null && tasks.size()>0 ) {
-                    for (Task task : tasks) {
-                        taskQueue.put(task);
+            List<Task> tasks = refresh();
+            if ( tasks!=null ) {
+                for (Task task : tasks) {
+                    if ( StringUtils.isBlank(task.getStatus())  || !"success".equalsIgnoreCase(task.getStatus())  ) {
+                        try {
+                            taskQueue.put(task);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
+
         }
 
         Task task = taskQueue.poll();
         if ( task==null ) {
             return;
         }
+
+        Platform.runLater(() -> taskTable.getSelectionModel().select(task));
 
         int pageCur = 1;
         int pageTotal = 1;
@@ -367,23 +386,15 @@ public class FXMLJDCrawlerController {
 
 
 
-
-        System.out.println("爬取任务: " + task.getTitle());
-
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                taskTable.getSelectionModel().select(task);
-            }
-        });
-
-
         List<SearchItem> searchItemList =   SQLExecutor.executeQueryBeanList("select * from  SEARCHITEM where TASKID = ? and SKUNUM <> ACTUAL order by PAGENUM, XH ", SearchItem.class, task.getId());
 
-        System.out.println("SearchItem: " + searchItemList.size());
+        System.out.println("[" + task.getTitle() + "][SearchItem][待处理]: " + searchItemList.size());
 
         if ( searchItemList==null || searchItemList.size() ==0 ) {
             task.setStatus("success");
+
+            Platform.runLater(() ->  refresh());
+
             try {
                 SQLExecutor.update(task);
             } catch (Exception e) {
@@ -393,8 +404,9 @@ public class FXMLJDCrawlerController {
         }
 
         int total = searchItemList.size();
+        boolean success = true;
         for (int i = 0; i < total; i++) {
-            boolean success = true;
+
             try {
                 SearchItem searchItem = searchItemList.get(i);
                 System.out.println("\r" + (i+1) + "/" + total + ". " + searchItem.getUrl() + ": " + searchItem.getSkunum());
@@ -417,9 +429,15 @@ public class FXMLJDCrawlerController {
             }
         }
 
+        if ( success ) {
+            task.setStatus("success");
+            Platform.runLater(() ->  refresh());
+            try {
+                SQLExecutor.update(task);
+            } catch (Exception e) {
 
-        task.setStatus("success");
-        SQLExecutor.update(task);
+            }
+        }
         System.out.println("爬取任务[" + task.getTitle() + "]完成一轮.");
     }
 
@@ -496,6 +514,7 @@ public class FXMLJDCrawlerController {
                         SQLExecutor.insert(task);
                         taskTable.getItems().add(0, task);
                         taskTable.getSelectionModel().select(task);
+                        taskQueue.put(task);
                         //ItemSupplement.loadSearchItems(task);
                     } catch (Exception e) {
                         e.printStackTrace();

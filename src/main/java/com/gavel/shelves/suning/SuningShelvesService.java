@@ -506,26 +506,37 @@ public class SuningShelvesService implements ShelvesService {
 
 
             // 规格与包装
-            Element ptableItem = detail.selectFirst("div.Ptable-item dl");
-            String line = "";
-            if ( ptableItem!=null ) {
 
-                for (Element element : ptableItem.children()) {
-                    if ( element.is("dd") ) {
-                        System.out.println(element.text());
-                        line = line + element.text();
+            Elements ptableItems = detail.select("div.Ptable-item dl");
+            if ( ptableItems!=null && ptableItems.size() > 0 ) {
+
+                for (Element ptableItem : ptableItems) {
+
+                    Element tips = ptableItem.selectFirst("dd.Ptable-tips");
+                    if ( tips!=null ) {
+                        tips.remove();
+                    }
+
+                    String line = "";
+                    for (Element element : ptableItem.children()) {
+                        if ( element.is("dd") ) {
+                            System.out.println(line);
+
+                            line = line + element.text();
+                            columnValues.add(line);
+                            line = null;
+                        } else {
+                            line = element.text() + ": ";
+                        }
+                    }
+
+                    if ( line!=null && line.trim().length() > 0 ) {
                         columnValues.add(line);
-                        line = null;
-                    } else {
-                        System.out.print(element.text() + ": ");
-                        line = element.text() + ": ";
                     }
                 }
+            }
 
-            }
-            if ( line!=null && line.trim().length() > 0 ) {
-                columnValues.add(line);
-            }
+
 
 
             // package-list

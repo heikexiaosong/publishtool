@@ -179,7 +179,6 @@ public class CrawlerApp {
             if ( searchItemList!=null && searchItemList.size() >0 ) {
                 break;
             }
-
             task.setStatus("success");
             try {
                 SQLExecutor.update(task);

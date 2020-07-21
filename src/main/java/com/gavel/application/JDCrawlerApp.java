@@ -19,15 +19,12 @@ public class JDCrawlerApp extends Application {
      * Constructor
      */
     public JDCrawlerApp() {
-        // Add some sample data
         Runtime.getRuntime().addShutdownHook(new Thread(){
             @Override
             public void run() {
                 DriverHtmlLoader.getInstance().quit();
             }
         });
-
-        DriverHtmlLoader.getInstance().loadHtml("https://item.jd.com/68812355916.html");
     }
 
 

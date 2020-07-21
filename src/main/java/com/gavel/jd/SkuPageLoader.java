@@ -264,22 +264,29 @@ public class SkuPageLoader {
 
 
             // 规格与包装
-            Element ptableItem = detail.selectFirst("div.Ptable-item dl");
-            if ( ptableItem!=null ) {
-                String line = "";
-                for (Element element : ptableItem.children()) {
-                    if ( element.is("dd") ) {
+            Elements ptableItems = detail.select("div.Ptable-item dl");
+            if ( ptableItems!=null && ptableItems.size() > 0 ) {
 
-                        line = line + element.text();
-                        System.out.println(line);
-                        //columnValues.add(line);
+                for (Element ptableItem : ptableItems) {
 
-                    } else {
-                        System.out.print(element.text() + ": ");
-                        line = element.text() + ": ";
+                    Element tips = ptableItem.selectFirst("dd.Ptable-tips");
+                    if ( tips!=null ) {
+                        tips.remove();
+                    }
+
+                    String line = "";
+                    for (Element element : ptableItem.children()) {
+                        if ( element.is("dd") ) {
+
+                            line = line + element.text();
+                            System.out.println(line);
+                            //columnValues.add(line);
+
+                        } else {
+                            line = element.text() + ": ";
+                        }
                     }
                 }
-
             }
 
 
@@ -345,7 +352,7 @@ public class SkuPageLoader {
     public static void main(String[] args) throws Exception {
 
         ShelvesItem item = new ShelvesItem();
-        item.setSkuCode("5283992");
+        item.setSkuCode("69569282804");
         item.setPrice(100);
 
 
@@ -357,27 +364,7 @@ public class SkuPageLoader {
         }
         try {
 
-            Document doc = Jsoup.parse(html);
-
-            Element crumb = doc.selectFirst("div#crumb-wrap .crumb");
-            if (crumb == null) {
-                throw new Exception("[" + item.getSkuCode() + "]Html内容有异常");
-            }
-
-
-            String priceStr = Float.toString(item.getPrice());
-            String hxPriceStr = Float.toString(item.getPrice());
-            Element price = doc.selectFirst("span.p-price .price");
-            if (price != null) {
-                priceStr = price.text();
-                System.out.println(price.text());
-            }
-
-            Element page_hx_price = doc.selectFirst("del#page_hx_price");
-            if (page_hx_price != null) {
-                hxPriceStr = page_hx_price.text().replace(",", "").replace("￥", "");
-                System.out.println(hxPriceStr);
-            }
+            parseSku(item.getSkuCode(), html, null);
         } catch (Exception e) {
 
         }

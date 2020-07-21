@@ -240,6 +240,7 @@ public class ShelvesItemParser {
                     SuningResponse.SnError error = response.getSnerror();
                     if ( error!=null ) {
                         System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                        System.out.println(new Gson().toJson(response));
                     } else {
                         picUrl = response.getSnbody().getAddNPic().getPicUrl();
                         System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
