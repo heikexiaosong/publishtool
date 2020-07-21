@@ -19,6 +19,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -148,10 +149,18 @@ public class FXMLBrandTaskSelectedController {
         skuList.setItems(FXCollections.observableList(filterItems));
     }
 
-    public void setPage(String url) {
-        String html =  DriverHtmlLoader.getInstance().loadHtml(url, 10000);
-        Document doc = Jsoup.parse(html);
+    public void setPage(String url, StringWriter writer) {
+        String html = null;
 
+        if (writer!=null ) {
+            html = writer.toString();
+        }
+
+        if ( html==null || html.trim().length() <= 0 ) {
+            html =  DriverHtmlLoader.getInstance().loadHtml(url, 10000);
+        }
+
+        Document doc = Jsoup.parse(html);
 
         String cate = "";
         Elements crumbs = doc.select("div.crumbs-nav-item span.curr");

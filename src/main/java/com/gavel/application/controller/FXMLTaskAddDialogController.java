@@ -17,6 +17,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
 import java.util.Calendar;
 
 public class FXMLTaskAddDialogController {
@@ -52,6 +59,8 @@ public class FXMLTaskAddDialogController {
         }
     }
 
+    private StringWriter writer;
+
     @FXML
     private void initialize() {
 
@@ -76,7 +85,31 @@ public class FXMLTaskAddDialogController {
 
         if ( url.contains("jd.com") ) {
 
-            String html = HttpUtils.get(url, "");
+            String html = null;
+
+            if ( writer!=null ) {
+                org.w3c.dom.Document doc = webView.getEngine().getDocument();
+
+                try {
+                    TransformerFactory transformerFactory = TransformerFactory.newInstance();
+                    Transformer transformer = transformerFactory.newTransformer();
+                    DOMSource source = new DOMSource(doc);
+
+                    StreamResult result = new StreamResult(writer);
+                    transformer.transform(source, result);
+                    html = writer.toString();
+                } catch (TransformerConfigurationException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (TransformerException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            if ( html==null || html.trim().length()<=0 ) {
+                html = HttpUtils.get(url, "");
+            }
+
             Document document = Jsoup.parse(html);
 
             System.out.println(document.selectFirst("div.f-pager .fp-text i"));
@@ -186,6 +219,10 @@ public class FXMLTaskAddDialogController {
 
     public void bindTask(Task _task) {
         this.task = _task;
+    }
+
+    public void bind(StringWriter _writer) {
+        this.writer = _writer;
     }
 
     public void handleGoAction(ActionEvent actionEvent) {

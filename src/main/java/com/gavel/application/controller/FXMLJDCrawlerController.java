@@ -33,6 +33,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -478,12 +479,15 @@ public class FXMLJDCrawlerController {
      */
     public void handleNewTaskAction(ActionEvent actionEvent) {
         Task task1 = new Task();
-        boolean okClicked = showAddTaskDialog(task1);
+
+        StringWriter writer = new StringWriter();
+
+        boolean okClicked = showAddTaskDialog(task1, writer);
         if (okClicked) {
 
 
             List<Task> tasks = new ArrayList<>();
-            okClicked = showSelectBrandTaskDialog(tasks, task1.getUrl());
+            okClicked = showSelectBrandTaskDialog(tasks, task1.getUrl(), writer);
 
             if ( okClicked && tasks.size() > 0 ) {
 
@@ -524,7 +528,7 @@ public class FXMLJDCrawlerController {
         }
     }
 
-    private boolean showAddTaskDialog(Task task) {
+    private boolean showAddTaskDialog(Task task, StringWriter writer) {
         try {
             // Load the fxml file and create a new stage for the popup dialog.
             FXMLLoader loader = new FXMLLoader();
@@ -543,6 +547,7 @@ public class FXMLJDCrawlerController {
             FXMLTaskAddDialogController controller = loader.getController();
             controller.setDialogStage(dialogStage);
             controller.bindTask(task);
+            controller.bind(writer);
             dialogStage.setMaximized(true);
             controller.setStartPage("https://www.jd.com/");
             // Show the dialog and wait until the user closes it
@@ -556,7 +561,7 @@ public class FXMLJDCrawlerController {
         return false;
     }
 
-    private boolean showSelectBrandTaskDialog(List<Task> tasks, String url) {
+    private boolean showSelectBrandTaskDialog(List<Task> tasks, String url, StringWriter writer) {
         try {
             // Load the fxml file and create a new stage for the popup dialog.
             FXMLLoader loader = new FXMLLoader();
@@ -575,7 +580,7 @@ public class FXMLJDCrawlerController {
             FXMLBrandTaskSelectedController controller = loader.getController();
             controller.setDialogStage(dialogStage);
             controller.bindItems(tasks);
-            controller.setPage(url);
+            controller.setPage(url, writer);
 
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
