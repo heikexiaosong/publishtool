@@ -1,5 +1,6 @@
 package com.gavel.shelves.suning;
 
+import com.gavel.HttpUtils;
 import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Item;
@@ -32,7 +33,7 @@ import java.util.regex.Pattern;
 public class SuningShelvesService implements ShelvesService {
 
 
-    private static final Pattern DETAIL_IMAGE = Pattern.compile("background-image:url(.*);");
+    private static final Pattern DETAIL_IMAGE = Pattern.compile("background-image:url([^;]*);");
 
     private static final Pattern PIC_IMAGE = Pattern.compile("360buyimg.com/n(\\d*)/");
 
@@ -51,6 +52,8 @@ public class SuningShelvesService implements ShelvesService {
 
     private BufferedImage logoImage;
 
+    private final String picdir;
+
     private CatetoryBrandSelector catetoryBrandSelector = new SuningCatetoryBrandSelector();
 
     public SuningShelvesService(int moq, String _defaultImage) {
@@ -58,9 +61,14 @@ public class SuningShelvesService implements ShelvesService {
     }
 
     public SuningShelvesService(int moq, String _defaultImage, String _logo) {
+       this(moq, _defaultImage, _logo, null);
+    }
+
+    public SuningShelvesService(int moq, String _defaultImage, String _logo, String picdir) {
         this.defaultImage = _defaultImage;
         this.moq = moq;
         this.logo = _logo;
+        this.picdir = picdir;
 
         if ( StringUtils.isNotBlank(logo) ) {
             try {
@@ -68,6 +76,13 @@ public class SuningShelvesService implements ShelvesService {
             } catch (Exception e) {
                 System.out.println("logo 图片加载失败: " + e.getMessage());
                 logoImage = null;
+            }
+        }
+
+        if ( picdir!=null && picdir.trim().length() > 0 ) {
+            File dir = new File(picdir);
+            if ( !dir.exists() ) {
+                dir.mkdirs();
             }
         }
     }
@@ -602,15 +617,16 @@ public class SuningShelvesService implements ShelvesService {
 
         ///
 
-
-
-
         // 商品图片 urlA~urlE
         List<ApplyAddRequest.SupplierImgUrl> supplierImgUrls = new ArrayList<>();
         request.setSupplierImgUrl(supplierImgUrls);
         ApplyAddRequest.SupplierImgUrl supplierImgUrl = new ApplyAddRequest.SupplierImgUrl();
         supplierImgUrls.add(supplierImgUrl);
 
+
+        if ( picUrls.size() > 5 ) {
+            picUrls.remove(0);
+        }
         List<ShelvesItemParser.Pic> images = ShelvesItemParser.getImages(item.getSkuCode(), picUrls, defaultImage, logoImage);
         for (ShelvesItemParser.Pic image : images) {
             System.out.println("Image: " + image.getUrl());
@@ -618,19 +634,34 @@ public class SuningShelvesService implements ShelvesService {
 
         if ( images.size() >= 1 ) {
             supplierImgUrl.setUrlA(images.get(0).getUrl());
+            if ( picdir!=null && picdir.trim().length() > 0  ) {
+                HttpUtils.download(supplierImgUrl.getUrlA(), picdir + File.separator +  item.getSkuCode() + "_A.jpg");
+            }
         }
         if ( images.size() >= 2 ) {
             supplierImgUrl.setUrlB(images.get(1).getUrl());
+            if ( picdir!=null && picdir.trim().length() > 0  ) {
+                HttpUtils.download(supplierImgUrl.getUrlB(), picdir + File.separator +  item.getSkuCode() + "_B.jpg");
+            }
         }
         if ( images.size() >= 3 ) {
             supplierImgUrl.setUrlC(images.get(2).getUrl());
+            if ( picdir!=null && picdir.trim().length() > 0  ) {
+                HttpUtils.download(supplierImgUrl.getUrlC(), picdir + File.separator +  item.getSkuCode() + "_C.jpg");
+            }
         }
 
         if ( images.size() >= 4 ) {
             supplierImgUrl.setUrlD(images.get(3).getUrl());
+            if ( picdir!=null && picdir.trim().length() > 0  ) {
+                HttpUtils.download(supplierImgUrl.getUrlD(), picdir + File.separator +  item.getSkuCode() + "_D.jpg");
+            }
         }
         if ( images.size() >= 5 ) {
             supplierImgUrl.setUrlE(images.get(4).getUrl());
+            if ( picdir!=null && picdir.trim().length() > 0  ) {
+                HttpUtils.download(supplierImgUrl.getUrlE(), picdir + File.separator +  item.getSkuCode() + "_E.jpg");
+            }
         }
 
         List<ParameterLoader.Parameter> commonParameters = parameterLoader.loadCommonParameters(category);
@@ -910,6 +941,9 @@ public class SuningShelvesService implements ShelvesService {
 
         Map<String, String> detailImageMap = new HashMap<>();
         for (String picUrl : detailUrls) {
+            if ( picUrl.contains("566010f4N01f5d17a.png") ) {
+                continue;
+            }
             String picSuningUrl = ShelvesItemParser.uploadDetailImage(picUrl);
             if (com.gavel.utils.StringUtils.isNotBlank(picSuningUrl)) {
                 detailImageMap.put(picUrl, picSuningUrl);

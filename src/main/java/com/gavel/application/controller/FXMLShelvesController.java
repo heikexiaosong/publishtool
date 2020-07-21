@@ -560,7 +560,7 @@ public class FXMLShelvesController {
             }
         }
 
-        ShelvesService shelvesService = new SuningShelvesService(shelvesTask.getMoq(), shelvesTask.getPic(), shelvesTask.getLogo());
+        ShelvesService shelvesService = new SuningShelvesService(shelvesTask.getMoq(), shelvesTask.getPic(), shelvesTask.getLogo(), shelvesTask.getPicdir());
         new Thread(new Runnable() {
             @Override
             public void run() {
