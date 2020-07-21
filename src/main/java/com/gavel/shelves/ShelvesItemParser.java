@@ -216,7 +216,12 @@ public class ShelvesItemParser {
         }
 
         if ( image.getPicurl()!=null && image.getPicurl().trim().length() > 0 ) {
-            return image.getPicurl();
+            try {
+               ImageLoader.loadOrginialIamge(image.getPicurl());
+                return image.getPicurl();
+            } catch (Exception e) {
+
+            }
         }
 
         String localFilePath = ImageLoader.PICS_DIR + File.separator + image.getFilepath();
@@ -281,7 +286,12 @@ public class ShelvesItemParser {
         }
 
         if (  com.gavel.utils.StringUtils.isNotBlank(image.getPicurl()) && logoImage==null ) {
-            return image.getPicurl();
+            try {
+                ImageLoader.loadOrginialIamge(image.getPicurl());
+                return image.getPicurl();
+            } catch (Exception e) {
+
+            }
         }
 
         String localFilePath = ImageLoader.PICS_DIR + File.separator + image.getFilepath();
@@ -296,8 +306,9 @@ public class ShelvesItemParser {
         }
         Imgproc.circle(src, new Point(src.width()-size, src.height()-size),  2, new Scalar(238, 238, 238));
 
-        localFilePath = localFilePath.replace(".jpg", ".png");
-        Imgcodecs.imwrite(localFilePath, src);
+        Imgcodecs.imwrite(localFilePath.replace(".jpg", ".png"), src);
+
+        Files.copy(new File(localFilePath.replace(".jpg", ".png")), new File(localFilePath));
 
         System.out.println("Local: " + localFilePath);
 
@@ -372,9 +383,7 @@ public class ShelvesItemParser {
      */
     public static String uploadImageWithoutDownload(String url, int size, BufferedImage logoImage) throws Exception {
 
-
         String id = MD5Utils.md5Hex(url.trim());
-
         ImageCache image =  SQLExecutor.executeQueryBean("select * from image  where id = ? ", ImageCache.class, id);
 
         if ( image==null ) {
@@ -393,7 +402,14 @@ public class ShelvesItemParser {
 
         if (  com.gavel.utils.StringUtils.isNotBlank(image.getPicurl()) && logoImage==null ) {
             System.out.println("[" + image.getFilepath() + "]: " + image.getPicurl());
-            return image.getPicurl();
+
+            try {
+                ImageLoader.loadOrginialIamge(image.getPicurl());
+                return image.getPicurl();
+            } catch (Exception e) {
+
+            }
+
         }
 
         String picUrl = null;

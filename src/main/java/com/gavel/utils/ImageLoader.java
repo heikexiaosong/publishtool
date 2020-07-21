@@ -117,6 +117,7 @@ public class ImageLoader {
             cache = new ImageCache();
             cache.setId(id);
             cache.setUrl(url.trim());
+            cache.setFilepath(getPath(url.trim()));
             try {
                 SQLExecutor.insert(cache);
             } catch (Exception e) {
@@ -131,25 +132,22 @@ public class ImageLoader {
                 return cache;
             }
         }
-        cache.setFilepath(null);
 
+        cache.setFilepath(null);
         String image = getPath(url);
         File imageFile = new File(PICS_DIR, image);
         if ( !imageFile.getParentFile().exists() ) {
             imageFile.getParentFile().mkdirs();
         }
 
-        try {
-            HttpUtils.download(url, imageFile.getAbsolutePath());
-            if ( imageFile.exists() && imageFile.length() > 9999 ) {
-                cache.setFilepath(image);
-                System.out.println("[" + url + "]Network Load: " + imageFile.getAbsolutePath());
-            } else {
-                imageFile.delete();
-            }
-        } catch (Exception e) {
-            System.out.println("[" + url + "]" + e.getMessage());
+        System.out.println("[" + url + "]Network Load: " + imageFile.getAbsolutePath());
+        HttpUtils.download(url, imageFile.getAbsolutePath());
+        if ( !imageFile.exists() || imageFile.length() < 999 ) {
+            imageFile.delete();
+            throw new RuntimeException("图片下载失败");
         }
+
+        cache.setFilepath(image);
         cache.setUpdatetime(Calendar.getInstance().getTime());
         try {
             SQLExecutor.update(cache);

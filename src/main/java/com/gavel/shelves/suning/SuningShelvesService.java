@@ -292,7 +292,7 @@ public class SuningShelvesService implements ShelvesService {
     }
 
     /**
-     * JD商品上架
+     * JD 商品上架
      * @param item
      * @throws Exception
      */
