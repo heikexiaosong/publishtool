@@ -250,6 +250,9 @@ public class FXMLPriceController {
                         Document doc = Jsoup.parse(pHtmlCache.getHtml());
                         if ( jd ) {
                             Element hx_price = doc.selectFirst("del#page_hx_price");
+                            if ( hx_price==null ) {
+                                hx_price = doc.selectFirst("del#page_origin_price");
+                            }
                             if ( hx_price!=null ) {
                                 // op 是京东原价
                                 // p 是 京东优惠价
