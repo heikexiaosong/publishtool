@@ -1221,6 +1221,11 @@ public class FXMLShelvesController {
                         if (StringUtils.isNotBlank(match.getSbrandcode()) ) {
                             item.setMappingbrandcode(match.getSbrandcode());
                             item.setMappingbrandname(match.getSbrandname());
+                            try {
+                                SQLExecutor.update(item);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
