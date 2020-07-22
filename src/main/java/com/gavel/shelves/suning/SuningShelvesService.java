@@ -742,6 +742,7 @@ public class SuningShelvesService implements ShelvesService {
                 Files.write(content.toString().getBytes(), new File("report" + File.separator + item.getItemCode() + ".err"));
                 throw buildException(error.getErrorCode(), error.getErrorMsg());
             } else {
+                System.out.println(request.getResParams());
                 System.out.println(new Gson().toJson(response.getSnbody().getAddApply()));
             }
         } catch (SuningApiException e) {

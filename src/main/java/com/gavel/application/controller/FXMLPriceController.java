@@ -3,7 +3,9 @@ package com.gavel.application.controller;
 import com.gavel.HttpUtils;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Item;
+import com.gavel.entity.PHtmlCache;
 import com.gavel.utils.ExcelTool;
+import com.gavel.utils.MD5Utils;
 import com.gavel.utils.StringUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -24,6 +26,10 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -68,6 +74,8 @@ public class FXMLPriceController {
     private TableColumn<PriceItem, String> priceCol;
     @FXML
     private TableColumn<PriceItem, String> price1Col;
+    @FXML
+    private TableColumn<PriceItem, String> price2Col;
 
     @FXML
     private TextField filename;
@@ -90,6 +98,7 @@ public class FXMLPriceController {
         platformCol.setCellValueFactory(cellData -> cellData.getValue().platformProperty());
         priceCol.setCellValueFactory(cellData -> cellData.getValue().priceProperty());
         price1Col.setCellValueFactory(cellData -> cellData.getValue().price1Property());
+        price2Col.setCellValueFactory(cellData -> cellData.getValue().price2Property());
     }
 
 
@@ -187,8 +196,6 @@ public class FXMLPriceController {
                 }
 
                 JsonObject priceObj = pricesMap.get(priceItem.getSkuid());
-                System.out.println(priceObj);
-
                 if ( priceObj!=null ) {
 
                     if (priceObj.has("op") ) {
@@ -197,6 +204,72 @@ public class FXMLPriceController {
 
                     if (priceObj.has("p") ) {
                         _priceItem.setPrice1(priceObj.get("p").getAsString());
+                    }
+                } else {
+                    System.out.println("[PriceJsonObject]" + priceItem.getSkuid() + ": " + null);
+                }
+
+
+                if ( _priceItem.getPrice()!=null && !_priceItem.getPrice().equalsIgnoreCase(_priceItem.getPrice1()) ) {
+
+                    PHtmlCache pHtmlCache = null;
+                    boolean jd = true;
+                    try {
+
+                        String url = "https://item.jd.com/" + priceItem.getSkuid().trim()  + ".html";
+                        String id = MD5Utils.md5Hex(url);
+                        if ( id!=null && id.trim().length() > 0 ) {
+                            pHtmlCache = SQLExecutor.executeQueryBean("select * from HTMLCACHE_" + id.charAt(id.length()-1) + " where ID = ? ", PHtmlCache.class, id);
+                        }
+                    } catch (Exception e) {
+
+                    }
+
+                    if ( pHtmlCache==null ) {
+                        String url = "https://i-item.jd.com/"  + priceItem.getSkuid().trim() +".html";
+                        String id = MD5Utils.md5Hex(url);
+                        if ( id!=null && id.trim().length() > 0 ) {
+                            pHtmlCache = SQLExecutor.executeQueryBean("select * from HTMLCACHE_" + id.charAt(id.length()-1) + " where ID = ? ", PHtmlCache.class, id);
+                        }
+                    }
+
+                    if ( pHtmlCache==null ) {
+                        String url = "https://www.grainger.cn/u-" + priceItem.getSkuid().trim() + ".html";
+                        String id = MD5Utils.md5Hex(url);
+                        if ( id!=null && id.trim().length() > 0 ) {
+                            pHtmlCache = SQLExecutor.executeQueryBean("select * from HTMLCACHE_" + id.charAt(id.length()-1) + " where ID = ? ", PHtmlCache.class, id);
+                            jd = false;
+                        }
+                    }
+
+
+                    _priceItem.setPrice2(_priceItem.getPrice());
+
+
+                    if ( pHtmlCache!=null && pHtmlCache.getHtml()!=null ) {
+                        Document doc = Jsoup.parse(pHtmlCache.getHtml());
+                        if ( jd ) {
+                            Element hx_price = doc.selectFirst("del#page_hx_price");
+                            if ( hx_price!=null ) {
+                                // op 是京东原价
+                                // p 是 京东优惠价
+                                System.out.println(_priceItem.getRownum() +  " 有优惠价 ==> " + _priceItem.getSkuid() );
+                            } else {
+                                // p 是京东价
+                                _priceItem.setPrice(_priceItem.getPrice1());
+                            }
+                        } else {
+                            Elements prices = doc.select("div.price b");
+                            if ( prices!=null && prices.size()==2 ) {
+                                // delPrice 是固安捷原价
+                                _priceItem.setPrice(prices.get(0).text().replace("¥", ""));
+                                _priceItem.setPrice1(prices.get(1).text().replace("¥", ""));
+                            } else if (prices!=null && prices.size()==1){
+                                _priceItem.setPrice(prices.get(0).text().replace("¥", ""));
+                                _priceItem.setPrice1(prices.get(0).text().replace("¥", ""));
+                            }
+
+                        }
                     }
                 }
 
@@ -254,9 +327,6 @@ public class FXMLPriceController {
                         }
                     }
 
-
-                    List<PriceItem> priceItems = new ArrayList<>();
-
                     if ( dataSheet!=null ) {
                         for (PriceItem _priceItem : itemList.getItems()) {
                             try {
@@ -276,6 +346,12 @@ public class FXMLPriceController {
                                        cell = row.createCell(20);
                                    }
                                    cell.setCellValue(_priceItem.getPrice1());
+
+                                   cell = row.getCell(21);
+                                   if ( cell==null ) {
+                                       cell = row.createCell(21);
+                                   }
+                                   cell.setCellValue(_priceItem.getPrice2());
                                }
 
                             } catch (Exception e) {
@@ -456,6 +532,8 @@ public class FXMLPriceController {
 
         private final StringProperty price1 = new SimpleStringProperty(); // 促销价格
 
+        private final StringProperty price2 = new SimpleStringProperty(); // 当前价格
+
 
         public PriceItem(int rownum) {
             this.rownum.set(String.valueOf(rownum));
@@ -628,6 +706,33 @@ public class FXMLPriceController {
         public void setPrice1(String price1) {
             this.price1.set(price1);
         }
+
+        public String getPrice2() {
+            return price2.get();
+        }
+
+        public StringProperty price2Property() {
+            return price2;
+        }
+
+        public void setPrice2(String price2) {
+            this.price2.set(price2);
+        }
     }
 
+
+    public static void main(String[] args) {
+
+        Document doc = Jsoup.parse("<div><div class=\"price\">\n" +
+                "                            价格:\n" +
+                "                            <b id=\"bSalePrice\" class=\"bSalePrice\">\n" +
+                "¥828.90                            </b>\n" +
+                "                            元/套\n" +
+                "                           \n" +
+                "                        </div></div>");
+
+        // price.selectFirst("b#bSalePrice del").text().replace("¥", "")
+        Elements prices = doc.select("div.price b");
+        System.out.println("123".charAt("123".length()));
+    }
 }

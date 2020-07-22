@@ -1,6 +1,5 @@
 package com.gavel.application;
 
-import com.gavel.crawler.DriverHtmlLoader;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
@@ -20,12 +19,12 @@ public class PriceFillApp extends Application {
      * Constructor
      */
     public PriceFillApp() {
-        Runtime.getRuntime().addShutdownHook(new Thread(){
-            @Override
-            public void run() {
-                DriverHtmlLoader.getInstance().quit();
-            }
-        });
+//        Runtime.getRuntime().addShutdownHook(new Thread(){
+//            @Override
+//            public void run() {
+//                DriverHtmlLoader.getInstance().quit();
+//            }
+//        });
     }
 
 

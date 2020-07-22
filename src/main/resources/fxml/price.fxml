@@ -28,19 +28,20 @@
                         <TableView fx:id="itemList" editable="true" prefHeight="631.0" prefWidth="1252.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="-2.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                             <columns>
                                 <TableColumn fx:id="noCol" prefWidth="60.0" text="序号" />
-                                <TableColumn fx:id="idCol" prefWidth="120.0" text="商品编码" />
-                                <TableColumn fx:id="skuidCol" prefWidth="75.0" text="供应商商品编码" />
+                                <TableColumn fx:id="idCol" prefWidth="100.0" text="商品编码" />
+                                <TableColumn fx:id="skuidCol" prefWidth="100.0" text="供应商商品编码" />
                                 <TableColumn fx:id="titleCol" prefWidth="400.0" text="商品名称" />
-                                <TableColumn fx:id="cateCol" prefWidth="60.0" text="类目" />
+                                <TableColumn fx:id="cateCol" prefWidth="75.0" text="类目" />
                                 <TableColumn fx:id="brandCol" prefWidth="100.0" text="品牌" />
                                 <TableColumn fx:id="sellPointsCol" prefWidth="100.0" text="商品卖点" />
                                 <TableColumn fx:id="stepCol" prefWidth="75.0" text="产品信息状态" />
                                 <TableColumn fx:id="statusCol" prefWidth="75.0" text="内容信息状态" />
-                                <TableColumn fx:id="typeCol" prefWidth="400.0" text="商品类型" />
+                                <TableColumn fx:id="typeCol" prefWidth="75.0" text="商品类型" />
                                 <TableColumn fx:id="masterCol" prefWidth="75.0" text="主商品编码" />
                                 <TableColumn fx:id="platformCol" prefWidth="75.0" text="平台" />
-                                <TableColumn fx:id="priceCol" prefWidth="100.0" text="价格" />
+                                <TableColumn fx:id="priceCol" prefWidth="100.0" text="当前价格" />
                                 <TableColumn fx:id="price1Col" prefWidth="75.0" text="促销价格" />
+                                <TableColumn fx:id="price2Col" prefWidth="75.0" text="原始价格" />
                             </columns>
                         </TableView>
                     </children>
