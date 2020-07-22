@@ -281,46 +281,11 @@ public class FXMLPriceController {
 
 
         if ( filename.getText()!=null && filename.getText().trim().length() > 0 ) {
-            FileInputStream ins = null;
+
+
             Workbook workbook = null;
             try {
-                ins = new FileInputStream(filename.getText());
-                try {
-                    workbook = new XSSFWorkbook(ins);
-                } catch (Exception e){
-                    try {
-                        workbook = new HSSFWorkbook(ins);
-                    } catch (Exception e1) {
-                        NPOIFSFileSystem fs = null;
-                        try {
-                            fs = new NPOIFSFileSystem(new File(filename.getText()));
-                            workbook = WorkbookFactory.create(fs);
-                        } catch (IOException e2) {
-                            e2.printStackTrace();
-
-                            filename.setText("文件打开失败, 请检查文件格式");
-                        } finally {
-                            if ( fs!=null ) {
-                                try {
-                                    fs.close();
-                                } catch (IOException e2) {
-                                    e2.printStackTrace();
-                                }
-                            }
-                        }
-                    }
-                } finally {
-                    if ( ins!=null ) {
-                        try {
-                            ins.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-
-
+                workbook = build(filename.getText().trim());
                 if ( workbook!=null ) {
 
                     // 获取数据sheet
@@ -397,10 +362,7 @@ public class FXMLPriceController {
                 }
 
 
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } finally {
-
                 if ( workbook!=null) {
                     try {
 
@@ -432,48 +394,11 @@ public class FXMLPriceController {
         filename.setText(path);
 
 
-        FileInputStream ins = null;
         Workbook workbook = null;
         try {
-            ins = new FileInputStream(path);
-            try {
-                workbook = new XSSFWorkbook(ins);
-            } catch (Exception e){
-                try {
-                    workbook = new HSSFWorkbook(ins);
-                } catch (Exception e1) {
-                    NPOIFSFileSystem fs = null;
-                    try {
-                        fs = new NPOIFSFileSystem(new File(path));
-                        workbook = WorkbookFactory.create(fs);
-                    } catch (IOException e2) {
-                        e2.printStackTrace();
-
-                        filename.setText("文件打开失败, 请检查文件格式");
-                    } finally {
-                        if ( fs!=null ) {
-                            try {
-                                fs.close();
-                            } catch (IOException e2) {
-                                e2.printStackTrace();
-                            }
-                        }
-                    }
-                }
-            } finally {
-                if ( ins!=null ) {
-                    try {
-                        ins.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-
+            workbook = build(path);
 
             if ( workbook!=null ) {
-
                 // 获取数据sheet
                 int activeSheetIndex = workbook.getActiveSheetIndex();
                 Sheet dataSheet = workbook.getSheetAt(activeSheetIndex);
@@ -530,15 +455,10 @@ public class FXMLPriceController {
                     }
 
                 }
-
                 itemList.setItems(FXCollections.observableArrayList(priceItems));
             }
 
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } finally {
-
             if ( workbook!=null) {
                 try {
                     workbook.close();
@@ -547,10 +467,62 @@ public class FXMLPriceController {
                 }
             }
         }
+    }
 
 
+    private Workbook build(String path) {
 
+        Workbook workbook = null;
 
+        FileInputStream ins = null;
+        try {
+            ins = new FileInputStream(path);
+            try {
+                workbook = new XSSFWorkbook(ins);
+            } catch (Exception e) {
+                try {
+                    workbook = new HSSFWorkbook(ins);
+                } catch (Exception e1) {
+                    NPOIFSFileSystem fs = null;
+                    try {
+                        fs = new NPOIFSFileSystem(new File(path));
+                        workbook = WorkbookFactory.create(fs);
+                    } catch (IOException e2) {
+                        e2.printStackTrace();
+
+                        filename.setText("文件打开失败, 请检查文件格式");
+                    } finally {
+                        if (fs != null) {
+                            try {
+                                fs.close();
+                            } catch (IOException e2) {
+                                e2.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            } finally {
+                if (ins != null) {
+                    try {
+                        ins.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+
+        } finally {
+            if ( ins!=null ) {
+                try {
+                    ins.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return workbook;
     }
 
 
