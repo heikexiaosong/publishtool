@@ -7,6 +7,7 @@ import com.gavel.entity.PHtmlCache;
 import com.gavel.utils.ExcelTool;
 import com.gavel.utils.MD5Utils;
 import com.gavel.utils.StringUtils;
+import com.google.common.io.Files;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -249,10 +250,7 @@ public class FXMLPriceController {
                     if ( pHtmlCache!=null && pHtmlCache.getHtml()!=null ) {
                         Document doc = Jsoup.parse(pHtmlCache.getHtml());
                         if ( jd ) {
-                            Element hx_price = doc.selectFirst("del#page_hx_price");
-                            if ( hx_price==null ) {
-                                hx_price = doc.selectFirst("del#page_origin_price");
-                            }
+                            Element hx_price = doc.selectFirst("span.pricing del");
                             if ( hx_price!=null ) {
                                 // op 是京东原价
                                 // p 是 京东优惠价
@@ -293,13 +291,22 @@ public class FXMLPriceController {
                     try {
                         workbook = new HSSFWorkbook(ins);
                     } catch (Exception e1) {
+                        NPOIFSFileSystem fs = null;
                         try {
-                            NPOIFSFileSystem fs = new NPOIFSFileSystem(new File(filename.getText()));
+                            fs = new NPOIFSFileSystem(new File(filename.getText()));
                             workbook = WorkbookFactory.create(fs);
                         } catch (IOException e2) {
                             e2.printStackTrace();
 
                             filename.setText("文件打开失败, 请检查文件格式");
+                        } finally {
+                            if ( fs!=null ) {
+                                try {
+                                    fs.close();
+                                } catch (IOException e2) {
+                                    e2.printStackTrace();
+                                }
+                            }
                         }
                     }
                 } finally {
@@ -331,6 +338,31 @@ public class FXMLPriceController {
                     }
 
                     if ( dataSheet!=null ) {
+
+
+                        Row head = dataSheet.getRow(0);
+                        if ( head != null ) {
+                            Cell cell = head.getCell(19);
+                            if ( cell==null ) {
+                                cell = head.createCell(19);
+                            }
+                            cell.setCellValue("建议价格");
+
+                            cell = head.getCell(20);
+                            if ( cell==null ) {
+                                cell = head.createCell(20);
+                            }
+                            cell.setCellValue("优惠价格");
+
+                            cell = head.getCell(21);
+                            if ( cell==null ) {
+                                cell = head.createCell(21);
+                            }
+                            cell.setCellValue("商品价格");
+
+                        }
+
+
                         for (PriceItem _priceItem : itemList.getItems()) {
                             try {
 
@@ -371,7 +403,16 @@ public class FXMLPriceController {
 
                 if ( workbook!=null) {
                     try {
-                        workbook.write(new FileOutputStream(filename.getText()));
+
+                        String output = filename.getText();
+                        String extension =Files.getFileExtension(output);
+                        if ( extension!=null && extension.trim().length() > 0 ) {
+                            output = output.replace("." + extension, "_rst." +extension);
+                        } else {
+                            output = output + "_rst";
+                        }
+
+                        workbook.write(new FileOutputStream(output));
                         workbook.close();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -401,13 +442,22 @@ public class FXMLPriceController {
                 try {
                     workbook = new HSSFWorkbook(ins);
                 } catch (Exception e1) {
+                    NPOIFSFileSystem fs = null;
                     try {
-                        NPOIFSFileSystem fs = new NPOIFSFileSystem(new File(path));
+                        fs = new NPOIFSFileSystem(new File(path));
                         workbook = WorkbookFactory.create(fs);
                     } catch (IOException e2) {
                         e2.printStackTrace();
 
                         filename.setText("文件打开失败, 请检查文件格式");
+                    } finally {
+                        if ( fs!=null ) {
+                            try {
+                                fs.close();
+                            } catch (IOException e2) {
+                                e2.printStackTrace();
+                            }
+                        }
                     }
                 }
             } finally {
