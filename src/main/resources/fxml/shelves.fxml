@@ -24,7 +24,7 @@
                   <ButtonBar prefHeight="40.0" prefWidth="200.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="50.0">
                     <buttons>
                         <TextField fx:id="keyword" />
-                      <Button fx:id="search" onAction="#handleTaskSeach" mnemonicParsing="false" prefHeight="22.0" text="搜 索" />
+                      <Button fx:id="search" mnemonicParsing="false" onAction="#handleTaskSeach" prefHeight="22.0" text="搜 索" />
                     </buttons>
                   </ButtonBar>
                         <TableView fx:id="taskTable" layoutX="-12.0" layoutY="49.0" prefHeight="298.0" prefWidth="175.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="100.0">
@@ -136,23 +136,24 @@
                            <children>
       
 
-                                        <HBox prefHeight="28.0" prefWidth="200.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="260.0" AnchorPane.topAnchor="0.0">
+                                        <HBox maxWidth="320.0" minWidth="320.0" prefHeight="28.0" prefWidth="320.0" spacing="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
                                             <children>
-                                                <CheckBox fx:id="curPage" mnemonicParsing="false" onAction="#handleCurPageAction" prefHeight="37.0" prefWidth="81.0" text="选择当前页" />
-                                                <CheckBox fx:id="allPage" mnemonicParsing="false" onAction="#handleALlPageAction" prefHeight="41.0" prefWidth="69.0" text="选择所有" />
+                                                <CheckBox fx:id="curPage" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#handleCurPageAction" prefHeight="30.0" prefWidth="90.0" text="选择当前页" />
+                                                <CheckBox fx:id="allPage" maxWidth="90.0" minWidth="90.0" mnemonicParsing="false" onAction="#handleALlPageAction" prefHeight="41.0" prefWidth="90.0" text="选择所有" />
                                                 <Label alignment="CENTER_RIGHT" prefHeight="28.0" prefWidth="57.0" text="已选择： " />
                                                 <Label fx:id="selectedNum" prefHeight="28.0" prefWidth="45.0" />
                                             </children>
                                         </HBox>
-                                          <ButtonBar prefHeight="30.0" prefWidth="700.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                          <ButtonBar prefHeight="30.0" prefWidth="750.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="400.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                               <buttons>
-                                                  <ComboBox fx:id="status" prefWidth="100.0" />
+                                                  <ComboBox fx:id="status" />
                                                   <ComboBox fx:id="brand" prefWidth="100.0" />
                                                   <Button mnemonicParsing="false" onAction="#handlBrandCateMappingAction" text="品牌类目映射" />
                                                   <Button mnemonicParsing="false" onAction="#handleImagesExportAction" text="导出图片" />
                                                   <Button mnemonicParsing="false" onAction="#handleEditSkuPerson" text="批量处理" />
                                                   <Button mnemonicParsing="false" onAction="#handleDetailEditAction" text="编 辑" />
                                                   <Button mnemonicParsing="false" onAction="#handleExportAction" text="导出价格数据" />
+                                                  <Button mnemonicParsing="false" onAction="#handleShelvesPreAction" text="预处理" />
                                                   <Button mnemonicParsing="false" onAction="#handleShelvesAction" text="上 架" />
                                                </buttons>
                                           </ButtonBar>
@@ -182,8 +183,8 @@
                                                 <TableColumn fx:id="ownCol" prefWidth="75.0" text="自营" />
                                                 <TableColumn fx:id="shopCol" prefWidth="100.0" text="店铺名称" />
                                                 <TableColumn fx:id="stockCol" prefWidth="75.0" text="库存" />
-                                                <TableColumn fx:id="graingercategorynameCol" prefWidth="100.0" text="固安捷类目" />
-                                                <TableColumn fx:id="graingerbrandnameCol" prefWidth="100.0" text="固安捷品牌" />
+                                                <TableColumn fx:id="graingercategorynameCol" prefWidth="100.0" text="商品类目" />
+                                                <TableColumn fx:id="graingerbrandnameCol" prefWidth="100.0" text="商品品牌" />
                                             </columns>
                                         </TableView>
                                         <Pagination fx:id="pagination" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />

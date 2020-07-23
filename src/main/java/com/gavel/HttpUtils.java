@@ -218,27 +218,6 @@ public class HttpUtils {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
-		//1.创建OkHttpClient对象
-		OkHttpClient okHttpClient = new OkHttpClient();
-		String url = "https://static.grainger.cn/product_images_new/800/1H8/12991_1_9591.jpg";
-
-		//2.创建Request对象
-		Request request  = new Request.Builder()
-				.url(url)
-				.build();
-
-		//3.异步请求newCall（Callback）
-		Call call = okHttpClient.newCall(request);
-
-
-		Response response = call.execute();
-		if ( response.isSuccessful() ) {
-			Files.write(response.body().bytes(), new File("test.jpg"));
-		}
-	}
-
-
 	public static void download(String url, String localFilePath) throws IOException {
 
 		//2.创建Request对象
@@ -260,5 +239,38 @@ public class HttpUtils {
 			throw new RuntimeException("[" + response.code() + "]" + response.message()) ;
 		}
 
+	}
+
+	public static long imageLength(String url) throws IOException {
+
+		System.out.println(url);
+
+		long res = 0;
+		//2.创建Request对象
+		Request request  = new Request.Builder()
+				.url(url)
+				.head()
+				.build();
+
+		//3.异步请求newCall（Callback）
+		Call call = client.newCall(request);
+
+		Response response = call.execute();
+		if ( response.isSuccessful() ) {
+			try {
+				String len = response.header("Content-Length");
+				res = Long.valueOf(len);
+			} finally {
+				response.close();
+			}
+		} else {
+			throw new RuntimeException("[" + response.code() + "]" + response.message()) ;
+		}
+
+		return res;
+	}
+
+	public static void main(String[] args) throws IOException {
+		System.out.println(imageLength("http://uimgproxy.suning.cn/uimg1/sop/commodity/bZHmRAZqtHeQdLe_dmiyNA.jpg?version=1"));
 	}
 }

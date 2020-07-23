@@ -37,7 +37,7 @@ public class DriverHtmlLoader {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("start-maximized"); // https://stackoverflow.com/a/26283818/1689770
         options.addArguments("enable-automation"); // https://stackoverflow.com/a/43840128/1689770
-        //options.addArguments("--headless"); // only if you are ACTUALLY running headless
+        options.addArguments("--headless"); // only if you are ACTUALLY running headless
         options.addArguments("--no-sandbox"); //https://stackoverflow.com/a/50725918/1689770
         options.addArguments("--disable-infobars"); //https://stackoverflow.com/a/43840128/1689770
         options.addArguments("--disable-dev-shm-usage"); //https://stackoverflow.com/a/50725918/1689770
@@ -46,9 +46,9 @@ public class DriverHtmlLoader {
         options.setPageLoadStrategy(PageLoadStrategy.EAGER);
 
         HashMap<String, Object> chromePrefs = new HashMap<>();
-        //chromePrefs.put("profile.managed_default_content_settings.images", 2);
+        chromePrefs.put("profile.managed_default_content_settings.images", 2);
         //chromePrefs.put("permissions.default.stylesheet", 2);
-        //chromePrefs.put("javascript", 2);
+        chromePrefs.put("javascript", 2);
         options.setExperimentalOption("prefs", chromePrefs);
 
         driver = new ChromeDriver(options);
@@ -94,7 +94,7 @@ public class DriverHtmlLoader {
     }
 
     public String loadHtml(String url, long millis) {
-        return loadHtml(url, millis, true);
+        return loadHtml(url, millis, false);
     }
 
     public String loadHtml(String url, long millis, boolean scrollTo) {
@@ -102,8 +102,8 @@ public class DriverHtmlLoader {
         driver.navigate().to(url.replace(" ", "%20"));
 
         try {
-            Thread.sleep(1000);
             if ( scrollTo ) {
+                Thread.sleep(1000);
                 ((JavascriptExecutor) driver).executeScript("window.scrollTo(0,document.body.scrollHeight)");
             }
             Thread.sleep(millis);

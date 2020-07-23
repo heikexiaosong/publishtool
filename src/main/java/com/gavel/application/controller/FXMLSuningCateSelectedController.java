@@ -6,6 +6,7 @@ import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Brand;
 import com.gavel.entity.CateBrandMapping;
 import com.gavel.entity.Category;
+import com.gavel.utils.StringUtils;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -24,6 +25,9 @@ public class FXMLSuningCateSelectedController {
 
     @FXML
     private TextField keyword;
+
+    @FXML
+    private TextField brandKeyword;
 
     @FXML
     private TableView<Category> itemList;
@@ -59,6 +63,8 @@ public class FXMLSuningCateSelectedController {
     private final SimpleStringProperty _keyword = new SimpleStringProperty();
     private CateBrandMapping cateBrandMapping;
 
+    private List<Brand> brands;
+
     @FXML
     private void initialize() {
 
@@ -90,7 +96,7 @@ public class FXMLSuningCateSelectedController {
 
         brandTable.setItems(FXCollections.emptyObservableList());
         if ( newValue!=null ) {
-            List<Brand> brands = new ArrayList<>();
+            brands = new ArrayList<>();
             try {
                 brands = SQLExecutor.executeQueryBeanList("select  distinct CODE, NAME from BRAND where SUPPLIERCODE = ?  and CATEGORYCODE = ? ", Brand.class, APPConfig.getInstance().getShopinfo().getCode(), newValue.getCategoryCode());
             } catch (Exception e) {
@@ -195,6 +201,26 @@ public class FXMLSuningCateSelectedController {
 
     public void bind(CateBrandMapping _cateBrandMapping) {
         this.cateBrandMapping = _cateBrandMapping;
+
+    }
+
+    public void handleBrandKeyPressedAction(KeyEvent keyEvent) {
+
+       String _brandKeyword =   brandKeyword.getText();
+       if (StringUtils.isBlank(_brandKeyword)) {
+           brandTable.setItems(FXCollections.observableArrayList(brands));
+           return;
+       }
+
+
+       List<Brand> filters = new ArrayList<>();
+        for (Brand brand : brands) {
+            if ( brand.getName()==null || brand.getName().contains(_brandKeyword) ) {
+                filters.add(brand);
+            }
+        }
+
+        brandTable.setItems(FXCollections.observableArrayList(filters));
 
     }
 }

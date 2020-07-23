@@ -99,8 +99,7 @@ public class SkuPageLoader {
             return null;
         }
 
-        String url = "https://i-item.jd.com/" + code + ".html";
-
+        String url = "https://item.jd.com/" + code + ".html";
         return loadPage(code, url);
     }
 
@@ -116,7 +115,7 @@ public class SkuPageLoader {
         PHtmlCache cache = SQLExecutor.executeQueryBean("select * from htmlcache_"+ com.gavel.utils.StringUtils.trim(suffix) + "  where ID = ? limit 1 ", PHtmlCache.class, id);
         if ( cache!=null ) {
             try {
-                parseSku(code, cache.getHtml(), null);
+                checkSku( cache.getHtml());
                 return cache.getHtml();
             } catch (Exception e) {
                 System.out.println("[Delete Cache][" + url + "]: " + e.getMessage());
@@ -125,13 +124,10 @@ public class SkuPageLoader {
         }
 
 
-
-
-        String html = DriverHtmlLoader.getInstance().loadHtml(url);
+        String html = DriverHtmlLoader.getInstance().loadHtml(url, 2000, true);
         if (com.gavel.utils.StringUtils.isNotBlank(html)) {
             try {
-                parseSku(code, html, null);
-
+                checkSku(html);
                 PHtmlCache _cache = new PHtmlCache();
                 _cache.setId(MD5Utils.md5Hex(url.trim()));
                 _cache.setUrl(url.trim());
@@ -149,7 +145,27 @@ public class SkuPageLoader {
         return null;
     }
 
-    private static Item parseSku(String code, String html, Item skuItem) throws Exception {
+
+    private static void checkSku(String html) throws Exception {
+
+
+        if ( html==null || html.trim().length()==0 ) {
+            throw new Exception("Html内容有异常");
+        }
+
+        Document doc = Jsoup.parse(html);
+        if ( doc==null ) {
+            throw new Exception("Html内容有异常");
+        }
+
+
+        Element crumb = doc.selectFirst("div#crumb-wrap .crumb");
+        if ( crumb==null ) {
+            throw new Exception("Html内容有异常");
+        }
+    }
+
+        private static Item parseSku(String code, String html, Item skuItem) throws Exception {
 
         if ( code==null || code.trim().length()==0 ) {
             return null;

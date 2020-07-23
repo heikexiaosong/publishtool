@@ -8,6 +8,7 @@ import com.gavel.config.APPConfig;
 import com.gavel.crawler.HtmlPageLoader;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.*;
+import com.gavel.jd.SkuPageLoader;
 import com.gavel.shelves.CatetoryBrand;
 import com.gavel.shelves.ShelvesItemParser;
 import com.gavel.shelves.ShelvesService;
@@ -51,6 +52,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class FXMLShelvesController {
@@ -747,15 +750,19 @@ public class FXMLShelvesController {
 
                                     try {
                                         SQLExecutor.insert(item);
-                                        itemList.getItems().add(item);
                                         System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入成功: ");
                                     } catch (Exception e) {
                                         System.out.println("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入失败: " + e.getMessage() );
+
+                                        Thread.sleep(10000);
                                     }  finally {
                                         updateProgress(i, total);
                                         updateValue(""+ i +"/" + total);
                                     }
                                 }
+
+
+                                itemList.setItems(FXCollections.observableArrayList(items));
 
                                 updateProgress(total, total);
 
@@ -1609,17 +1616,6 @@ public class FXMLShelvesController {
             e.printStackTrace();
         }
 
-
-//        Runtime rt = Runtime.getRuntime();
-//        Process p = null;
-//
-//        try {
-//            p = rt.exec(command ,null,new File("C:\\ffmpeg-git-670229e-win32-static\\bin"));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-
-
     }
 
     public void handleTaskSeach(ActionEvent actionEvent) {
@@ -1630,6 +1626,305 @@ public class FXMLShelvesController {
         if (taskTable.getItems().size() > 0 ) {
             taskTable.getSelectionModel().select(0);
         }
+
+
+    }
+
+    /**
+     * 上架商品预处理
+     * @param actionEvent
+     */
+    public void handleShelvesPreAction(ActionEvent actionEvent) {
+
+        Service<String> service = new Service<String>() {
+
+            @Override
+            protected javafx.concurrent.Task<String> createTask() {
+                return new javafx.concurrent.Task<String>() {
+
+                    @Override
+                    protected String call() throws Exception {
+                        List<ShelvesItem> pending =  items.stream().filter( ShelvesItem::isSelected  ).collect(Collectors.toList());
+
+                        if ( pending==null || pending.size()==0 ) {
+                            updateProgress(1, 1);
+                            return "预处理完成";
+                        }
+
+                        final  int total = pending.size();
+                        final String picDir = picdirField.getText();
+                        File dir = new File(picDir);
+                        if ( !dir.exists() ) {
+                            dir.mkdirs();
+                        }
+
+                        final Pattern DETAIL_IMAGE = Pattern.compile("background-image:url([^;]*);");
+                        final Pattern PIC_IMAGE = Pattern.compile("360buyimg.com/n(\\d*)/");
+
+                        updateProgress(0, total);
+                        updateValue("开始预处理...");
+
+                        int i = 0;
+                        for (ShelvesItem item : pending) {
+                            //ShelvesItem item = SQLExecutor.executeQueryBean("select * from SHELVESITEM where ID = ?", ShelvesItem.class, _item.getId());
+
+                            updateProgress(++i, total);
+                            updateValue("["+ i +"/" + total + "][SKU: " + item.getSkuCode() + "]" + item.getCmTitle());
+
+                            if ( "JD".equalsIgnoreCase(item.getType()) ) {
+                                String skuCode =  item.getSkuCode();
+                                try {
+                                    String html =  SkuPageLoader.getInstance().loadPage(skuCode);
+
+                                    Document doc = Jsoup.parse(html);
+                                    Element crumb = doc.selectFirst("div#crumb-wrap .crumb");
+
+                                    Element ellipsis = crumb.selectFirst("div.ellipsis");
+                                    if ( ellipsis!=null ) {
+                                        String text = ellipsis.attr("title");
+                                        if ( StringUtils.isBlank(text) ) {
+                                            text = ellipsis.text();
+                                        }
+                                        item.setSellingPoints(text);
+                                    }
+
+
+                                    Elements _items = crumb.select("div.item");
+                                    if ( _items!=null && _items.size() > 5 ) {
+                                        String cate =  _items.get(4).text();
+                                        item.setCategoryCode(cate);
+                                        item.setCategoryname(cate);
+                                    }
+
+                                    // 主图 图片
+                                    Elements imgs = doc.select("div#spec-list li>img");
+                                    for (int i1 = 0; i1 < imgs.size(); i1++) {
+                                        Element img = imgs.get(i1);
+
+                                        String text = img.attr("src");
+                                        if ( text.startsWith("//") ) {
+                                            text = "https:" + text;
+                                        }
+                                        Matcher mat = PIC_IMAGE.matcher(text);
+                                        if (mat.find()){
+                                            text = text.substring(0,  mat.start()) + "360buyimg.com/n12/" + text.substring(mat.end());
+                                        }
+                                        System.out.println("[SKU: " + item.getSkuCode() + "]主图: " +  text);
+
+
+
+
+
+                                        String id = MD5Utils.md5Hex(item.getId() + "_M_" + i1);
+                                        ImageInfo exist = SQLExecutor.executeQueryBean("select * from ITEM_IMAGE where ID = ? ", ImageInfo.class, id);
+                                        if ( exist==null ) {
+                                            exist = new ImageInfo();
+                                            exist.setId(id);
+                                            SQLExecutor.insert(exist);
+                                        }
+
+                                        boolean image_exist = false;
+                                        if ( exist!=null && StringUtils.isNotBlank(exist.getFilepath()) ) {
+                                            File image = new File(exist.getFilepath());
+                                            if ( image.exists() && image.length() > 999 ) {
+                                                // 图片存在
+                                                image_exist  = true;
+                                            }
+                                        }
+
+                                        if ( !image_exist ) {
+                                            String imageFileName =  skuCode + "_" + (i1+1) + ".jpg";
+                                            File imageFile = new File(dir, imageFileName);
+                                            try {
+                                                HttpUtils.download(text, imageFile.getAbsolutePath());
+
+                                                exist.setRefid(item.getId());
+                                                exist.setCode(item.getSkuCode());
+                                                exist.setXh(i1+1);
+                                                exist.setType("M");
+                                                exist.setPicurl(text);
+                                                exist.setFilepath(imageFile.getAbsolutePath());
+
+                                                SQLExecutor.update(exist);
+                                            } catch (Exception e) {
+                                                System.out.println("图片下载失败: " + e.getMessage() + " ==> " + text);
+                                            }
+                                        }
+
+
+                                    }
+                                    System.out.println("Images: " + imgs.size());
+
+
+                                    // 详情图
+                                    int i1 = 1;
+                                    Element detail = doc.selectFirst("div#detail");
+                                    if ( detail!=null ) {
+                                        Element detailcontent = detail.selectFirst("div#detail div#J-detail-content style");
+                                        if ( detailcontent!=null ) {
+                                            Matcher mat = DETAIL_IMAGE.matcher(detailcontent.html());
+                                            while(mat.find()){
+                                                String text = mat.group(1);
+                                                if ( text.startsWith("(") ) {
+                                                    text = text.substring(1);
+                                                }
+                                                if ( text.endsWith(")") ) {
+                                                    text = text.substring(0, text.length()-1);
+                                                }
+                                                if ( text.startsWith("//") ) {
+                                                    text = "https:" + text;
+                                                }
+                                                System.out.println("style image: " + text);
+
+
+                                                String id = MD5Utils.md5Hex(item.getId() + "_D_" + i1);
+
+                                                ImageInfo exist = SQLExecutor.executeQueryBean("select * from ITEM_IMAGE where ID = ? ", ImageInfo.class, id);
+                                                if ( exist==null ) {
+                                                    exist = new ImageInfo();
+                                                    exist.setId(id);
+                                                    SQLExecutor.insert(exist);
+                                                }
+
+                                                boolean image_exist = false;
+                                                if ( exist!=null && StringUtils.isNotBlank(exist.getFilepath()) ) {
+                                                    File image = new File(exist.getFilepath());
+                                                    if ( image.exists() && image.length() > 999 ) {
+                                                        // 图片存在
+                                                        image_exist  = true;
+                                                    }
+                                                }
+
+
+                                                if ( !image_exist ) {
+                                                    String imageFileName =  skuCode + "_" + i1 + "_detail" + ".jpg";
+                                                    File imageFile = new File(dir, imageFileName);
+                                                    try {
+                                                        HttpUtils.download(text, imageFile.getAbsolutePath());
+
+                                                        exist.setRefid(item.getId());
+                                                        exist.setCode(item.getSkuCode());
+                                                        exist.setXh(i1);
+                                                        exist.setType("D");
+                                                        exist.setPicurl(text);
+                                                        exist.setFilepath(imageFile.getAbsolutePath());
+
+                                                        SQLExecutor.update(exist);
+                                                    } catch (Exception e) {
+                                                        System.out.println("图片下载失败: " + e.getMessage() + " ==> " + text);
+                                                    }
+                                                }
+
+
+
+                                                i1++;
+
+                                            }
+                                        }
+
+                                        Elements detailImgs = detail.select("div#J-detail-content img");
+                                        if ( detailImgs!=null ) {
+                                            for (Element detailImg : detailImgs) {
+
+                                                String src = detailImg.attr("src");
+                                                if ( src==null || src.trim().length()==0 ||  src.endsWith("blank.gif") ) {
+                                                    src = detailImg.attr("data-lazyload");
+                                                }
+                                                if ( src.startsWith("//") ) {
+                                                    src = "https:" + src;
+                                                }
+                                                System.out.println("J-detail-content img: " + src);
+
+
+                                                String id = MD5Utils.md5Hex(item.getId() + "_D_" + i1);
+                                                ImageInfo exist = SQLExecutor.executeQueryBean("select * from ITEM_IMAGE where ID = ? ", ImageInfo.class, id);
+                                                if ( exist==null ) {
+                                                    exist = new ImageInfo();
+                                                    exist.setId(id);
+                                                    SQLExecutor.insert(exist);
+                                                }
+
+                                                boolean image_exist = false;
+                                                if ( exist!=null && StringUtils.isNotBlank(exist.getFilepath()) ) {
+                                                    File image = new File(exist.getFilepath());
+                                                    if ( image.exists() && image.length() > 999 ) {
+                                                        // 图片存在
+                                                        image_exist  = true;
+                                                    }
+                                                }
+
+
+                                                if ( !image_exist ) {
+                                                    String imageFileName =  skuCode + "_" + i1 + "_detail" + ".jpg";
+                                                    File imageFile = new File(dir, imageFileName);
+                                                    try {
+                                                        HttpUtils.download(src, imageFile.getAbsolutePath());
+
+                                                        exist.setRefid(item.getId());
+                                                        exist.setCode(item.getSkuCode());
+                                                        exist.setXh(i1);
+                                                        exist.setType("D");
+                                                        exist.setPicurl(src);
+                                                        exist.setFilepath(imageFile.getAbsolutePath());
+
+                                                        SQLExecutor.update(exist);
+                                                    } catch (Exception e) {
+                                                        System.out.println("图片下载失败: " + e.getMessage() + " ==> " + src);
+                                                    }
+                                                }
+
+                                                i1++;
+                                            }
+                                        }
+                                    }
+
+
+
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            SQLExecutor.update(item);
+                        }
+
+                        return "预处理完成, 请点击确定或者取消";
+                    };
+                };
+            }
+
+        };
+
+
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("/fxml/ProgressDialog.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage _dialogStage = new Stage();
+            _dialogStage.setTitle("预处理进度");
+            _dialogStage.initModality(Modality.WINDOW_MODAL);
+            _dialogStage.initOwner(stage());
+            _dialogStage.setScene(new Scene(page));
+
+            // Set the person into the controller.
+            FXMLProgressDialogController controller = loader.getController();
+            // Show the dialog and wait until the user closes it
+            controller.setDialogStage(_dialogStage);
+            controller.bind(service);
+            _dialogStage.showAndWait();
+
+            if ( service.isRunning() ) {
+                service.cancel();
+                service.reset();
+                service = null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
 
 
     }

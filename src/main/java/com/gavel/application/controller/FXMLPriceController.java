@@ -196,16 +196,50 @@ public class FXMLPriceController {
                     continue;
                 }
 
+                boolean hasTemp = false;
+
                 JsonObject priceObj = pricesMap.get(priceItem.getSkuid());
+                System.out.println(priceObj);
                 if ( priceObj!=null ) {
 
-                    if (priceObj.has("op") ) {
-                        _priceItem.setPrice(priceObj.get("op").getAsString());
+                    if ( _priceItem.getSkuid().equalsIgnoreCase("24344463563") ) {
+                        System.out.println("");
                     }
 
-                    if (priceObj.has("p") ) {
-                        _priceItem.setPrice1(priceObj.get("p").getAsString());
+                    float l = 0;
+                    if (priceObj.has("l") ) {
+                        try {
+                            l  =  Float.parseFloat(priceObj.get("l").getAsString());
+                            hasTemp = true;
+                        } catch (Exception e) {
+
+                        }
                     }
+
+                    float op = 0;
+                    if (priceObj.has("op") ) {
+                        try {
+                            op  =  Float.parseFloat(priceObj.get("op").getAsString());
+                        } catch (Exception e) {
+
+                        }
+                    }
+
+                    float p = 0;
+                    if (priceObj.has("p") ) {
+                        try {
+                            p  =  Float.parseFloat(priceObj.get("p").getAsString());
+                        } catch (Exception e) {
+
+                        }
+                    }
+
+                    _priceItem.setPrice(String.valueOf(op));
+                    if ( l > 0 && l > op ) {
+                        _priceItem.setPrice(String.valueOf(l));
+                    }
+                    _priceItem.setPrice1(String.valueOf(p));
+
                 } else {
                     System.out.println("[PriceJsonObject]" + priceItem.getSkuid() + ": " + null);
                 }
@@ -246,12 +280,11 @@ public class FXMLPriceController {
 
                     _priceItem.setPrice2(_priceItem.getPrice());
 
-
                     if ( pHtmlCache!=null && pHtmlCache.getHtml()!=null ) {
                         Document doc = Jsoup.parse(pHtmlCache.getHtml());
                         if ( jd ) {
                             Element hx_price = doc.selectFirst("span.pricing del");
-                            if ( hx_price!=null ) {
+                            if ( hasTemp || hx_price!=null ) {
                                 // op 是京东原价
                                 // p 是 京东优惠价
                                 System.out.println(_priceItem.getRownum() +  " 有优惠价 ==> " + _priceItem.getSkuid() );
@@ -478,15 +511,18 @@ public class FXMLPriceController {
         try {
             ins = new FileInputStream(path);
             try {
-                workbook = new XSSFWorkbook(ins);
+                workbook = new HSSFWorkbook(ins);
+                System.out.println("HSSFWorkbook....");
             } catch (Exception e) {
                 try {
-                    workbook = new HSSFWorkbook(ins);
+                    workbook = new XSSFWorkbook(ins);
+                    System.out.println("XSSFWorkbook....");
                 } catch (Exception e1) {
                     NPOIFSFileSystem fs = null;
                     try {
                         fs = new NPOIFSFileSystem(new File(path));
                         workbook = WorkbookFactory.create(fs);
+                        System.out.println("NPOIFSFileSystem....");
                     } catch (IOException e2) {
                         e2.printStackTrace();
 

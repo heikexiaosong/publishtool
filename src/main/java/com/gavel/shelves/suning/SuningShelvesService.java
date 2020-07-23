@@ -3,14 +3,18 @@ package com.gavel.shelves.suning;
 import com.gavel.HttpUtils;
 import com.gavel.config.APPConfig;
 import com.gavel.database.SQLExecutor;
+import com.gavel.entity.ImageInfo;
 import com.gavel.entity.Item;
 import com.gavel.entity.ShelvesItem;
+import com.gavel.jd.JDSkuParser;
 import com.gavel.jd.SkuPageLoader;
 import com.gavel.shelves.*;
 import com.gavel.utils.StringUtils;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.suning.api.SuningResponse;
+import com.suning.api.entity.item.NPicAddRequest;
+import com.suning.api.entity.item.NPicAddResponse;
 import com.suning.api.entity.selfmarket.ApplyAddRequest;
 import com.suning.api.entity.selfmarket.ApplyAddResponse;
 import com.suning.api.exception.SuningApiException;
@@ -26,17 +30,10 @@ import org.slf4j.LoggerFactory;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SuningShelvesService implements ShelvesService {
-
-
-    private static final Pattern DETAIL_IMAGE = Pattern.compile("background-image:url([^;]*);");
-
-    private static final Pattern PIC_IMAGE = Pattern.compile("360buyimg.com/n(\\d*)/");
-
 
     static {
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
@@ -351,6 +348,10 @@ public class SuningShelvesService implements ShelvesService {
         request.setProductName(item.getCmTitle());
         request.setCmTitle(item.getCmTitle());         // 商品标题
 
+        if ( item.getCmTitle()!=null && item.getCmTitle().length() > 60  ) {
+            throw  new RuntimeException("商品标题长度超过60");
+        }
+
 
         Map<String, String> _attrs = new HashMap<String, String>();
         /**
@@ -411,15 +412,12 @@ public class SuningShelvesService implements ShelvesService {
         }
 
 
-
-
         List<String> picUrls = new ArrayList<>();
         List<String> columnValues = new ArrayList<>();
         List<String> detailUrls = new ArrayList<>();
         /// ================
 
         Document doc = Jsoup.parse(html);
-
         Element crumb = doc.selectFirst("div#crumb-wrap .crumb");
         if ( crumb==null ) {
             throw new Exception("Html内容有异常");
@@ -438,8 +436,6 @@ public class SuningShelvesService implements ShelvesService {
 
                }
             }
-
-
 
             Element page_hx_price = doc.selectFirst("del#page_hx_price");
             if ( page_hx_price!=null ) {
@@ -478,38 +474,14 @@ public class SuningShelvesService implements ShelvesService {
         }
 
         request.setSellingPoints(item.getSellingPoints()); // 商品卖点
-
-        // 图片
-        Elements imgs = doc.select("div#spec-list li>img");
-        for (Element img : imgs) {
-
-            String text = img.attr("src");
-            if ( text.startsWith("//") ) {
-                text = "https:" + text;
-            }
-
-            Matcher mat = PIC_IMAGE.matcher(text);
-            if (mat.find()){
-                System.out.println(mat.group(1) + "; " + mat.start() + "->" + mat.end());
-                text = text.substring(0,  mat.start()) + "360buyimg.com/n12/" + text.substring(mat.end());
-            }
-
-            picUrls.add(text);
-            System.out.println("主图: " +  text);
-
+        if ( item.getSellingPoints()!=null && item.getSellingPoints().length() > 45  ) {
+            throw  new RuntimeException("商品卖点长度超过45");
         }
-        System.out.println("Images: " + imgs.size());
-
 
 
         Element detail = doc.selectFirst("div#detail");
-
-        // System.out.println(detail.html());
         if ( detail!=null ) {
             Element parameter = detail.selectFirst("div.p-parameter");
-
-//            Element brand = parameter.selectFirst("ul#parameter-brand a");
-//            System.out.println(brand.text());
 
             Elements parameter2 = parameter.select("ul.parameter2  li");
             for (Element element : parameter2) {
@@ -531,7 +503,6 @@ public class SuningShelvesService implements ShelvesService {
 
 
             // 规格与包装
-
             Elements ptableItems = detail.select("div.Ptable-item dl");
             if ( ptableItems!=null && ptableItems.size() > 0 ) {
 
@@ -561,9 +532,6 @@ public class SuningShelvesService implements ShelvesService {
                 }
             }
 
-
-
-
             // package-list
             Element packagelist = detail.selectFirst("div.package-list");
             if ( packagelist!=null ) {
@@ -575,43 +543,10 @@ public class SuningShelvesService implements ShelvesService {
                 }
             }
 
-
-            //
-            Element detailcontent = detail.selectFirst("div#J-detail-content style");
-            if ( detailcontent!=null ) {
-                Matcher mat = DETAIL_IMAGE.matcher(detailcontent.html());
-                while(mat.find()){
-                    String text = mat.group(1);
-                    if ( text.startsWith("(") ) {
-                        text = text.substring(1);
-                    }
-                    if ( text.endsWith(")") ) {
-                        text = text.substring(0, text.length()-1);
-                    }
-                    if ( text.startsWith("//") ) {
-                        text = "https:" + text;
-                    }
-                    System.out.println("style image: " + text);
-                    detailUrls.add(text);
-                }
-            }
         }
 
-        Elements detailImgs = detail.select("div#J-detail-content img");
-        if ( detailImgs!=null ) {
-            for (Element detailImg : detailImgs) {
 
-                String src = detailImg.attr("src");
-                if ( src==null || src.trim().length()==0 ||  src.endsWith("blank.gif") ) {
-                    src = detailImg.attr("data-lazyload");
-                }
-                if ( src.startsWith("//") ) {
-                    src = "https:" + src;
-                }
-                System.out.println("J-detail-content img: " + src);
-                detailUrls.add(src);
-            }
-        }
+
 
         Element ssd = detail.selectFirst("div#ssd-vc-goods");
         if ( ssd!=null ) {
@@ -625,7 +560,6 @@ public class SuningShelvesService implements ShelvesService {
             }
         }
 
-        ///
 
         // 商品图片 urlA~urlE
         List<ApplyAddRequest.SupplierImgUrl> supplierImgUrls = new ArrayList<>();
@@ -634,44 +568,39 @@ public class SuningShelvesService implements ShelvesService {
         supplierImgUrls.add(supplierImgUrl);
 
 
+        JDSkuParser jdSkuParser = new JDSkuParser(item, html);
+
+        // 商品主图片
+        List<ImageInfo> imageInfos = jdSkuParser.loadImages(picdir);
+
+        for (ImageInfo imageInfo : imageInfos) {
+            picUrls.add(imageInfo.getPicurl());
+        }
+        System.out.println("商品主图: " + picUrls.size());
+
         if ( coup || picUrls.size() > 5 ) {
             picUrls.remove(0);
         }
-        List<ShelvesItemParser.Pic> images = ShelvesItemParser.getImages(item.getSkuCode(), picUrls, defaultImage, logoImage);
-        for (ShelvesItemParser.Pic image : images) {
-            System.out.println("Image: " + image.getUrl());
-        }
+
+
+        List<String> images = preHandleImage(imageInfos, logoImage, new File(picdir));
+
+        //List<ShelvesItemParser.Pic> images = ShelvesItemParser.getImages(item.getSkuCode(), picUrls, defaultImage, logoImage);
 
         if ( images.size() >= 1 ) {
-            supplierImgUrl.setUrlA(images.get(0).getUrl());
-            if ( picdir!=null && picdir.trim().length() > 0  ) {
-                HttpUtils.download(supplierImgUrl.getUrlA(), picdir + File.separator +  item.getSkuCode() + "_A.jpg");
-            }
+            supplierImgUrl.setUrlA(images.get(0));
         }
         if ( images.size() >= 2 ) {
-            supplierImgUrl.setUrlB(images.get(1).getUrl());
-            if ( picdir!=null && picdir.trim().length() > 0  ) {
-                HttpUtils.download(supplierImgUrl.getUrlB(), picdir + File.separator +  item.getSkuCode() + "_B.jpg");
-            }
+            supplierImgUrl.setUrlB(images.get(1));
         }
         if ( images.size() >= 3 ) {
-            supplierImgUrl.setUrlC(images.get(2).getUrl());
-            if ( picdir!=null && picdir.trim().length() > 0  ) {
-                HttpUtils.download(supplierImgUrl.getUrlC(), picdir + File.separator +  item.getSkuCode() + "_C.jpg");
-            }
+            supplierImgUrl.setUrlC(images.get(2));
         }
-
         if ( images.size() >= 4 ) {
-            supplierImgUrl.setUrlD(images.get(3).getUrl());
-            if ( picdir!=null && picdir.trim().length() > 0  ) {
-                HttpUtils.download(supplierImgUrl.getUrlD(), picdir + File.separator +  item.getSkuCode() + "_D.jpg");
-            }
+            supplierImgUrl.setUrlD(images.get(3));
         }
         if ( images.size() >= 5 ) {
-            supplierImgUrl.setUrlE(images.get(4).getUrl());
-            if ( picdir!=null && picdir.trim().length() > 0  ) {
-                HttpUtils.download(supplierImgUrl.getUrlE(), picdir + File.separator +  item.getSkuCode() + "_E.jpg");
-            }
+            supplierImgUrl.setUrlE(images.get(4));
         }
 
         List<ParameterLoader.Parameter> commonParameters = parameterLoader.loadCommonParameters(category);
@@ -691,7 +620,7 @@ public class SuningShelvesService implements ShelvesService {
             //
 
             if ( images.size() > 0 ) {
-                childItem.setSupplierImgAUrl(images.get(0).getUrl());
+                childItem.setSupplierImgAUrl(images.get(0));
             }
 
             List<ApplyAddRequest.ParsX> parsX = new ArrayList<>();
@@ -712,7 +641,17 @@ public class SuningShelvesService implements ShelvesService {
 
         String introduction = item.getIntroduction();
         try {
-            introduction = buildIntroduction(item.getSkuCode(), moq, item.getPrice(), detailUrls, columnValues);
+
+            List<ImageInfo> _imageInfos = jdSkuParser.loadDetailImages(picdir);
+            for (ImageInfo imageInfo : _imageInfos) {
+                detailUrls.add(imageInfo.getPicurl());
+            }
+
+            List<String> _images = preHandleImage(_imageInfos, null, new File(picdir));
+
+            System.out.println("商品详情图: " + detailUrls.size());
+
+            introduction = buildIntroduction(moq, item.getPrice(), _images, columnValues);
         } catch (Exception e) {
             System.out.println("[" + item.getItemCode() + "]生成商品详情异常: " + e.getMessage());
         }
@@ -726,6 +665,12 @@ public class SuningShelvesService implements ShelvesService {
             request.setIntroduction(Base64.encodeBase64String(_introduction.getBytes("UTF8"))); // 商品介绍
         }
 
+
+        System.out.println(request.getResParams());
+
+        if ( 1==1 ) {
+            //return;
+        }
 
         //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
         request.setCheckParam(true);
@@ -749,6 +694,96 @@ public class SuningShelvesService implements ShelvesService {
             logger.error("[Item: " + item.getItemCode() + "]Exception: " + e.getMessage());
             throw e;
         }
+    }
+
+    /**
+     * 图片预处理 图片下载并上传到苏宁图片空间
+     *
+     * @param imageInfos
+     * @param logoImage
+     * @return
+     */
+    private List<String> preHandleImage(List<ImageInfo> imageInfos, BufferedImage logoImage, File dir) {
+        List<String> images = new ArrayList<>();
+
+        try {
+            System.out.println("待处理图片: " + (imageInfos == null ? 0 : imageInfos.size()));
+            if (imageInfos == null || imageInfos.size() == 0) {
+                return Collections.EMPTY_LIST;
+            }
+
+
+            for (ImageInfo imageInfo : imageInfos) {
+                if (StringUtils.isBlank(imageInfo.getPicurl())) {
+                    continue;
+                }
+
+                if (StringUtils.isNotBlank(imageInfo.getSuningurl())) {
+                    try {
+                        long len = HttpUtils.imageLength(imageInfo.getSuningurl());
+                        if (len > 999) {
+                            images.add(imageInfo.getSuningurl());
+                            continue;
+                        }
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    } finally {
+
+                    }
+                }
+
+                if (StringUtils.isBlank(imageInfo.getFilepath())) {
+                    String imageFileName = imageInfo.getCode() + "_" + imageInfo.getXh() + ".jpg";
+                    File imageFile = new File(dir, imageFileName);
+                    try {
+                        HttpUtils.download(imageInfo.getPicurl(), imageFile.getAbsolutePath());
+                        imageInfo.setFilepath(imageFile.getAbsolutePath());
+                    } catch (Exception e) {
+                        System.out.println("图片下载失败: " + e.getMessage() + " ==> " + imageInfo.getPicurl());
+                    }
+                }
+
+                if (StringUtils.isNotBlank(imageInfo.getFilepath())) {
+                    NPicAddRequest request = new NPicAddRequest();
+                    request.setPicFileData(imageInfo.getFilepath());
+                    NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
+                    SuningResponse.SnError error = response.getSnerror();
+                    if (error != null) {
+                        System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                        System.out.println(new Gson().toJson(response));
+                    } else {
+                        System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
+                        imageInfo.setSuningurl(response.getSnbody().getAddNPic().getPicUrl());
+                    }
+                }
+
+
+                if ( StringUtils.isNotBlank(imageInfo.getSuningurl())  ) {
+                    long len = 0;
+                    try {
+                        len = HttpUtils.imageLength(imageInfo.getSuningurl() + "?version=1");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println(len);
+
+                    if ( len > 999 ) {
+                        images.add(imageInfo.getSuningurl());
+                    }
+                }
+
+                try {
+                    SQLExecutor.update(imageInfo);
+                } catch (Exception e) {
+
+                }
+            }
+
+        }catch (Exception e) {
+
+        }
+
+        return images;
     }
 
     private static Exception buildException(String errorCode, String errorMsg){
@@ -948,18 +983,18 @@ public class SuningShelvesService implements ShelvesService {
     }
 
 
-    public static String buildIntroduction(String skuCode, int moq, float _price, List<String> detailUrls, List<String> columnValues) throws Exception {
+    public static String buildIntroduction(int moq, float _price, List<String> detailUrls, List<String> columnValues) throws Exception {
 
-        Map<String, String> detailImageMap = new HashMap<>();
-        for (String picUrl : detailUrls) {
-            if ( picUrl.contains("566010f4N01f5d17a.png") ) {
-                continue;
-            }
-            String picSuningUrl = ShelvesItemParser.uploadDetailImage(picUrl);
-            if (com.gavel.utils.StringUtils.isNotBlank(picSuningUrl)) {
-                detailImageMap.put(picUrl, picSuningUrl);
-            }
-        }
+//        Map<String, String> detailImageMap = new HashMap<>();
+//        for (String picUrl : detailUrls) {
+//            if ( picUrl.contains("566010f4N01f5d17a.png") ) {
+//                continue;
+//            }
+//            String picSuningUrl = ShelvesItemParser.uploadDetailImage(picUrl);
+//            if (com.gavel.utils.StringUtils.isNotBlank(picSuningUrl)) {
+//                detailImageMap.put(picUrl, picSuningUrl);
+//            }
+//        }
 
 
         StringBuilder detail = new StringBuilder();
@@ -999,15 +1034,12 @@ public class SuningShelvesService implements ShelvesService {
         detail.append("<div  style=\"border-bottom:1px solid #e8e8e8!important;padding-left:10px;position:relative;font-size:14px;color:#333;font-weight:bold;margin-bottom:1px;height: 30px; line-height: 30px; background-color: #f5f5f5;\"><span></span>产品描述</div>");
         //detail.append(proDetailTit.html());
 
-        System.out.println("详情图片: " + detailImageMap.size());
+        System.out.println("详情图片: " + detailUrls.size());
         if ( detailUrls.size() > 0 ) {
             detail.append("<br>");
             for (String picUrl : detailUrls) {
-                String picSuningUrl = detailImageMap.get(picUrl);
-                if (com.gavel.utils.StringUtils.isNotBlank(picSuningUrl)) {
-                    detail.append("<img alt=\"\" src=\"" + picSuningUrl + "\">");
-                    detail.append("<br>");
-                }
+                detail.append("<img alt=\"\" src=\"" + picUrl + "\">");
+                detail.append("<br>");
             }
         }
         detail.append("</div>");

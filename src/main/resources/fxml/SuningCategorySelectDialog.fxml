@@ -4,7 +4,8 @@
 <?import javafx.scene.layout.*?>
 <AnchorPane prefHeight="640.0" prefWidth="960.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLSuningCateSelectedController">
     <children>
-        <TextField fx:id="keyword" onKeyPressed="#handleKeyPressedAction" prefHeight="40.0" prefWidth="1120.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="7.0" />
+
+       <TextField fx:id="keyword" onKeyPressed="#handleKeyPressedAction" prefHeight="40.0" prefWidth="1120.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="7.0" />
 
         <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
             <buttons>
@@ -26,14 +27,15 @@
                                       <TableColumn fx:id="descPathCol" prefWidth="240.0" text="采购目录层级描述" />
                                   </columns>
                               </TableView>
-                              <Pagination fx:id="pagination" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                              <Pagination fx:id="pagination" maxPageIndicatorCount="30" pageCount="1" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                           </children>
                       </AnchorPane>
                   </content>
               </ScrollPane>
              <AnchorPane prefHeight="666.0" prefWidth="395.0">
                  <children>
-                     <TableView fx:id="brandTable" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <TextField fx:id="brandKeyword" onKeyPressed="#handleBrandKeyPressedAction" prefHeight="40.0" prefWidth="1120.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="7.0" />
+                     <TableView fx:id="brandTable" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0">
                          <columns>
                              <TableColumn fx:id="brandCodeCol" prefWidth="80.0" text="编码" />
                              <TableColumn fx:id="brandNameCol" prefWidth="120.0" text="品牌" />

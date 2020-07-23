@@ -221,7 +221,12 @@ public class FXMLJDCrawlerController {
 
         while ( pageCur <= pageTotal ) {
 
-            String html = DriverHtmlLoader.getInstance().loadHtml(task.getUrl() + "&page=" + (pageCur*2 - 1));
+            int pageParams = (pageCur*2 - 1);
+            if ( task.getUrl()!=null && task.getUrl().contains("i-list.jd.com") ) {
+                pageParams = pageCur;
+            }
+
+            String html = DriverHtmlLoader.getInstance().loadHtml(task.getUrl() + "&page=" + pageParams);
 
             Document doc = Jsoup.parse(html);
 
@@ -234,11 +239,17 @@ public class FXMLJDCrawlerController {
                 continue;
             }
 
-            Elements items = doc.select("div#plist li.gl-item");
-            if ( items==null || items.size()==0 ) {
-                items = doc.select("div#J_goodsList li.gl-item");
+
+            // 根据上面的商品结果，为您推荐的相似商品。 删除
+            Element diviner = doc.selectFirst("div#J_goodsList ul.J_diviner");
+            if ( diviner!=null ) {
+                diviner.remove();
             }
 
+            Elements items = doc.select("div#J_goodsList li.gl-item");
+            if ( items==null || items.size()==0 ) {
+                items = doc.select("div#plist li.gl-item div.j-sku-item");
+            }
 
             List<SearchItem> searchItems = new ArrayList<>();
 
@@ -303,8 +314,15 @@ public class FXMLJDCrawlerController {
 
 
                     Element shopname = item.selectFirst("a.hd-shopname");
+                    if ( shopname==null ) {
+                        shopname = item.selectFirst("a.hd-shopname");
+                    }
                     if ( shopname!=null ) {
-                        searchItem.setShop(shopname.text());
+                        String _shop = shopname.attr("title");
+                        if ( StringUtils.isBlank(_shop) ) {
+                            _shop = shopname.text();
+                        }
+                        searchItem.setShop(_shop);
                     }
 
 
@@ -323,7 +341,7 @@ public class FXMLJDCrawlerController {
 
             if ( searchItems!=null && searchItems.size() > 0 ) {
 
-                StringBuilder query = new StringBuilder("https://p.3.cn/prices/mgets?type=1&area=12_988_40034_0&pdbp=0&pdtk=&pdpin=hailinking1984&pin=hailinking1984&source=list_pc_front&skuIds=");
+                StringBuilder query = new StringBuilder("https://p.3.cn/prices/mgets?pin=hailinking1984&type=1&skuIds=");
 
                 int cnt = 1;
                 StringBuilder skuids = new StringBuilder();
@@ -332,12 +350,12 @@ public class FXMLJDCrawlerController {
                 for (int i1 = 0; i1 < searchItems.size(); i1++) {
                     SearchItem searchItem = searchItems.get(i1);
                     skuids.append("J_").append(searchItem.getCode()).append("%2C");
-                    if ( cnt++ >= 30 || i1==searchItems.size()-1 ) {
+                    if ( cnt++ >= 100 || i1==searchItems.size()-1 ) {
                         cnt = 1;
 
                         System.out.println(query.toString() + skuids.toString());
 
-                        String text = HttpUtils.get(query.toString() + skuids.toString(), task.getUrl() + "&page=" + (pageCur*2 - 1));
+                        String text = HttpUtils.get(query.toString() + skuids.toString(), task.getUrl() + "&page=" + pageParams);
                         JsonArray arrays = new JsonParser().parse(text).getAsJsonArray();
                         if ( arrays!=null && arrays.size() > 0 ) {
                             for (JsonElement array : arrays) {
@@ -375,8 +393,8 @@ public class FXMLJDCrawlerController {
                 item.setStock(searchItem.getStock());
 
                 JsonObject priceObj = pricesMap.get("J_" + searchItem.getCode());
-                if ( priceObj!=null && priceObj.has("p") ) {
-                    item.setPrice(priceObj.get("p").getAsFloat());
+                if ( priceObj!=null && priceObj.has("op") ) {
+                    item.setPrice(priceObj.get("op").getAsFloat());
                 }
 
                 SQLExecutor.insert(item);

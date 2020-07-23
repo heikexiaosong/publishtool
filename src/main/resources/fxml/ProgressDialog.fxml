@@ -2,7 +2,7 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane prefHeight="270.0" prefWidth="413.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLProgressDialogController">
+<AnchorPane prefHeight="270.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.gavel.application.controller.FXMLProgressDialogController">
     <children>
 
         <ButtonBar layoutX="176.0" layoutY="233.0" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0">
@@ -12,6 +12,6 @@
             </buttons>
         </ButtonBar>
         <ProgressBar fx:id="progressBar" layoutX="14.0" layoutY="117.0" prefHeight="18.0" prefWidth="385.0" progress="0.0" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" />
-      <Label fx:id="text" alignment="CENTER" layoutX="124.0" layoutY="145.0" prefHeight="22.0" prefWidth="199.0" text="0/1234" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" />
+      <Label fx:id="text" alignment="CENTER_LEFT" layoutX="124.0" layoutY="145.0" prefHeight="22.0" prefWidth="199.0" text="0/1234" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" />
     </children>
 </AnchorPane>
