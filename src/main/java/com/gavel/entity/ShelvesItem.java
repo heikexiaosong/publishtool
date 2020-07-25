@@ -98,8 +98,6 @@ public class ShelvesItem {
     @FieldMeta(name = "TYPE", title = "类型")
     private String type;
 
-
-
     @FieldMeta(name = "PRICE", title = "价格")
     private float price;
 
@@ -111,6 +109,9 @@ public class ShelvesItem {
 
     @FieldMeta(name = "STOCK", title = "库存")
     private final StringProperty stock= new SimpleStringProperty();
+
+    @FieldMeta(name = "ZT", title = "状态")
+    private int zt;
 
     public String getId() {
         return id.get();
@@ -426,5 +427,13 @@ public class ShelvesItem {
 
     public void setStock(String stock) {
         this.stock.set(stock);
+    }
+
+    public int getZt() {
+        return zt;
+    }
+
+    public void setZt(int zt) {
+        this.zt = zt;
     }
 }

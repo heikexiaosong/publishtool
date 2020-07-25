@@ -98,11 +98,7 @@ public class SQLExecutor {
         builder.append(") VALUES (").append(params).append(")");
 
         QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
-        try {
-            runner.execute(builder.toString(), paramObjs.toArray(new Object[paramObjs.size()]));
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
+        runner.execute(builder.toString(), paramObjs.toArray(new Object[paramObjs.size()]));
 
 //        QueryRunner runner = new QueryRunner(DataSourceHolder.dataSource());
 //        runner.update(builder.toString());

@@ -163,6 +163,14 @@
 			<version>3.17</version>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/com.monitorjbl/xlsx-streamer -->
+		<dependency>
+			<groupId>com.monitorjbl</groupId>
+			<artifactId>xlsx-streamer</artifactId>
+			<version>2.1.0</version>
+		</dependency>
+
+
 	</dependencies>
 
 

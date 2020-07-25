@@ -9,6 +9,7 @@ import com.gavel.entity.ShelvesItem;
 import com.gavel.jd.JDSkuParser;
 import com.gavel.jd.SkuPageLoader;
 import com.gavel.shelves.*;
+import com.gavel.utils.MD5Utils;
 import com.gavel.utils.StringUtils;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -23,15 +24,17 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.opencv.core.Core;
+import org.opencv.core.*;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SuningShelvesService implements ShelvesService {
 
@@ -573,17 +576,11 @@ public class SuningShelvesService implements ShelvesService {
         // 商品主图片
         List<ImageInfo> imageInfos = jdSkuParser.loadImages(picdir);
 
-        for (ImageInfo imageInfo : imageInfos) {
-            picUrls.add(imageInfo.getPicurl());
+        List<String> images = preHandleImage(imageInfos, logoImage, new File(picdir), 5);
+
+        if ( images==null || images.size() <= 0 ) {
+            throw  new RuntimeException("没有找到商品主图");
         }
-        System.out.println("商品主图: " + picUrls.size());
-
-        if ( coup || picUrls.size() > 5 ) {
-            picUrls.remove(0);
-        }
-
-
-        List<String> images = preHandleImage(imageInfos, logoImage, new File(picdir));
 
         //List<ShelvesItemParser.Pic> images = ShelvesItemParser.getImages(item.getSkuCode(), picUrls, defaultImage, logoImage);
 
@@ -647,7 +644,7 @@ public class SuningShelvesService implements ShelvesService {
                 detailUrls.add(imageInfo.getPicurl());
             }
 
-            List<String> _images = preHandleImage(_imageInfos, null, new File(picdir));
+            List<String> _images = preHandleImage(_imageInfos, null, new File(picdir), -1);
 
             System.out.println("商品详情图: " + detailUrls.size());
 
@@ -667,9 +664,11 @@ public class SuningShelvesService implements ShelvesService {
 
 
         System.out.println(request.getResParams());
+        try {
+            item.setZt(1);
+            SQLExecutor.update(item);
+        } catch (Exception e) {
 
-        if ( 1==1 ) {
-            //return;
         }
 
         //api入参校验逻辑开关，当测试稳定之后建议设置为 false 或者删除该行
@@ -697,55 +696,133 @@ public class SuningShelvesService implements ShelvesService {
     }
 
     /**
-     * 图片预处理 图片下载并上传到苏宁图片空间
+     * 图片预处理 图片上传到苏宁图片空间
      *
      * @param imageInfos
      * @param logoImage
      * @return
      */
-    private List<String> preHandleImage(List<ImageInfo> imageInfos, BufferedImage logoImage, File dir) {
-        List<String> images = new ArrayList<>();
-
+    private List<String> preHandleImage(List<ImageInfo> imageInfos, BufferedImage logoImage, File dir, int total) {
+        List<ImageInfo> usable = new ArrayList<>();
         try {
             System.out.println("待处理图片: " + (imageInfos == null ? 0 : imageInfos.size()));
             if (imageInfos == null || imageInfos.size() == 0) {
                 return Collections.EMPTY_LIST;
             }
 
+            boolean preHandl = true;
+            try {
+                ShelvesItem shelvesItem = SQLExecutor.executeQueryBean("select * from SHELVESITEM where ID = ? ", ShelvesItem.class, imageInfos.get(0).getRefid());
+                preHandl = (shelvesItem.getZt()==1);
+            } catch (Exception e) {
+
+            }
+
+            Collections.sort(imageInfos, new Comparator<ImageInfo>() {
+                @Override
+                public int compare(ImageInfo o1, ImageInfo o2) {
+                    return o1.getXh() - o2.getXh();
+                }
+            });
 
             for (ImageInfo imageInfo : imageInfos) {
-                if (StringUtils.isBlank(imageInfo.getPicurl())) {
-                    continue;
-                }
+                try {
 
-                if (StringUtils.isNotBlank(imageInfo.getSuningurl())) {
-                    try {
-                        long len = HttpUtils.imageLength(imageInfo.getSuningurl());
-                        if (len > 999) {
-                            images.add(imageInfo.getSuningurl());
+                    if (  preHandl && StringUtils.isBlank(imageInfo.getFilepath())) {
+                        System.out.println("[Image][" + imageInfo.getCode() + "][" + imageInfo.getXh() + "]Filepath is blank.");
+                        continue;
+                    }
+
+                    File imageFile = new File(imageInfo.getFilepath());
+                    if ( preHandl && !imageFile.exists() ) {
+                        System.out.println("[Image][" + imageInfo.getCode() + "][" + imageInfo.getXh() + "][File: " + imageInfo.getFilepath() + "] not exist.");
+                        continue;
+                    }
+
+                    if (StringUtils.isNotBlank(imageInfo.getSuningurl()) && imageInfo.getStatus() < 999 ) {
+                        continue;
+                    }
+
+                    if (StringUtils.isNotBlank(imageInfo.getSuningurl())) {
+                        try {
+                            long len = HttpUtils.imageLength(imageInfo.getSuningurl() + "?version=1");
+                            System.out.println("[" + imageInfo.getSuningurl() + "]Len: " + len);
+                            imageInfo.setStatus((int)len);
+                            if (len > 999) {
+                                usable.add(imageInfo);
+                            }
                             continue;
+                        } catch (Exception e) {
+                            System.out.println(e.getMessage());
                         }
-                    } catch (Exception e) {
-                        System.out.println(e.getMessage());
-                    } finally {
-
                     }
-                }
 
-                if (StringUtils.isBlank(imageInfo.getFilepath())) {
-                    String imageFileName = imageInfo.getCode() + "_" + imageInfo.getXh() + ".jpg";
-                    File imageFile = new File(dir, imageFileName);
+                    if (StringUtils.isNotBlank(imageInfo.getFilepath())) {
+                        NPicAddRequest request = new NPicAddRequest();
+                        request.setPicFileData(imageInfo.getFilepath());
+                        NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
+                        SuningResponse.SnError error = response.getSnerror();
+                        if (error != null) {
+                            System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
+                            System.out.println(new Gson().toJson(response));
+                        } else {
+                            System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
+                            imageInfo.setSuningurl(response.getSnbody().getAddNPic().getPicUrl());
+                            usable.add(imageInfo);
+                        }
+                    }
+
+                } finally {
                     try {
-                        HttpUtils.download(imageInfo.getPicurl(), imageFile.getAbsolutePath());
-                        imageInfo.setFilepath(imageFile.getAbsolutePath());
+                        SQLExecutor.update(imageInfo);
                     } catch (Exception e) {
-                        System.out.println("图片下载失败: " + e.getMessage() + " ==> " + imageInfo.getPicurl());
+
                     }
                 }
+            }
+        }catch (Exception e) {
 
-                if (StringUtils.isNotBlank(imageInfo.getFilepath())) {
+        }
+
+        if ( total > 0 && usable!=null && usable.size() > 0 ) {
+            int start = imageInfos.size() + 1;
+            while (  usable.size() < total ) {  // 图片不全 补主图
+                int offset = start -  imageInfos.size() - 1;
+
+                ImageInfo imageInfo = usable.get(offset);
+                File org_image = new File(imageInfo.getFilepath());
+
+                ImageInfo supplement = new ImageInfo();
+                String id = MD5Utils.md5Hex(supplement.getCode() + "_" + imageInfo.getType() + "_" + start + "_" + System.currentTimeMillis());
+                supplement.setId(id);
+                supplement.setRefid(imageInfo.getRefid());
+                supplement.setCode(imageInfo.getCode());
+                supplement.setType(imageInfo.getType());
+                supplement.setPicurl(imageInfo.getPicurl());
+                supplement.setXh(start);
+                String imageFileName =  supplement.getCode() + "_" + start + ".jpg";
+                File targetImage = new File(dir, imageFileName);
+                try {
+
+                    Mat src = Imgcodecs.imread(org_image.getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED);
+                    if ( src.width()!=800 || src.height()!=800 ) {
+                        Imgproc.resize(src, src, new Size(800, 800));
+                    }
+                    double[] pixes = src.get(src.width()-30, src.height()-10);
+                    Scalar scalar =  new Scalar(238,  238,  238);
+                    if ( pixes!=null && pixes.length==3 ) {
+                        pixes[0] = pixes[0]-15;
+                        pixes[1] = pixes[1]-15;
+                        pixes[2] = pixes[2]-15;
+                        scalar = new Scalar(pixes);
+                    }
+                    Imgproc.putText(src, Integer.toString(start), new Point(src.width()-30, src.height()-10), 0, 1.0, scalar);
+                    Imgcodecs.imwrite(targetImage.getAbsolutePath(), src);
+                    supplement.setFilepath(targetImage.getAbsolutePath());
+
+
                     NPicAddRequest request = new NPicAddRequest();
-                    request.setPicFileData(imageInfo.getFilepath());
+                    request.setPicFileData(targetImage.getAbsolutePath());
                     NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
                     SuningResponse.SnError error = response.getSnerror();
                     if (error != null) {
@@ -753,35 +830,19 @@ public class SuningShelvesService implements ShelvesService {
                         System.out.println(new Gson().toJson(response));
                     } else {
                         System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
-                        imageInfo.setSuningurl(response.getSnbody().getAddNPic().getPicUrl());
+                        supplement.setSuningurl(response.getSnbody().getAddNPic().getPicUrl());
                     }
-                }
-
-
-                if ( StringUtils.isNotBlank(imageInfo.getSuningurl())  ) {
-                    long len = 0;
-                    try {
-                        len = HttpUtils.imageLength(imageInfo.getSuningurl() + "?version=1");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println(len);
-
-                    if ( len > 999 ) {
-                        images.add(imageInfo.getSuningurl());
-                    }
-                }
-
-                try {
-                    SQLExecutor.update(imageInfo);
+                    usable.add(supplement);
+                    SQLExecutor.insert(supplement);
+                    start++;
                 } catch (Exception e) {
-
+                    e.printStackTrace();
                 }
             }
-
-        }catch (Exception e) {
-
         }
+
+        List<String> images = usable.stream().map( ImageInfo::getSuningurl).collect(Collectors.toList());
+
 
         return images;
     }

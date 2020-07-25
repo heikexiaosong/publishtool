@@ -1,5 +1,6 @@
 package com.gavel.application.controller;
 
+import com.gavel.application.IDCell;
 import com.gavel.application.MainApp;
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.Item;
@@ -32,7 +33,7 @@ public class FXMLSkuImportController {
     @FXML
     private TableView<Item> skuList;
     @FXML
-    private TableColumn<Item, String> picCol;
+    private TableColumn<Item, String> noCol;
     @FXML
     private TableColumn<Item, String> codeCol;
     @FXML
@@ -73,7 +74,7 @@ public class FXMLSkuImportController {
     @FXML
     private void initialize() {
 
-        picCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getUrl()));
+        noCol.setCellFactory(new IDCell<>());
         codeCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getCode()));
         nameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getName()));
         brandnameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBrandname()));
@@ -248,12 +249,12 @@ public class FXMLSkuImportController {
                                     shelvesItem = ShelvesItemParser.parse(item);
                                 }
                                 items.add(shelvesItem);
-                                System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getCode() +"]解析成功: ");
+                                System.out.print("\r[" + (i+1) + "/" +  total + "][Item: " + item.getCode() +"]解析成功: ");
                             } catch (Exception e) {
-                                System.out.println("\r[" + i + "/" + total + "][Item: " + item.getCode() +"]解析失败: " + e.getMessage());
+                                System.out.println("\r[" + (i+1) + "/" + total + "][Item: " + item.getCode() +"]解析失败: " + e.getMessage());
                             } finally {
-                                updateProgress(i, total);
-                                updateValue(""+ i +"/" + total);
+                                updateProgress((i+1), total);
+                                updateValue(""+ (i+1) +"/" + total);
                             }
                         }
 

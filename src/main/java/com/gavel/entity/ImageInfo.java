@@ -39,6 +39,9 @@ public class ImageInfo {
     @FieldMeta(name = "UPDATETIME", title = "更新时间")
     private Date updatetime;
 
+    public ImageInfo() {
+        this.status = Integer.MAX_VALUE;
+    }
 
     public String getId() {
         return id;

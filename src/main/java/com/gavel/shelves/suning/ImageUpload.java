@@ -1,19 +1,12 @@
 package com.gavel.shelves.suning;
 
-import com.gavel.HttpUtils;
-import com.gavel.config.APPConfig;
 import com.gavel.entity.ImageCache;
 import com.gavel.utils.ImageLoader;
-import com.google.gson.Gson;
-import com.suning.api.SuningResponse;
-import com.suning.api.entity.item.NPicAddRequest;
-import com.suning.api.entity.item.NPicAddResponse;
-import com.suning.api.entity.item.PicDeleteRequest;
-import com.suning.api.entity.item.PicDeleteResponse;
-import com.suning.api.exception.SuningApiException;
-import org.opencv.core.Core;
+import org.opencv.core.*;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
-import java.util.Calendar;
+import java.io.File;
 
 public class ImageUpload {
 
@@ -32,50 +25,24 @@ public class ImageUpload {
 
     public static void main(String[] args) throws Exception {
 
-//       String url = execute("http://img30.360buyimg.com/popWaterMark/jfs/t1/96763/32/16831/116382/5e7ee0bbE42a76d3d/4b147f363759eb81.jpg");
-//
-//        System.out.println("Img: " + url);
+        File imageFile = new File("D:\\pics\\1595554002742", "10020179543659_1.jpg");
 
-        System.out.println(APPConfig.getInstance().getShopinfo().getName());
-
-        NPicAddRequest request = new NPicAddRequest();
-        request.setPicFileData("D:\\pics\\餐具套装_1595488707010\\65481123170_1.jpg");
-        try {
-            //System.out.println(request.getResParams());
-            System.out.println("当前时间: " + Calendar.getInstance().getTime());
-            NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
-            SuningResponse.SnError error = response.getSnerror();
-            if ( error!=null ) {
-                System.out.println(error.getErrorCode() + " ==> " + error.getErrorMsg());
-                System.out.println(new Gson().toJson(response));
-            } else {
-                System.out.println(new Gson().toJson(response.getSnbody().getAddNPic()));
-
-                for (int i = 0; i < 3; i++) {
-                    Thread.sleep(10000);
-
-                    long len =   HttpUtils.imageLength(response.getSnbody().getAddNPic().getPicUrl() + "?version=1");
-                    System.out.println(len);
-
-                    if ( len < 999 ) {
-                        System.out.println("待删除...");
-                        PicDeleteRequest deleteRequest = new PicDeleteRequest();
-                        deleteRequest.setPicUrl(response.getSnbody().getAddNPic().getPicUrl());
-
-                        PicDeleteResponse _response = APPConfig.getInstance().client().excute(deleteRequest);
-                        System.out.println(new Gson().toJson(_response));
-                    }
-                }
-
-
-            }
-        } catch (SuningApiException e) {
-            e.printStackTrace();
+        Mat src = Imgcodecs.imread(imageFile.getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED);
+        if ( src.width()!=800 || src.height()!=800 ) {
+            Imgproc.resize(src, src, new Size(800, 800));
         }
 
-        // http://uimgproxy.suning.cn/uimg1/sop/commodity/CM9oEx8ei2AETvR1mr0BlQ.jpg
-        // http://uimgproxy.suning.cn/uimg1/sop/commodity/cDjuTGkwxNhX1JIHNzxKBw.jpg
-        // http://uimgproxy.suning.cn/uimg1/sop/commodity/Aa4dczkMYROvl-xuwfQVeA.jpg
+        double[] pixes = src.get(src.width()-30, src.height()-10);
+        Scalar scalar =  new Scalar(238,  238,  238);
+        if ( pixes!=null && pixes.length==3 ) {
+            pixes[0] = pixes[0]-15;
+            pixes[1] = pixes[1]-15;
+            pixes[2] = pixes[2]-15;
+            scalar = new Scalar(pixes);
+        }
+
+        Imgproc.putText(src, Integer.toString(1), new Point(src.width()-30, src.height()-10), 0, 1.0, scalar);
+        Imgcodecs.imwrite(imageFile.getAbsolutePath(), src);
 
     }
 }

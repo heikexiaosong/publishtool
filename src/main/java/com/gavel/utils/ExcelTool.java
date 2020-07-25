@@ -39,8 +39,8 @@ public class ExcelTool {
         	case FORMULA:
         		try {
         			cellvalue = String.valueOf(cell.getNumericCellValue());    
-        	    } catch (IllegalStateException e) {
-        	    	cellvalue = String.valueOf(cell.getRichStringCellValue());
+        	    } catch (Exception e) {
+        	    	//cellvalue = String.valueOf(cell.getRichStringCellValue());
         	    }
         		break;
             case STRING:

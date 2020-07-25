@@ -44,6 +44,12 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.core.Size;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
 
 import java.awt.*;
 import java.io.BufferedWriter;
@@ -383,7 +389,7 @@ public class FXMLShelvesController {
             //mainApp.getPersonData().add(tempPerson);
             tempShelvesTask.setShopid(APPConfig.getInstance().getShopinfo().getCode());
             try {
-                String path = "D:\\pics\\" + tempShelvesTask.getTitle() + "_" + tempShelvesTask.getId();
+                String path = "D:\\pics\\" + tempShelvesTask.getId() + "_" + tempShelvesTask.getMoq();
                 File dir = new File(path);
                 if ( !dir.exists() ) {
                     dir.mkdirs();
@@ -586,6 +592,7 @@ public class FXMLShelvesController {
                     try {
                         shelvesService.shelves(shelvesItem);
                         shelvesItem.setStatus("上架成功");
+                        shelvesItem.setSelected(false);
                     } catch (Exception e){
                         shelvesItem.setStatus("上架失败");
                         shelvesItem.setMessage(e.getMessage());
@@ -753,8 +760,6 @@ public class FXMLShelvesController {
                                         System.out.print("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入成功: ");
                                     } catch (Exception e) {
                                         System.out.println("\r[" + i + "/" +  total + "][Item: " + item.getSkuCode() +"]导入失败: " + e.getMessage() );
-
-                                        Thread.sleep(10000);
                                     }  finally {
                                         updateProgress(i, total);
                                         updateValue(""+ i +"/" + total);
@@ -1658,8 +1663,9 @@ public class FXMLShelvesController {
                             dir.mkdirs();
                         }
 
-                        final Pattern DETAIL_IMAGE = Pattern.compile("background-image:url([^;]*);");
+                        final Pattern DETAIL_IMAGE = Pattern.compile("background-image:url\\(([^)]*)");
                         final Pattern PIC_IMAGE = Pattern.compile("360buyimg.com/n(\\d*)/");
+                        final Pattern PIC_IMAGE_JFS = Pattern.compile("n12/(s.*_)jfs/");
 
                         updateProgress(0, total);
                         updateValue("开始预处理...");
@@ -1709,6 +1715,11 @@ public class FXMLShelvesController {
                                         if (mat.find()){
                                             text = text.substring(0,  mat.start()) + "360buyimg.com/n12/" + text.substring(mat.end());
                                         }
+
+                                        mat = PIC_IMAGE_JFS.matcher(text);
+                                        if (mat.find()){
+                                            text = text.substring(0, 32) + "jfs/" + text.substring(mat.end());
+                                        }
                                         System.out.println("[SKU: " + item.getSkuCode() + "]主图: " +  text);
 
 
@@ -1735,20 +1746,46 @@ public class FXMLShelvesController {
                                         if ( !image_exist ) {
                                             String imageFileName =  skuCode + "_" + (i1+1) + ".jpg";
                                             File imageFile = new File(dir, imageFileName);
-                                            try {
-                                                HttpUtils.download(text, imageFile.getAbsolutePath());
 
-                                                exist.setRefid(item.getId());
-                                                exist.setCode(item.getSkuCode());
-                                                exist.setXh(i1+1);
-                                                exist.setType("M");
-                                                exist.setPicurl(text);
-                                                exist.setFilepath(imageFile.getAbsolutePath());
+                                            int cnt = 0;
+                                            while ( cnt++ < 3 ) {
+                                                try {
+                                                    HttpUtils.download(text, imageFile.getAbsolutePath());
 
-                                                SQLExecutor.update(exist);
-                                            } catch (Exception e) {
-                                                System.out.println("图片下载失败: " + e.getMessage() + " ==> " + text);
+
+                                                    Mat src = Imgcodecs.imread(imageFile.getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED);
+                                                    if ( src.width()!=800 || src.height()!=800 ) {
+                                                        Imgproc.resize(src, src, new Size(800, 800));
+                                                    }
+
+                                                    double[] pixes = src.get(src.width()-30, src.height()-10);
+                                                    Scalar scalar =  new Scalar(238,  238,  238);
+                                                    if ( pixes!=null && pixes.length==3 ) {
+                                                        pixes[0] = pixes[0]-15;
+                                                        pixes[1] = pixes[1]-15;
+                                                        pixes[2] = pixes[2]-15;
+                                                        scalar = new Scalar(pixes);
+                                                    }
+
+                                                    Imgproc.putText(src, Integer.toString(i1+1), new Point(src.width()-30, src.height()-10), 0, 1.0, scalar);
+                                                    Imgcodecs.imwrite(imageFile.getAbsolutePath(), src);
+
+
+                                                    exist.setRefid(item.getId());
+                                                    exist.setCode(item.getSkuCode());
+                                                    exist.setXh(i1+1);
+                                                    exist.setType("M");
+                                                    exist.setPicurl(text);
+                                                    exist.setFilepath(imageFile.getAbsolutePath());
+
+                                                    SQLExecutor.update(exist);
+                                                    break;
+                                                } catch (Exception e) {
+                                                    System.out.println("图片下载失败: " + e.getMessage() + " ==> " + text);
+                                                    Thread.sleep(1000);
+                                                }
                                             }
+
                                         }
 
 
@@ -1771,11 +1808,20 @@ public class FXMLShelvesController {
                                                 if ( text.endsWith(")") ) {
                                                     text = text.substring(0, text.length()-1);
                                                 }
+                                                if ( text.startsWith("\"") ) {
+                                                    text = text.substring(1);
+                                                }
+                                                if ( text.endsWith("\"") ) {
+                                                    text = text.substring(0, text.length()-1);
+                                                }
                                                 if ( text.startsWith("//") ) {
                                                     text = "https:" + text;
                                                 }
                                                 System.out.println("style image: " + text);
 
+                                                if ( StringUtils.isBlank(text) ) {
+                                                    continue;
+                                                }
 
                                                 String id = MD5Utils.md5Hex(item.getId() + "_D_" + i1);
 
@@ -1799,23 +1845,27 @@ public class FXMLShelvesController {
                                                 if ( !image_exist ) {
                                                     String imageFileName =  skuCode + "_" + i1 + "_detail" + ".jpg";
                                                     File imageFile = new File(dir, imageFileName);
-                                                    try {
-                                                        HttpUtils.download(text, imageFile.getAbsolutePath());
 
-                                                        exist.setRefid(item.getId());
-                                                        exist.setCode(item.getSkuCode());
-                                                        exist.setXh(i1);
-                                                        exist.setType("D");
-                                                        exist.setPicurl(text);
-                                                        exist.setFilepath(imageFile.getAbsolutePath());
+                                                    int cnt = 0;
+                                                    while ( cnt++ < 3 ) {
+                                                        try {
+                                                            HttpUtils.download(text, imageFile.getAbsolutePath());
 
-                                                        SQLExecutor.update(exist);
-                                                    } catch (Exception e) {
-                                                        System.out.println("图片下载失败: " + e.getMessage() + " ==> " + text);
+                                                            exist.setRefid(item.getId());
+                                                            exist.setCode(item.getSkuCode());
+                                                            exist.setXh(i1);
+                                                            exist.setType("D");
+                                                            exist.setPicurl(text);
+                                                            exist.setFilepath(imageFile.getAbsolutePath());
+
+                                                            SQLExecutor.update(exist);
+                                                            break;
+                                                        } catch (Exception e) {
+                                                            System.out.println("图片下载失败: " + e.getMessage() + " ==> " + text);
+                                                            Thread.sleep(1000);
+                                                        }
                                                     }
                                                 }
-
-
 
                                                 i1++;
 
@@ -1857,19 +1907,25 @@ public class FXMLShelvesController {
                                                 if ( !image_exist ) {
                                                     String imageFileName =  skuCode + "_" + i1 + "_detail" + ".jpg";
                                                     File imageFile = new File(dir, imageFileName);
-                                                    try {
-                                                        HttpUtils.download(src, imageFile.getAbsolutePath());
 
-                                                        exist.setRefid(item.getId());
-                                                        exist.setCode(item.getSkuCode());
-                                                        exist.setXh(i1);
-                                                        exist.setType("D");
-                                                        exist.setPicurl(src);
-                                                        exist.setFilepath(imageFile.getAbsolutePath());
+                                                    int cnt = 0;
+                                                    while ( cnt++ < 3 ) {
+                                                        try {
+                                                            HttpUtils.download(src, imageFile.getAbsolutePath());
 
-                                                        SQLExecutor.update(exist);
-                                                    } catch (Exception e) {
-                                                        System.out.println("图片下载失败: " + e.getMessage() + " ==> " + src);
+                                                            exist.setRefid(item.getId());
+                                                            exist.setCode(item.getSkuCode());
+                                                            exist.setXh(i1);
+                                                            exist.setType("D");
+                                                            exist.setPicurl(src);
+                                                            exist.setFilepath(imageFile.getAbsolutePath());
+
+                                                            SQLExecutor.update(exist);
+                                                            break;
+                                                        } catch (Exception e) {
+                                                            System.out.println("图片下载失败: " + e.getMessage() + " ==> " + src);
+                                                            Thread.sleep(1000);
+                                                        }
                                                     }
                                                 }
 
@@ -1879,7 +1935,7 @@ public class FXMLShelvesController {
                                     }
 
 
-
+                                    item.setZt(1);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -1888,7 +1944,7 @@ public class FXMLShelvesController {
                             SQLExecutor.update(item);
                         }
 
-                        return "预处理完成, 请点击确定或者取消";
+                        return "[Complete]预处理完成";
                     };
                 };
             }
@@ -2020,5 +2076,27 @@ public class FXMLShelvesController {
         public void setCkALl(boolean ckALl) {
             this.ckALl = ckALl;
         }
+    }
+
+    public static void main(String[] args) {
+
+        Pattern PIC_IMAGE = Pattern.compile("360buyimg.com/n(\\d*)/");
+
+        String text = "https://img12.360buyimg.com/n5/s54x54_jfs/t1/24469/22/2790/120612/5c209a8eEd4945f31/0b0937df042c368d.jpg";
+
+        Matcher mat = PIC_IMAGE.matcher(text);
+        if (mat.find()){
+            text = text.substring(0,  mat.start()) + "360buyimg.com/n12/" + text.substring(mat.end());
+        }
+
+
+        Pattern PIC_IMAGE_JFS = Pattern.compile("n12/(s.*_)jfs/");
+
+        mat = PIC_IMAGE_JFS.matcher(text);
+        if (mat.find()){
+            text = text.substring(0, 32) + "jfs/" + text.substring(mat.end());
+        }
+
+        System.out.println(text);
     }
 }
