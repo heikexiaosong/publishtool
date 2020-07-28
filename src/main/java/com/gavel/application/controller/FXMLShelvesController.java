@@ -573,7 +573,7 @@ public class FXMLShelvesController {
             }
         }
 
-        ShelvesService shelvesService = new SuningShelvesService(shelvesTask.getMoq(), shelvesTask.getPic(), shelvesTask.getLogo(), shelvesTask.getPicdir());
+        ShelvesService shelvesService = new SuningShelvesService(shelvesTask.getMoq(), shelvesTask.getPic(), shelvesTask.getLogo(), shelvesTask.getPicdir(), shelvesTask.getBrand_zh(), shelvesTask.getBrand_en());
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -642,7 +642,9 @@ public class FXMLShelvesController {
                         String desc = editTask.getDest().trim();
                         item.setCmTitle(item.getCmTitle().replace(src, desc));
                         if ( editTask.isCkALl() ) {
-                            item.setSellingPoints(item.getSellingPoints().replace(src, desc));
+                            if ( item.getSellingPoints()!=null ) {
+                                item.setSellingPoints(item.getSellingPoints().replace(src, desc));
+                            }
                             item.setSrc(editTask.getSrc());
                             item.setDest(editTask.getDest());
                         }
@@ -668,7 +670,6 @@ public class FXMLShelvesController {
 
                     try {
                         SQLExecutor.update(item);
-
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

@@ -57,6 +57,10 @@ public class SuningShelvesService implements ShelvesService {
 
     private final String picdir;
 
+    private final String brandCn;
+
+    private final String brandEn;
+
     private CatetoryBrandSelector catetoryBrandSelector = new SuningCatetoryBrandSelector();
 
     public SuningShelvesService(int moq, String _defaultImage) {
@@ -64,14 +68,16 @@ public class SuningShelvesService implements ShelvesService {
     }
 
     public SuningShelvesService(int moq, String _defaultImage, String _logo) {
-       this(moq, _defaultImage, _logo, null);
+       this(moq, _defaultImage, _logo, null, null, null);
     }
 
-    public SuningShelvesService(int moq, String _defaultImage, String _logo, String picdir) {
+    public SuningShelvesService(int moq, String _defaultImage, String _logo, String picdir, String brandCn, String brandEn) {
         this.defaultImage = _defaultImage;
         this.moq = moq;
         this.logo = _logo;
         this.picdir = picdir;
+        this.brandCn = brandCn;
+        this.brandEn = brandEn;
 
         if ( StringUtils.isNotBlank(logo) ) {
             try {
@@ -417,8 +423,6 @@ public class SuningShelvesService implements ShelvesService {
             throw new Exception("[Item: " + item.getItemCode() + "]获取sku页面信息失败");
         }
 
-
-        List<String> picUrls = new ArrayList<>();
         List<String> columnValues = new ArrayList<>();
         List<String> detailUrls = new ArrayList<>();
         /// ================
@@ -639,6 +643,22 @@ public class SuningShelvesService implements ShelvesService {
          * 商家商品介绍，UTF-8格式。将html内容的txt文本文件读取为字节数组,然后base64加密，去除空格回车后作为字段，传输时所涉及的图片不得使用外部url。允许写入CSS（禁止引用外部CSS）不支持JS。
          */
 
+        String orgBandZn = "";
+        String orgBandEn = "";
+        Element brandEle = doc.selectFirst("ul#parameter-brand a");
+        if ( brandEle!=null ) {
+           String[] brands = brandEle.text().split("[（）]");
+           if ( brands!=null ) {
+               if ( brands.length > 0 ) {
+                   orgBandZn = brands[0];
+               }
+               if ( brands.length > 0 ) {
+                   orgBandEn = brands[1];
+               }
+           }
+        }
+
+
         String introduction = item.getIntroduction();
         try {
 
@@ -654,16 +674,39 @@ public class SuningShelvesService implements ShelvesService {
             introduction = buildIntroduction(moq, item.getPrice(), _images, columnValues);
         } catch (Exception e) {
             System.out.println("[" + item.getItemCode() + "]生成商品详情异常: " + e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
 
-        request.setIntroduction(introduction); // 商品介绍
 
         if ( StringUtils.isNotBlank(item.getSrc()) ) {
-            byte[] datas = Base64.decodeBase64(introduction.getBytes("UTF8"));
-            String _introduction = new String(datas, "UTF8");
-            _introduction = _introduction.replace(item.getSrc(), item.getDest());
-            request.setIntroduction(Base64.encodeBase64String(_introduction.getBytes("UTF8"))); // 商品介绍
+            introduction = introduction.replace(item.getSrc(), item.getDest());
         }
+
+        if ( (StringUtils.isNotBlank(orgBandZn) || StringUtils.isNotBlank(orgBandEn))
+              && (StringUtils.isNotBlank(brandCn) || StringUtils.isNotBlank(brandEn))   ) {
+
+
+            String fullBrand = brandCn + "（" + brandEn + "）";
+            if ( StringUtils.isBlank(brandCn) ) {
+                fullBrand = brandEn;
+            }
+
+            if ( StringUtils.isBlank(brandEn) ) {
+                fullBrand = brandCn;
+            }
+
+            if ( StringUtils.isBlank(orgBandEn) ) {
+                introduction = introduction.replace(orgBandZn, fullBrand);
+            } else {
+                introduction = introduction.replace(orgBandZn, brandCn);
+                introduction = introduction.replace(orgBandEn, brandEn);
+            }
+
+            // 品牌1 b1 -> 京苏 jinsu
+            // 品牌1 b1 -> 京苏 jinsu
+        }
+
+        request.setIntroduction(Base64.encodeBase64String(introduction.getBytes("UTF8"))); // 商品介绍
 
 
         System.out.println(request.getResParams());
@@ -761,7 +804,7 @@ public class SuningShelvesService implements ShelvesService {
                     }
 
                     if (StringUtils.isNotBlank(imageInfo.getFilepath())) {
-                        if ( logoImage!=null ) {
+                        if ( logoImage!=null && total > 0 ) {
                             try {
                                 // ImageIO读取图片
                                 BufferedImage pic = ImageIO.read( new File(imageInfo.getFilepath()));
@@ -1151,7 +1194,7 @@ public class SuningShelvesService implements ShelvesService {
 
         System.out.println("Detail: " + detail.toString());
 
-        return Base64.encodeBase64String(detail.toString().getBytes("UTF8"));
+        return detail.toString();
     }
 
 
