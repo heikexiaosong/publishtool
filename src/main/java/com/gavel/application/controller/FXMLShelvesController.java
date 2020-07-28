@@ -40,6 +40,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.geometry.Positions;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -51,7 +53,9 @@ import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -1670,6 +1674,20 @@ public class FXMLShelvesController {
                         updateProgress(0, total);
                         updateValue("开始预处理...");
 
+                        // 水印图片
+                        BufferedImage logoImage = null;
+                        if ( StringUtils.isNotBlank(logo.getText()) ) {
+                            File logoFile = new File(logo.getText());
+                            if ( logoFile.exists() ) {
+                                try {
+                                    logoImage = ImageIO.read(logoFile);
+                                } catch (Exception e) {
+                                    System.out.println("logo 图片加载失败: " + e.getMessage());
+                                    logoImage = null;
+                                }
+                            }
+                        }
+
                         int i = 0;
                         for (ShelvesItem item : pending) {
                             //ShelvesItem item = SQLExecutor.executeQueryBean("select * from SHELVESITEM where ID = ?", ShelvesItem.class, _item.getId());
@@ -1724,8 +1742,6 @@ public class FXMLShelvesController {
 
 
 
-
-
                                         String id = MD5Utils.md5Hex(item.getId() + "_M_" + i1);
                                         ImageInfo exist = SQLExecutor.executeQueryBean("select * from ITEM_IMAGE where ID = ? ", ImageInfo.class, id);
                                         if ( exist==null ) {
@@ -1771,6 +1787,22 @@ public class FXMLShelvesController {
                                                     Imgcodecs.imwrite(imageFile.getAbsolutePath(), src);
 
 
+                                                    if ( logoImage!=null ) {
+                                                        try {
+                                                            // ImageIO读取图片
+                                                            BufferedImage pic = ImageIO.read(imageFile);
+                                                            Thumbnails.of(pic)
+                                                                    // 设置图片大小
+                                                                    .size(pic.getWidth(), pic.getHeight())
+                                                                    // 加水印 参数：1.水印位置 2.水印图片 3.不透明度0.0-1.0
+                                                                    .watermark(Positions.TOP_LEFT, logoImage, 0.9f)
+                                                                    // 输出到文件
+                                                                    .toFile(imageFile);
+                                                        } catch (IOException e) {
+                                                            e.printStackTrace();
+                                                        }
+                                                    }
+
                                                     exist.setRefid(item.getId());
                                                     exist.setCode(item.getSkuCode());
                                                     exist.setXh(i1+1);
@@ -1787,11 +1819,8 @@ public class FXMLShelvesController {
                                             }
 
                                         }
-
-
                                     }
                                     System.out.println("Images: " + imgs.size());
-
 
                                     // 详情图
                                     int i1 = 1;

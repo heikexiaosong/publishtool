@@ -19,6 +19,8 @@ import com.suning.api.entity.item.NPicAddResponse;
 import com.suning.api.entity.selfmarket.ApplyAddRequest;
 import com.suning.api.entity.selfmarket.ApplyAddResponse;
 import com.suning.api.exception.SuningApiException;
+import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.geometry.Positions;
 import org.apache.commons.codec.binary.Base64;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -33,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -758,6 +761,23 @@ public class SuningShelvesService implements ShelvesService {
                     }
 
                     if (StringUtils.isNotBlank(imageInfo.getFilepath())) {
+                        if ( logoImage!=null ) {
+                            try {
+                                // ImageIO读取图片
+                                BufferedImage pic = ImageIO.read( new File(imageInfo.getFilepath()));
+                                Thumbnails.of(pic)
+                                        // 设置图片大小
+                                        .size(pic.getWidth(), pic.getHeight())
+                                        // 加水印 参数：1.水印位置 2.水印图片 3.不透明度0.0-1.0
+                                        .watermark(Positions.TOP_LEFT, logoImage, 0.9f)
+                                        // 输出到文件
+                                        .toFile(imageInfo.getFilepath());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+
                         NPicAddRequest request = new NPicAddRequest();
                         request.setPicFileData(imageInfo.getFilepath());
                         NPicAddResponse response = APPConfig.getInstance().client().excuteMultiPart(request);
