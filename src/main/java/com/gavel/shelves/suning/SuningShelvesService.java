@@ -652,7 +652,7 @@ public class SuningShelvesService implements ShelvesService {
                if ( brands.length > 0 ) {
                    orgBandZn = brands[0];
                }
-               if ( brands.length > 0 ) {
+               if ( brands.length > 1 ) {
                    orgBandEn = brands[1];
                }
            }
