@@ -1,5 +1,6 @@
 package com.gavel.crawler;
 
+import com.gavel.config.APPConfig;
 import com.gavel.entity.HtmlCache;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -9,10 +10,13 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
@@ -27,11 +31,24 @@ public class DriverHtmlLoader {
 
     private final WebDriver driver;
 
+    private final ChromeDriverService service;
+
     private final Pattern pattern =  Pattern.compile("(.*)(已加载完全部)(.*)");
 
     private DriverHtmlLoader() {
 
-        System.setProperty("webdriver.chrome.driver","C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe");
+
+        String chromedriver = APPConfig.getInstance().getProperty("chromedriver", "");
+        System.out.println("chromedriver: " + chromedriver );
+
+        service = new ChromeDriverService.Builder().usingDriverExecutable(new File(chromedriver)).usingAnyFreePort().build();
+        try {
+            service.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.setProperty("webdriver.chrome.driver", chromedriver);
 
 
         ChromeOptions options = new ChromeOptions();
@@ -133,6 +150,7 @@ public class DriverHtmlLoader {
     public void quit() {
         driver.close();
         driver.quit();
+        service.stop();
     }
 
     public static void main(String[] args) {

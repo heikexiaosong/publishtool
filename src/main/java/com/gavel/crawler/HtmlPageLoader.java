@@ -2,6 +2,7 @@ package com.gavel.crawler;
 
 import com.gavel.database.SQLExecutor;
 import com.gavel.entity.HtmlCache;
+import com.gavel.entity.PHtmlCache;
 import com.gavel.utils.MD5Utils;
 import com.gavel.utils.StringUtils;
 import org.jsoup.Jsoup;
@@ -69,7 +70,7 @@ public class HtmlPageLoader {
                 String id = MD5Utils.md5Hex(url);
                 String suffix =  id.substring(id.length()-1);
                 System.out.println(url + " => " + id + " : " + suffix);
-                cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
+                cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ StringUtils.trim(suffix) + "  where ID = ? limit 1 ", PHtmlCache.class, id);
             } catch (Exception e) {
                 System.out.println("[executeQueryBean]SQLExecutor: " + url);
             }
@@ -107,7 +108,7 @@ public class HtmlPageLoader {
             try {
                 String id = MD5Utils.md5Hex(url);
                 String suffix =  id.substring(id.length()-1);
-                cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ StringUtils.trim(suffix) + "  where ID = ? limit 1 ", HtmlCache.class, id);
+                cache =  SQLExecutor.executeQueryBean("select * from htmlcache_"+ StringUtils.trim(suffix) + "  where ID = ? limit 1 ", PHtmlCache.class, id);
             } catch (Exception e) {
                 System.out.println("[executeQueryBean]SQLExecutor: " + e.getMessage());
             }
@@ -137,14 +138,15 @@ public class HtmlPageLoader {
 
 //            OkHttpClient client = HttpProxyClient.getInstance().defaultClient();
 //            if ( times > 0 ) {
-//                client = HttpProxyClient.getInstance().getClient();
+//                client = HttpProxyClient.getIDrnstance().getClient();
 //            }
 
             try {
                 //String html =  HttpUtils.get(url, client);
 
                 String html = DriverHtmlLoader.getInstance().loadHtml(url);
-                cache = new HtmlCache();
+                cache = new PHtmlCache();
+                ((PHtmlCache) cache).setId(MD5Utils.md5Hex(url));
                 cache.setUrl(url.trim());
                 cache.setHtml(html);
                 cache.setContentlen(html.length());
